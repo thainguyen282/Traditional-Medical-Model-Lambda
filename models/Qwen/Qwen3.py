@@ -13,14 +13,19 @@ from trl import SFTTrainer, SFTConfig
 
 
 import torch
+import triton
 print(f"PyTorch version: {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA version: {torch.version.cuda}")
 print(f"GPU: {torch.cuda.get_device_name(0)}")
 print(f"Compute capability: {torch.cuda.get_device_capability(0)}")
-import triton
-print(f"Triton: {triton.__version__}")  # Should be ≥2.1.0
-# print(f"Flash Attention: {flash_attn.__version__}")  # Should be ≥2.5.0
+
+import wandb
+
+wandb.init(
+    project="VeneraMedicalM1",
+    name="QwenUnsloth",
+)
 
 fourbit_models = [
     "unsloth/Qwen3-1.7B-unsloth-bnb-4bit", # Qwen 14B 2x faster
@@ -45,7 +50,6 @@ model, tokenizer = FastLanguageModel.from_pretrained(
     full_finetuning = False, # We have full finetuning now!
     #  attn_implementation="flash_attention_2"  #
     attn_implementation="sdpa",
-    #    torch_dtype = torch.float16,
 )
 
 model = FastLanguageModel.get_peft_model(
@@ -74,10 +78,8 @@ def formatting_func(examples):
     if "conversations" in examples:
         conversations = examples["conversations"]
         
-        # If it's batched, conversations will be a list of lists
         if isinstance(conversations, list) and len(conversations) > 0:
             if isinstance(conversations[0], list):
-                # Batched case
                 texts = []
                 for conversation in conversations:
                     messages = [
@@ -92,7 +94,6 @@ def formatting_func(examples):
                     texts.append(text)
                 return texts
             else:
-                # Single example case
                 messages = [
                     {"role": "user" if msg["from"] == "human" else "assistant", "content": msg["value"]}
                     for msg in conversations
@@ -104,7 +105,6 @@ def formatting_func(examples):
                 )
                 return [text]
     
-    # Fallback
     return [""]
 
 def formatting_funcs(examples):
@@ -114,6 +114,7 @@ n_samples=10
 sampled_data = [non_reasoning_dataset[i] for i in range(min(n_samples, len(non_reasoning_dataset)))]
 combined_dataset = Dataset.from_list(sampled_data).shuffle(seed=3407)
 example=combined_dataset[0]
+
 print("combined dataset[0]",combined_dataset[0])
 print("format func",formatting_func(example))
 print("len combine dataset",len(combined_dataset))
@@ -137,7 +138,7 @@ trainer = SFTTrainer(
         weight_decay = 0.01,
         lr_scheduler_type = "linear",
         seed = 3407,
-        report_to = "none" # Use this for WandB etc
+        report_to = "wandb" # Use this for WandB etc
     )
 )
 trainer_stats = trainer.train()

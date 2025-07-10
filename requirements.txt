@@ -1,14 +1,23 @@
-flask
-scikit-learn
-numpy
-gunicorn
-transformers
-torchao
-# sglang[all]>=0.4.9.post1
-# flashinfer-python -i https://flashinfer.ai/whl/cu126/torch2.6/
-jupyter
-ipykernel
-unsloth
-triton==3.2.0
-torch
-bitsandbytes
+# Core ML & Transformers
+torch==2.6.0
+transformers==4.53.1
+accelerate==1.8.1
+bitsandbytes==0.46.1
+peft==0.16.0
+safetensors==0.5.3
+
+# FastAPI + ASGI Server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.11.7
+python-multipart==0.0.20
+
+# Optional (Monitoring/Utils)
+wandb==0.21.0
+python-dotenv==1.1.1
+scikit-learn==1.7.0  # Only if needed for preprocessing
+numpy==2.3.1
+
+# GPU/CUDA (if applicable)
+xformers==0.0.29.post3  # Optional for attention optimizations
+triton==3.2.0  # Required for some PyTorch optimizations
