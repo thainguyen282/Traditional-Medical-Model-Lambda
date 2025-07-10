@@ -1,0 +1,5 @@
+model.pkl
+unsloth_compiled_cache
+unsloth_training_checkpoints
+.venv
+__pycache__
