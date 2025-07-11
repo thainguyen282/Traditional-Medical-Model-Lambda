@@ -1,0 +1,23 @@
+experiments:
+
+ - name: Fine tune unsloth/Qwen3-0.6B
+   model: "unsloth/Qwen3-0.6B"
+   dataset: 
+    - name: mlabonne/FineTome-100k
+      split: train
+   n_samples: 10
+
+   batch_size: 4
+   max_seq_length: 2048
+   output_dir: "output"
+
+ - name: "Fine tune unsloth/Qwen3-1.7B-"
+   model: "unsloth/Qwen3-1.7B"
+   dataset:
+     - name: mlabonne/FineTome-100k
+       split: train
+  
+   n_samples: 10
+   batch_size: 4
+   max_seq_length: 2048
+   output_dir: "output"

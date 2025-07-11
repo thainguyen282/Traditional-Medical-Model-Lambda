@@ -5,3 +5,5 @@ unsloth_training_checkpoints
 __pycache__
 wandb
 .env
+output
+final_model
