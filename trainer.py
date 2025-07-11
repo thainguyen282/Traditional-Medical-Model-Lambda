@@ -72,10 +72,12 @@ def main():
         config = yaml.safe_load(file)
     for experiment in config["experiments"]:
         print("EXPERIMENT ", experiment)
-        output_dir=os.makedirs( os.path.join(experiment["output_dir"],date_time_string), exist_ok=True)
-        print("output dir",output_dir)
-        branch_name = f"{experiment['model']}-{date_time_string}"
-        print("branch name",branch_name)
+        output_dir= os.path.join(experiment["output_dir"],date_time_string)
+        output_dir=os.makedirs( output_dir, exist_ok=True)
+        print("Output dir",output_dir)
+        branch_slug = f"{experiment['model'].replace('/', '-')}"
+        branch_name = f"{branch_slug}-{date_time_string}"
+        print("Branch name",branch_name)
         
         run = wandb.init(
             project=f"VeneraMedicalM1 {date_time_string}",
