@@ -3,9 +3,20 @@ experiments:
  - name: Fine tune unsloth/Qwen3-0.6B
    model: "unsloth/Qwen3-0.6B"
    dataset: 
-    - name: mlabonne/FineTome-100k
-      split: train
-   n_samples: 10
+      - tag: fine_tome
+        name: mlabonne/FineTome-100k
+        train:
+          n_samples: 50
+        val:
+          # n_samples: 50
+          percent: 0.2
+      - tag: dummy
+      
+      # - config:
+      #   - tag: null
+      #     name: another-dataset/example-50k
+      #     split: validation
+      #     n_samples: 5
 
    batch_size: 4
    max_seq_length: 2048

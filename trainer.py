@@ -21,6 +21,9 @@ import gc
 from huggingface_hub import login
 from dotenv import load_dotenv
 from huggingface_hub import HfApi
+from data.finetome import load_fine_tome_ds
+from base_trainer import MultiDatasetTrainer
+from collator import MultiDatasetCollator
 
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -42,25 +45,49 @@ def parse_arguments():
 
 
 def load_combined_datasets(dataset_configs: List):
-    combine_datasets = []
-    for dataset_config in dataset_configs:
-        try:
-            dataset_name = dataset_config["name"]
-            configs = get_dataset_config_names(dataset_name)
-            config = "default" if "default" in configs else configs[0]
+    combine_train_datasets = []
+    combine_val_datasets = []
+    # dataset_id_maps = {} 
+    cur_train_idx = 0
+    train_idx_ladder=[]
+    cur_val_idx = 0
+    val_idx_ladder=[]
+    for id, dataset_config in enumerate(dataset_configs):
+        tag= dataset_config.get("tag")
+        if tag == "fine_tome":
+            print("Loading FineTome dataset")
+            from data.finetome import load_fine_tome_ds
 
-            dataset = load_dataset(dataset_name, name=config, split="train")
-        except Exception as e:
-            print(f"Error loading {dataset_name}: {e}")
-            try:
-                dataset = load_dataset(dataset_name)["train"]
-            except:
-                raise ValueError(
-                    f"Could not load dataset {dataset_name} with any method"
-                )
-        combine_datasets.append(dataset)
-    combine_datasets = concatenate_datasets(combine_datasets)
-    return combine_datasets
+            # combine_datasets.append(load_fine_tome_ds(dataset_config))
+            train_dataset, val_dataset = load_fine_tome_ds(dataset_config, id)
+            # combine_datasets.append(dataset)
+            # dataset_id_maps[id] = "fine_tome"
+        elif tag == "dummy":
+            print("Loading Dummy dataset")
+            from data.finetome import load_dummy_ds
+
+            train_dataset, val_dataset = load_dummy_ds(
+                train_samples=dataset_config.get("train_samples", 4),
+                val_samples=dataset_config.get("val_samples", 3),
+                # include_dataset_ids=True,
+            )
+            
+        if train_dataset is not None:
+            combine_train_datasets.append(train_dataset)
+            cur_train_idx += len(train_dataset)
+            train_idx_ladder.append((cur_train_idx,tag))
+        if val_dataset is not None:
+            cur_val_idx += len(val_dataset)
+            val_idx_ladder.append((cur_val_idx,tag))
+            combine_val_datasets.append(val_dataset)
+            
+    if len(combine_train_datasets) > 0:
+        print("train dataset ", train_dataset)
+        combine_train_datasets = concatenate_datasets(combine_train_datasets)
+    if len(combine_val_datasets) > 0:
+        combine_val_datasets = concatenate_datasets(combine_val_datasets)
+    return combine_train_datasets, combine_val_datasets, train_idx_ladder, val_idx_ladder
+
 
 
 def main():
@@ -70,21 +97,24 @@ def main():
     date_time_string = now.strftime("%d-%m-%Y--%H-%M-%S")
     with open(cmd_args.config_path, "r") as file:
         config = yaml.safe_load(file)
+
     for experiment in config["experiments"]:
+        experiment_tag = experiment["name"]
+        run = wandb.init(
+            project=f"VeneraMedicalM1 ",
+            name=f"{experiment_tag} {date_time_string}",
+            reinit=True,
+            config=config,
+        )
+        run.config.update({"experiment": experiment})
         print("EXPERIMENT ", experiment)
-        output_dir= os.path.join(experiment["output_dir"],date_time_string)
-        output_dir=os.makedirs( output_dir, exist_ok=True)
-        print("Output dir",output_dir)
+        output_dir = os.path.join(experiment["output_dir"], date_time_string)
+        os.makedirs(output_dir, exist_ok=True)
+        print("Output dir", output_dir)
         branch_slug = f"{experiment['model'].replace('/', '-')}"
         branch_name = f"{branch_slug}-{date_time_string}"
-        print("Branch name",branch_name)
-        
-        run = wandb.init(
-            project=f"VeneraMedicalM1 {date_time_string}",
-            name=f"{experiment['name']}",
-            reinit=True,
-            config=experiment,
-        )
+        print("Branch name", branch_name)
+
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name=experiment["model"],
             max_seq_length=experiment[
@@ -118,92 +148,99 @@ def main():
             loftq_config=None,  # And LoftQ
         )
 
-        combined_dataset = load_combined_datasets(experiment["dataset"])
-        n_samples = experiment["n_samples"]
-        sampled_data = [
-            combined_dataset[i] for i in range(min(n_samples, len(combined_dataset)))
-        ]
-        combined_dataset = Dataset.from_list(sampled_data).shuffle(seed=3407)
-
+        combined_train_dataset, combined_val_dataset, train_idx_ladder,val_idx_ladder = (
+            load_combined_datasets(experiment["dataset"])
+        )
+        print("len of combined train dataset", len(combined_train_dataset))
+        print("len of combined val dataset", len(combined_val_dataset))
         def formatting_func(examples):
+            
+            output=[]
             if "conversations" in examples:
                 conversations = examples["conversations"]
-
+                # dataset_ids=examples["dataset_id"]
                 if isinstance(conversations, list) and len(conversations) > 0:
                     if isinstance(conversations[0], list):
-                        texts = []
-                        for conversation in conversations:
+                        for i,conversation in enumerate(conversations):
                             messages = [
                                 {
-                                    "role": (
-                                        "user"
-                                        if msg["from"] == "human"
-                                        else "assistant"
-                                    ),
-                                    "content": msg["value"],
+                                    "role": "user" if msg["from"] == "human" else "assistant",
+                                    "content": msg["value"]
                                 }
                                 for msg in conversation
                             ]
                             text = tokenizer.apply_chat_template(
-                                messages, tokenize=False, add_generation_prompt=False
+                                messages, 
+                                tokenize=False, 
+                                add_generation_prompt=False
                             )
-                            texts.append(text)
-                        return texts
+                            # text= add_id_to_text(text, dataset_ids[i])  # Add dataset_id to text
+                            output.append(text)
+                            # output.append({"text": text, "dataset_id": dataset_ids[i]})  # Preserve dataset_id for each text)
                     else:
                         messages = [
                             {
-                                "role": (
-                                    "user" if msg["from"] == "human" else "assistant"
-                                ),
-                                "content": msg["value"],
+                                "role": "user" if msg["from"] == "human" else "assistant",
+                                "content": msg["value"]
                             }
                             for msg in conversations
                         ]
                         text = tokenizer.apply_chat_template(
-                            messages, tokenize=False, add_generation_prompt=False
+                            messages,
+                            tokenize=False,
+                            add_generation_prompt=False
                         )
-                        return [text]
+                        # text = add_id_to_text(text, dataset_ids)  # Add dataset_id to text
+                        output.append(text)
+            
+            return output
+    
 
-            return [""]
-
-        trainer = SFTTrainer(
+        trainer = MultiDatasetTrainer(
             model=model,
             tokenizer=tokenizer,
-            train_dataset=combined_dataset,
+            train_dataset=combined_train_dataset,
             output_dir=output_dir,
-            eval_dataset=None,
+            eval_dataset=combined_val_dataset,
+            dataloader_shuffle=False,  
+            remove_unused_columns=False,  # Required if using dataset_ids
             formatting_func=formatting_func,
+            train_idx_ladder=train_idx_ladder,
+            val_idx_ladder=val_idx_ladder,
             args=SFTConfig(
                 per_device_train_batch_size=2,
                 gradient_accumulation_steps=4,  # Use GA to mimic batch size!
                 warmup_steps=5,
-                # num_train_epochs = 1, # Set this for 1 full training run.
-                # max_steps = 30,
-                max_steps=4,
+                num_train_epochs = 1, # Set this for 1 full training run.
+                # max_steps = 60,
+                # max_steps=4,
                 learning_rate=2e-4,  # Reduce to 2e-5 for long training runs
-                logging_steps=1,
+                logging_steps=4,
                 optim="adamw_8bit",
                 weight_decay=0.01,
                 lr_scheduler_type="linear",
                 seed=3407,
-                report_to="wandb",  # Use this for WandB etc
+                report_to="wandb", 
             ),
+            data_collator=MultiDatasetCollator(tokenizer=tokenizer, mlm=False),
         )
         trainer.add_callback(CustomWandbCallback())
         trainer_stats = trainer.train()
-                
-        api = HfApi() 
+
+        api = HfApi()
         trainer.save_model("./final_model")
-        api.create_branch(repo_id=repo_id, branch=branch_name, exist_ok=True)
-        api.upload_folder(
-            folder_path="./final_model",
-            repo_id=repo_id,
-            revision=branch_name,  
-            commit_message=f"Training {now.isoformat()} - {experiment['name']}"
-        )
+        # api.create_branch(repo_id=repo_id, branch=branch_name, exist_ok=True)
+        # api.upload_folder(
+        #     folder_path="./final_model",
+        #     repo_id=repo_id,
+        #     revision=branch_name,
+        #     commit_message=f"Training {now.isoformat()} - {experiment['name']}",
+        # )
         if run is not None:
             run.finish()
-            torch.cuda.empty_cache()  
+            torch.cuda.empty_cache()
             gc.collect()
+
+
 if __name__ == "__main__":
     main()
