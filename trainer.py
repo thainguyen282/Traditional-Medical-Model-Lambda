@@ -24,7 +24,7 @@ from huggingface_hub import HfApi
 from data.finetome import load_fine_tome_ds
 from base_trainer import MultiDatasetTrainer
 from collator import MultiDatasetCollator
-
+from transformers import TrainingArguments
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
 login(token=HF_TOKEN)
@@ -58,10 +58,9 @@ def load_combined_datasets(dataset_configs: List):
             print("Loading FineTome dataset")
             from data.finetome import load_fine_tome_ds
 
-            # combine_datasets.append(load_fine_tome_ds(dataset_config))
             train_dataset, val_dataset = load_fine_tome_ds(dataset_config, id)
-            # combine_datasets.append(dataset)
-            # dataset_id_maps[id] = "fine_tome"
+            print(" fine tome train set",len(train_dataset))
+            print(" fine tome val set",len(val_dataset))
         elif tag == "dummy":
             print("Loading Dummy dataset")
             from data.finetome import load_dummy_ds
@@ -69,8 +68,9 @@ def load_combined_datasets(dataset_configs: List):
             train_dataset, val_dataset = load_dummy_ds(
                 train_samples=dataset_config.get("train_samples", 4),
                 val_samples=dataset_config.get("val_samples", 3),
-                # include_dataset_ids=True,
             )
+            print(" Dummy train set",len(train_dataset))
+            print(" Dummy val set",len(val_dataset))
             
         if train_dataset is not None:
             combine_train_datasets.append(train_dataset)
@@ -82,7 +82,6 @@ def load_combined_datasets(dataset_configs: List):
             combine_val_datasets.append(val_dataset)
             
     if len(combine_train_datasets) > 0:
-        print("train dataset ", train_dataset)
         combine_train_datasets = concatenate_datasets(combine_train_datasets)
     if len(combine_val_datasets) > 0:
         combine_val_datasets = concatenate_datasets(combine_val_datasets)
@@ -153,12 +152,10 @@ def main():
         )
         print("len of combined train dataset", len(combined_train_dataset))
         print("len of combined val dataset", len(combined_val_dataset))
-        def formatting_func(examples):
-            
+        def formatting_func(examples):   
             output=[]
             if "conversations" in examples:
                 conversations = examples["conversations"]
-                # dataset_ids=examples["dataset_id"]
                 if isinstance(conversations, list) and len(conversations) > 0:
                     if isinstance(conversations[0], list):
                         for i,conversation in enumerate(conversations):
@@ -174,9 +171,7 @@ def main():
                                 tokenize=False, 
                                 add_generation_prompt=False
                             )
-                            # text= add_id_to_text(text, dataset_ids[i])  # Add dataset_id to text
                             output.append(text)
-                            # output.append({"text": text, "dataset_id": dataset_ids[i]})  # Preserve dataset_id for each text)
                     else:
                         messages = [
                             {
@@ -190,40 +185,74 @@ def main():
                             tokenize=False,
                             add_generation_prompt=False
                         )
-                        # text = add_id_to_text(text, dataset_ids)  # Add dataset_id to text
                         output.append(text)
             
             return output
     
+        training_args = TrainingArguments(
+            output_dir="./output",  
+            per_device_train_batch_size=2,
+            gradient_accumulation_steps=4,
+            eval_strategy="steps",  
+            eval_steps=2,                # Evaluate every 2 training steps
+            do_eval=True,             
+            logging_steps=4,           
+            num_train_epochs=1,
+            learning_rate=2e-4,
+            optim="adamw_8bit",
+            weight_decay=0.01,
+            lr_scheduler_type="linear",
+            warmup_steps=5,
+            seed=3407,
+            report_to="wandb",         
+            save_strategy="steps",   
+            save_steps=10           
+        )
 
         trainer = MultiDatasetTrainer(
             model=model,
             tokenizer=tokenizer,
+            args=training_args,          # MUST pass TrainingArguments (not SFTConfig)
             train_dataset=combined_train_dataset,
-            output_dir=output_dir,
-            eval_dataset=combined_val_dataset,
-            dataloader_shuffle=False,  
-            remove_unused_columns=False,  # Required if using dataset_ids
+            eval_dataset=combined_val_dataset,  # REQUIRED for evaluation
+            dataloader_shuffle=False,
             formatting_func=formatting_func,
             train_idx_ladder=train_idx_ladder,
             val_idx_ladder=val_idx_ladder,
-            args=SFTConfig(
-                per_device_train_batch_size=2,
-                gradient_accumulation_steps=4,  # Use GA to mimic batch size!
-                warmup_steps=5,
-                num_train_epochs = 1, # Set this for 1 full training run.
-                # max_steps = 60,
-                # max_steps=4,
-                learning_rate=2e-4,  # Reduce to 2e-5 for long training runs
-                logging_steps=4,
-                optim="adamw_8bit",
-                weight_decay=0.01,
-                lr_scheduler_type="linear",
-                seed=3407,
-                report_to="wandb", 
-            ),
-            data_collator=MultiDatasetCollator(tokenizer=tokenizer, mlm=False),
+            data_collator=MultiDatasetCollator(tokenizer=tokenizer, mlm=False)
         )
+
+        # trainer = MultiDatasetTrainer(
+        #     model=model,
+        #     tokenizer=tokenizer,
+        #     train_dataset=combined_train_dataset,
+        #     output_dir=output_dir,
+        #     eval_dataset=combined_val_dataset,
+        #     dataloader_shuffle=False,  
+        #     formatting_func=formatting_func,
+        #     train_idx_ladder=train_idx_ladder,
+        #     val_idx_ladder=val_idx_ladder,
+        #      evaluation_strategy="steps",  
+        #         eval_steps=2,              
+        #         do_eval=True,
+        #     args=SFTConfig(
+        #         per_device_train_batch_size=2,
+        #         gradient_accumulation_steps=4,  # Use GA to mimic batch size!
+        #         warmup_steps=5,
+        #         num_train_epochs = 1, # Set this for 1 full training run.
+        #         # max_steps = 60,
+        #         # max_steps=4,
+        #         learning_rate=2e-4,  # Reduce to 2e-5 for long training runs
+        #         logging_steps=4,
+        #         optim="adamw_8bit",
+        #         weight_decay=0.01,
+        #         lr_scheduler_type="linear",
+        #         seed=3407,
+               
+        #         report_to="wandb"
+        #     ),
+        #     data_collator=MultiDatasetCollator(tokenizer=tokenizer, mlm=False),
+        # )
         trainer.add_callback(CustomWandbCallback())
         trainer_stats = trainer.train()
 
