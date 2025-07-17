@@ -4,6 +4,8 @@ import torch
 from trl import SFTTrainer, SFTConfig
 from collections import defaultdict
 import wandb  
+
+
 class MultiDatasetTrainer(SFTTrainer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -19,6 +21,11 @@ class MultiDatasetTrainer(SFTTrainer):
 
         self.eval_step_counter = 0
         self.eval_loss_accumulator = defaultdict(list)
+        if wandb.run is not None:
+            wandb.log({
+                "train/num_samples": len(self.train_dataset),
+                "val/num_samples": len(self.eval_dataset) if self.eval_dataset else 0
+            }, commit=False)  
 
     def _get_dataset_from_index(self, index, ladder):
         """Helper to find which dataset an index belongs to"""
@@ -30,7 +37,6 @@ class MultiDatasetTrainer(SFTTrainer):
 
     def training_step(self, model, inputs, return_outputs=False):
 
-        # print("global step ", self.state.global_step)
         start_idx, end_idx = get_batch_indices(
             global_step=self.state.global_step,
             batch_size=self.args.per_device_train_batch_size,
@@ -38,7 +44,6 @@ class MultiDatasetTrainer(SFTTrainer):
             world_size=self.args.world_size,
             dataset_length=len(self.train_dataset),
         )
-        # print("start idx",start_idx, "end idx",end_idx)
         dataset_tag = self._get_dataset_from_index(end_idx, self.train_idx_ladder)
         loss = super().training_step(model, inputs, return_outputs)
 
@@ -74,7 +79,6 @@ class MultiDatasetTrainer(SFTTrainer):
         self, model, inputs, prediction_loss_only=False, ignore_keys=None
     ):
         batch_size = self.args.per_device_eval_batch_size
-        print("eval batch size", batch_size)
         start_idx = self.eval_step_counter * batch_size
         end_idx = start_idx + batch_size
 
@@ -97,12 +101,19 @@ class MultiDatasetTrainer(SFTTrainer):
             prepared["dataset_tag"] = inputs["dataset_tag"]
         return prepared
 
+    def log(self, logs,**kwargs) -> None:
+        """Enhanced logging with GPU memory tracking"""
+        # Add GPU memory usage
+        if torch.cuda.is_available():
+            logs["gpu_memory_allocated"] = torch.cuda.memory_allocated() / 1024**3  # GB
+            logs["gpu_memory_reserved"] = torch.cuda.memory_reserved() / 1024**3   # GB
+        
+        super().log(logs, **kwargs)
 
 def get_batch_indices(
     global_step, batch_size, grad_accum_steps, world_size, dataset_length
 ):
     absolute_batch_idx = global_step * grad_accum_steps
-
     total_batch_size = batch_size * world_size
     start_idx = absolute_batch_idx * total_batch_size
     end_idx = start_idx + total_batch_size

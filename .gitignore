@@ -7,3 +7,5 @@ wandb
 .env
 output
 final_model
+**/*.jsonl
+outputs/**
