@@ -39,13 +39,8 @@ class CustomWandbCallback(TrainerCallback):
         self.start_time = time.time()
         self.total_samples = 0
         
-        # Log initial system state
         initial_metrics = {
-            "training_started": True,
-            "total_epochs": args.num_train_epochs,
-            "batch_size": args.per_device_train_batch_size,
-            "gradient_accumulation_steps": args.gradient_accumulation_steps,
-            "effective_batch_size": args.per_device_train_batch_size * args.gradient_accumulation_steps,
+            
         }
         
         if self.log_system_metrics:
@@ -139,7 +134,6 @@ class CustomWandbCallback(TrainerCallback):
         total_training_time = time.time() - self.start_time
         
         final_metrics = {
-            "training_completed": True,
             "total_training_time_sec": total_training_time,
             "total_training_time_hours": total_training_time / 3600,
             "total_samples_processed": self.total_samples,

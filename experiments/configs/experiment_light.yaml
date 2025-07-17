@@ -71,10 +71,10 @@ sweep:
     min_iter: 100
     eta: 2
   parameters:
-    learning_rate:
-      distribution: "log_uniform"
-      min: 5e-5
-      max: 5e-4
+    # learning_rate:
+    #   distribution: "log_uniform_values"
+    #   min: 5e-5
+    #   max: 5e-4
     lora_r:
       values: [16, 32, 64]
     max_seq_length:
