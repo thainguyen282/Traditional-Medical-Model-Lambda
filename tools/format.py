@@ -19,13 +19,14 @@ def formatting_func(examples, tokenizer=None):
                                 "role": "user" if msg["role"] == "user" else "assistant",
                                 "content": msg["content"]
                             })
+                    print("text",messages)
                     text = tokenizer.apply_chat_template(
                         messages,
                         tokenize=False,
                         add_generation_prompt=False
                     )
                     output.append(text)
-            else:  # Single conversation
+            else:  
                 messages = []
                 for msg in conversations:
                     if msg["role"] == "system":
@@ -38,6 +39,7 @@ def formatting_func(examples, tokenizer=None):
                             "role": "user" if msg["role"] == "user" else "assistant",
                             "content": msg["content"]
                         })
+                print("text",messages)
                 text = tokenizer.apply_chat_template(
                     messages,
                     tokenize=False,

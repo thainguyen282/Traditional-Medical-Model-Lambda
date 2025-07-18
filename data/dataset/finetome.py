@@ -29,8 +29,10 @@ def load_fine_tome_ds(config, dataset_id,call_preformat=True):
     train_dataset = dataset_dict[list(dataset_dict.keys())[0]]  # Get first split
     
     train_dataset = train_dataset.add_column("dataset_id", [dataset_id] * len(train_dataset))
-    
-    n_total_samples = min(config["train_samples"], len(train_dataset))
+    if config["train_samples"]==-1:
+        n_total_samples= len(train_dataset)
+    else:
+        n_total_samples = min(config["train_samples"], len(train_dataset))
     train_dataset = train_dataset.shuffle(seed=42).select(range(n_total_samples))
     # if call_preformat:
     train_dataset = train_dataset.map(
@@ -38,7 +40,7 @@ def load_fine_tome_ds(config, dataset_id,call_preformat=True):
         batched=False,
         desc="Preformatting keys"
     )
-    split_ratio = config["weight"]
+    split_ratio = 1- config["weight"]
     dataset = train_dataset.train_test_split(
         test_size=split_ratio, 
         seed=42

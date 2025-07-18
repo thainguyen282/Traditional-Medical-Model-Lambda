@@ -14,18 +14,16 @@ from transformers import TrainingArguments
 from base_trainer import MultiDatasetTrainer
 from collator import MultiDatasetCollator
 from tools.format import formatting_func
-from logging_wandb import CustomWandbCallback
+from callbacks.logging_wandb import CustomWandbCallback
 from data.dataset.finetome import load_fine_tome_ds
 from datasets import Dataset, concatenate_datasets
-
-# Load environment variables
+import json
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
 if not HF_TOKEN:
     raise ValueError("HF_TOKEN environment variable is not set")
 login(token=HF_TOKEN)
 
-# Set environment variables
 os.environ["TRITON_DISABLE_COMPILE"] = "1"
 os.environ["TRITON_USE_PYTORCH_ALLOCATOR"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -33,10 +31,10 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 def merge_configs(defaults, model_config):
     """Merge defaults with model-specific config (model overrides defaults)"""
-    merged = {**defaults}  # Shallow copy
+    merged = {**defaults}  
     for key, value in model_config.items():
         if isinstance(value, dict) and key in merged:
-            merged[key] = {**merged[key], **value}  # Recursive merge for nested dicts
+            merged[key] = {**merged[key], **value}  
         else:
             merged[key] = value
     return merged
@@ -49,7 +47,6 @@ def apply_sweep_config(experiment_config: Dict[str, Any]) -> Dict[str, Any]:
     
     config = experiment_config.copy()
     
-    # Apply sweep parameters to nested config structure
     sweep_params = {
         'learning_rate': ('training', 'learning_rate'),
         'lora_r': ('lora', 'r'),
@@ -58,16 +55,16 @@ def apply_sweep_config(experiment_config: Dict[str, Any]) -> Dict[str, Any]:
         'per_device_train_batch_size': ('training', 'per_device_train_batch_size'),
         'weight_decay': ('training', 'weight_decay'),
         'warmup_steps': ('training', 'warmup_steps'),
-        'max_seq_length': (None, 'max_seq_length'),  # Top-level parameter
+        'max_seq_length': (None, 'max_seq_length'),  
     }
     
     for param_name, (section, key) in sweep_params.items():
         if hasattr(wandb.config, param_name):
             value = getattr(wandb.config, param_name)
             
-            if section is None:  # Top-level parameter
+            if section is None:  
                 config[key] = value
-            else:  # Nested parameter
+            else:  
                 if section not in config:
                     config[section] = {}
                 config[section][key] = value
@@ -95,7 +92,7 @@ def create_training_args(config: Dict[str, Any]) -> TrainingArguments:
         eval_strategy=train_config.get("eval_strategy", "steps"),
         eval_steps=train_config.get("eval_steps", 50),
         save_strategy=train_config.get("save_strategy", "steps"),
-        save_steps=train_config.get("save_steps", 100),
+        save_steps=train_config.get("save_steps", 50),
         logging_steps=train_config.get("logging_steps", 10),
         seed=train_config.get("seed", 3407),
         report_to=train_config.get("report_to", "wandb"),
@@ -151,7 +148,10 @@ def load_combined_datasets(dataset_configs):
             print("Loading Dummy dataset")
             from data.dataset.dummy import load_dummy_ds
             train_dataset, val_dataset = load_dummy_ds(dataset_config)
-        
+        elif tag=="med_sample":
+            print("Load med sample")
+            from data.dataset.med_sample import load_med_sample
+            train_dataset,val_dataset=load_med_sample(dataset_config)
         # # Debug: print sample data
         # if train_dataset:
         #     for i in range(min(4, len(train_dataset))):
@@ -185,7 +185,9 @@ def load_combined_datasets(dataset_configs):
 def train_with_config(experiment_config: Dict[str, Any],sweep_id: Optional[str] = None):
     """Train model with given configuration"""
     
-    run = wandb.init(
+    
+    try:
+        run = wandb.init(
         project=experiment_config.get("monitoring", {}).get("project_name", "VeneraMedicalM1"),
         name=experiment_config.get("name", "experiment"),
         config=experiment_config,
@@ -201,10 +203,10 @@ def train_with_config(experiment_config: Dict[str, Any],sweep_id: Optional[str] 
         ],
     )
 
-    try:
         config = apply_sweep_config(experiment_config)
         
-        print("Final experiment config after sweep application:")
+        wandb.config["experiment"]=  config
+
         print(yaml.dump(config, default_flow_style=False))
 
         model, tokenizer = FastLanguageModel.from_pretrained(
@@ -222,7 +224,16 @@ def train_with_config(experiment_config: Dict[str, Any],sweep_id: Optional[str] 
         )
 
         training_args = create_training_args(config)
-        
+        output_ckp=training_args.output_dir
+        if sweep_id:
+            output_ckp=os.path.join(output_ckp,f"sweep_{sweep_id}")
+        output_ckp= os.path.join(output_ckp,f"run_{wandb.run.id}")
+        os.makedirs(output_ckp, exist_ok=True)
+        print("output_ckp",output_ckp)
+        meta_data_file=os.path.join(output_ckp,"meta.json")
+        with open(meta_data_file, "w") as f:  
+            json.dump(experiment_config, f, indent=4) 
+        training_args.output_dir=output_ckp
         trainer = MultiDatasetTrainer(
             model=model,
             tokenizer=tokenizer,
@@ -237,14 +248,11 @@ def train_with_config(experiment_config: Dict[str, Any],sweep_id: Optional[str] 
         trainer.add_callback(CustomWandbCallback())
 
         trainer.train()
-        
-        output_dir = Path(config["output_dir"]) / datetime.now().strftime("%Y%m%d_%H%M%S")
-        trainer.save_model(output_dir)
-        
+                
         final_metrics = trainer.evaluate()
         wandb.log(final_metrics)
         
-        print(f"Training completed successfully. Model saved to {output_dir}")
+        print(f"Training completed successfully. Model saved to {output_ckp}")
 
     except Exception as e:
         print(f"Training failed with error: {str(e)}")
@@ -255,13 +263,23 @@ def train_with_config(experiment_config: Dict[str, Any],sweep_id: Optional[str] 
         torch.cuda.empty_cache()
 
 
-def run_sweep(config: Dict[str, Any],sweep_count=2):
+def run_sweep(config: Dict[str, Any],test=False,sweep_count=3):
     """Run hyperparameter sweep for all experiments"""
     sweep_config = config.get("sweep", {})
     
     if not sweep_config:
         raise ValueError("No sweep configuration found in config file")
-    
+    if test:
+        print("Test mode, sweep count =1")
+        config["experiments"] =[ config["experiments"][0] ]
+        config["defaults"]["dataset"]=[{
+            "tag": "fine_tome",
+        "path": "mlabonne/FineTome-100k",
+        "train_samples": 10,
+        "weight": 0.7
+        }]
+        sweep_count=1
+    print("Sweep count",sweep_count)
     for experiment in config["experiments"]:
         experiment_config = merge_configs(config.get("defaults", {}), experiment)
         model_name = experiment_config["name"].replace("/", "_")
@@ -315,9 +333,15 @@ def main():
         help="Run hyperparameter sweep"
     )
     parser.add_argument(
+        "--test", 
+        
+        action="store_true", 
+        help="test pipeline with minimal config"
+    )
+    parser.add_argument(
         "--sweep-count", 
         type=int, 
-        default=10,
+        default=5,
         help="Number of sweep trials per model"
     )
     
@@ -328,7 +352,7 @@ def main():
 
     if args.sweep:
         print("Running hyperparameter sweeps for all models")
-        run_sweep(config)
+        run_sweep(config,test=args.test,sweep_count=args.sweep_count )
     else:
         print("Running single experiments for all models")
         run_single_experiments(config)

@@ -22,3 +22,9 @@ numpy==2.3.1
 xformers==0.0.29.post3  # Optional for attention optimizations
 triton==3.2.0  # Required for some PyTorch optimizations
 gputil==1.4.0
+
+
+bert-score==0.3.13
+evaluate==0.4.5
+nltk==3.9.1
+rouge-score==0.1.2

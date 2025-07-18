@@ -24,7 +24,7 @@ class MultiDatasetTrainer(SFTTrainer):
         if wandb.run is not None:
             wandb.log({
                 "train/num_samples": len(self.train_dataset),
-                "val/num_samples": len(self.eval_dataset) if self.eval_dataset else 0
+                "eval/num_samples": len(self.eval_dataset) if self.eval_dataset else 0
             }, commit=False)  
 
     def _get_dataset_from_index(self, index, ladder):
@@ -83,7 +83,7 @@ class MultiDatasetTrainer(SFTTrainer):
         end_idx = start_idx + batch_size
 
         dataset_tag = self._get_dataset_from_index(end_idx, self.eval_idx_ladder)
-        print(f"Processing eval batch {self.eval_step_counter} for {dataset_tag}")
+        # print(f"Processing eval batch {self.eval_step_counter} for {dataset_tag}")
 
         loss, logits, labels = super().prediction_step(
             model, inputs, prediction_loss_only, ignore_keys
@@ -101,14 +101,23 @@ class MultiDatasetTrainer(SFTTrainer):
             prepared["dataset_tag"] = inputs["dataset_tag"]
         return prepared
 
-    def log(self, logs,**kwargs) -> None:
-        """Enhanced logging with GPU memory tracking"""
-        # Add GPU memory usage
-        if torch.cuda.is_available():
-            logs["gpu_memory_allocated"] = torch.cuda.memory_allocated() / 1024**3  # GB
-            logs["gpu_memory_reserved"] = torch.cuda.memory_reserved() / 1024**3   # GB
+    # def log(self, logs,**kwargs) -> None:
+    #     """Enhanced logging with GPU memory tracking"""
+    #     # Add GPU memory usage
+    #     if torch.cuda.is_available():
+    #         logs["gpu_memory_allocated"] = torch.cuda.memory_allocated() / 1024**3  # GB
+    #         logs["gpu_memory_reserved"] = torch.cuda.memory_reserved() / 1024**3   # GB
         
-        super().log(logs, **kwargs)
+    #     super().log(logs, **kwargs)
+    def log(self, logs, start_time=None, **kwargs) -> None:
+        """Handle both positional and keyword arguments"""
+        if torch.cuda.is_available():
+            logs.update({
+                "gpu_mem_alloc_gb": torch.cuda.memory_allocated() / 1e9,
+                "gpu_mem_reserved_gb": torch.cuda.memory_reserved() / 1e9,
+            })
+        
+        super().log(logs, start_time, **kwargs)
 
 def get_batch_indices(
     global_step, batch_size, grad_accum_steps, world_size, dataset_length
