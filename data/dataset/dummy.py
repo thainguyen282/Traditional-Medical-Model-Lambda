@@ -13,7 +13,7 @@ def load_dummy_ds(dataset_config) -> Tuple[Dataset, Dataset]:
                 {"role": "user", "content": f"Answer {random.randint(1, 1000)}."}
             ]
         }
-    # rain_samples: int = 100, val_samples: int = 50
+    # train_samples: int = 100, val_samples: int = 50
     train_samples = dataset_config.get("train_samples", 100)
     train_samples=int(train_samples*dataset_config.get("weight", 0.5))
     val_samples = int(train_samples * (1 - dataset_config.get("weight", 0.5)))

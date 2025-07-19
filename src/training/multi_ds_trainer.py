@@ -101,14 +101,7 @@ class MultiDatasetTrainer(SFTTrainer):
             prepared["dataset_tag"] = inputs["dataset_tag"]
         return prepared
 
-    # def log(self, logs,**kwargs) -> None:
-    #     """Enhanced logging with GPU memory tracking"""
-    #     # Add GPU memory usage
-    #     if torch.cuda.is_available():
-    #         logs["gpu_memory_allocated"] = torch.cuda.memory_allocated() / 1024**3  # GB
-    #         logs["gpu_memory_reserved"] = torch.cuda.memory_reserved() / 1024**3   # GB
-        
-    #     super().log(logs, **kwargs)
+
     def log(self, logs, start_time=None, **kwargs) -> None:
         """Handle both positional and keyword arguments"""
         if torch.cuda.is_available():

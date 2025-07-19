@@ -1,0 +1,50 @@
+defaults:
+  model: "unsloth/Qwen3-0.6B"
+  max_seq_length: 2048
+  output_dir: "./outputs"
+  dataset:
+    - tag: "fine_tome"
+      path: "mlabonne/FineTome-100k"
+      train_samples: 1000
+      weight: 0.7
+      
+    - tag: "med_sample"
+      path: "./data/medical"
+      train_samples: 500
+      weight: 0.8
+
+  training:
+    learning_rate: 2e-4
+    per_device_train_batch_size: 2
+    gradient_accumulation_steps: 4
+    num_train_epochs: 3
+    weight_decay: 0.01
+    warmup_steps: 100
+
+  lora:
+    r: 32
+    lora_alpha: 32
+    lora_dropout: 0.1
+
+  monitoring:
+    project_name: "VeneraMedicalM1"
+
+sweep:
+  method: "bayes"
+  metric:
+    name: "eval_loss"
+    goal: "minimize"
+  parameters:
+    learning_rate:
+      min: 1e-5
+      max: 1e-3
+      distribution: "log_uniform"
+    lora_r:
+      values: [8, 16, 32, 64]
+    lora_alpha:
+      values: [16, 32, 64]
+
+experiments:
+  - name: "lora-unsloth/Qwen3-0.6B"
+    model: "unsloth/Qwen3-0.6B"
+    max_seq_length: 2048

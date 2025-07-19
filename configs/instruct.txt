@@ -1,0 +1,25 @@
+When You Should Create New Files
+Backend Changes (Unsloth ↔ Vanilla)
+
+Architecture Variants (LoRA vs. Full FT)
+
+Model Versions (Qwen2 vs Qwen3)
+
+When to Avoid New Files
+Hyperparameter Tuning (Use CLI overrides)
+
+Temporary Debugging (Use environment vars)
+
+Minor Adjustments (Edit existing)
+
+# Start with base experiment
+python train.py --config experiments/01_lora_unsloth.yaml
+
+# Tune learning rate without new files
+for lr in 1e-5 3e-5 5e-5; do
+  python train.py --config 01_lora_unsloth.yaml \
+    --override training.learning_rate=$lr
+done
+
+# When satisfied, create permanent version
+cp 01_lora_unsloth.yaml 02_lora_tuned.yaml
