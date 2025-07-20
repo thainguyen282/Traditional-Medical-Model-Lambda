@@ -9,3 +9,6 @@ output
 final_model
 **/*.jsonl
 outputs/**
+logs
+sample
+**/wandb

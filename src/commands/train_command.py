@@ -1,3 +1,4 @@
+from unsloth import FastLanguageModel
 from typing import Dict, Any, Optional
 from pathlib import Path
 import torch
@@ -11,7 +12,6 @@ from ..training import (
 )
 from ..data import DatasetFactory
 from ..utils.error_handler import log_error
-
 class TrainCommand:
     def __init__(
         self,
@@ -27,16 +27,12 @@ class TrainCommand:
     
     def execute(self):
         try:
-            # Initialize tracking
             run = self._init_tracking()
             
-            # Load model and tokenizer
             model, tokenizer = self._load_model()
             
-            # Prepare datasets
             train_dataset, val_dataset, train_ladder, val_ladder = self._load_datasets()
             
-            # Build training components
             training_args = self._build_training_args()
             trainer = self._build_trainer(
                 model, tokenizer, 
@@ -44,7 +40,6 @@ class TrainCommand:
                 train_ladder, val_ladder
             )
             
-            # Execute training
             self._run_training(trainer)
             
             return trainer
@@ -61,21 +56,22 @@ class TrainCommand:
             name=self.config.get("name"),
             config=self.config,
             group=self.config.get("model"),
-            job_type="sweep" if self.sweep_id else "baseline"
+            tags=self.config.get("tags"),
         )
     
     def _load_model(self):
-        from fast_language_model import FastLanguageModel
+        if self.config["unsloth"]:
+            return FastLanguageModel.from_pretrained(
+                model_name=self.config["model"]["name"],
+                max_seq_length=self.config["model"]["max_seq_length"],
+                load_in_4bit=self.config["unsloth"]["load_in_4bit"],
+                attn_implementation=self.config["unsloth"]["attn_implementation"]
+            )
+        else:
+            raise NotImplementedError
         
-        return FastLanguageModel.from_pretrained(
-            model_name=self.config["model"],
-            max_seq_length=self.config["max_seq_length"],
-            load_in_4bit=True,
-            attn_implementation="sdpa"
-        )
-    
     def _load_datasets(self):
-        return DatasetFactory.load_combined_datasets(self.config["dataset"])
+        return DatasetFactory.load_combined_datasets(self.config["datasets"])
     
     def _build_training_args(self):
         return ArgumentBuilder.build(self.config)

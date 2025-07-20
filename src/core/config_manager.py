@@ -52,28 +52,27 @@ class ExperimentConfig(BaseModel):
 
 
 class ConfigManager:
-    def __init__(self, config_path: str):
-        self.config_path = Path(config_path)
+    def __init__(self, ):
+        # self.config_path = Path(config_path)
+        pass
     
     
-    def load(self) -> Dict[str, Any]:
+    def load(self,config_path,override_args=None) -> Dict[str, Any]:
         """Load and preprocess raw YAML"""
-        if not self.config_path.exists():
-            raise FileNotFoundError(f"Config file not found: {self.config_path}")
             
-        with open(self.config_path, 'r') as f:
+        with open(config_path, 'r') as f:
             config = yaml.safe_load(f)
-            
-        config.setdefault('defaults', {})
-        config.setdefault('experiments', [])
-        return config
+        
+        merge_config=merge_configs(config,override_args)
+        self.config=merge_config
+        return merge_config
     
     def validate(self, raw_config: Dict[str, Any]) -> ExperimentConfig:
         """Validate and normalize configuration"""
         try:
             merged_config = {
                 **raw_config.get('defaults', {}),
-                **raw_config  # Experiment-specific overrides
+                **raw_config  
             }
             print("merged config",merged_config)
             return ExperimentConfig(**merged_config)
@@ -83,3 +82,33 @@ class ConfigManager:
     def get_validated_config(self) -> ExperimentConfig:
         """Full pipeline: load -> validate"""
         return self.validate(self._load_raw_config())
+
+
+def merge_configs(base_config: dict, override_args: dict) -> dict:
+    """
+    Merges dotted argument overrides into a nested config structure.
+    
+    Args:
+        base_config: Your loaded base configuration (nested dict)
+        override_args: Dictionary of arguments from argparse (dotted keys)
+        
+    Returns:
+        Merged configuration dictionary
+    """
+    config = base_config.copy()
+    
+    for dotted_key, value in override_args.items():
+        if value is None:  
+            continue
+            
+        keys = dotted_key.split('.')
+        current_level = config
+        
+        for key in keys[:-1]:
+            if key not in current_level:
+                current_level[key] = {}
+            current_level = current_level[key]
+        
+        current_level[keys[-1]] = value
+    
+    return config

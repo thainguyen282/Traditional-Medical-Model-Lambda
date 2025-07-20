@@ -27,11 +27,10 @@ def preformat(data):
 
 class FineTomeDatasetStrategy(BaseDatasetStrategy):
     def load(self, config: dict) -> Tuple[Dataset, Dataset]:
-        
-        dataset_dict = load_dataset(config["path"])
+        data_source="mlabonne/FineTome-100k"
+        dataset_dict = load_dataset(data_source)
         train_dataset = dataset_dict[list(dataset_dict.keys())[0]]  # Get first split
         
-        train_dataset = train_dataset.add_column("dataset_id", [dataset_id] * len(train_dataset))
         if config["train_samples"]==-1:
             n_total_samples= len(train_dataset)
         else:

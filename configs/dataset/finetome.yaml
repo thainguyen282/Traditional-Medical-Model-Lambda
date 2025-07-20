@@ -1,0 +1,6 @@
+name: "fine_tome"
+path: "labonne/FineTome-100k" 
+
+metadata:  
+  source: "public"
+  license: "none"
