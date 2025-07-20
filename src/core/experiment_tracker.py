@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import wandb
+from uuid import uuid4
 
 class ExperimentTracker(ABC):
     @abstractmethod
@@ -16,6 +17,10 @@ class ExperimentTracker(ABC):
     @abstractmethod
     def finish(self):
         pass
+    
+    @abstractmethod
+    def get_run_id(self):
+        pass
 
 class WandbTracker(ExperimentTracker):
     def __init__(self, enabled: bool = True):
@@ -26,6 +31,11 @@ class WandbTracker(ExperimentTracker):
         if self.enabled:
             self.run = wandb.init(**kwargs)
         return self
+    def get_run_id(self):
+        if self.enabled and self.run:
+            return self.run.id
+        print("Wandb not initialized, returning hashed run id")
+        return str(uuid4())[:8]
     def save_config(self, config: dict):
         if self.enabled and self.run:
             wandb.config.update(config)
@@ -42,6 +52,9 @@ class DummyTracker(ExperimentTracker):
     def init(self, **kwargs):
         print(f"[TRACKER] Initialized with config: {kwargs}")
         return self
+    
+    def get_run_id(self):
+        return str(uuid4())[:8]
     
     def log(self, metrics: dict):
         print(f"[TRACKER] Logging metrics: {metrics}")

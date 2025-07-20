@@ -12,3 +12,4 @@ outputs/**
 logs
 sample
 **/wandb
+group_outputs

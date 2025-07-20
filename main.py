@@ -2,6 +2,7 @@ import argparse
 from src.commands import TrainCommand
 from src.core import ConfigManager, WandbTracker,DummyTracker
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Train language models")
     

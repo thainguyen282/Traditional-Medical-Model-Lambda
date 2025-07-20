@@ -1,12 +1,18 @@
 from typing import Dict, Any
 from transformers import TrainingArguments
-
+import os
 class ArgumentBuilder:
     @staticmethod
-    def build(config: Dict[str, Any]) -> TrainingArguments:
+    def build(config: Dict[str, Any], run_id: str=None) -> TrainingArguments:
         train_config = config.get("training", {})
+        output_dir = train_config.get("output_dir", "./outputs")
+
+        if run_id is not None:
+            output_dir = f"{output_dir}/{run_id}"
+        os.makedirs(output_dir, exist_ok=True)
+        
         return TrainingArguments(
-            output_dir=config.get("output_dir", "./outputs"),
+            output_dir=output_dir,
             per_device_train_batch_size=train_config.get("per_device_train_batch_size", 2),
             gradient_accumulation_steps=train_config.get("gradient_accumulation_steps", 4),
             num_train_epochs=train_config.get("num_train_epochs", 3),

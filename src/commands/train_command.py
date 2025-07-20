@@ -9,10 +9,11 @@ from ..training import (
     ArgumentBuilder,
     LoraConfigBuilder,
     MultiDatasetTrainer,
-    formatting_func
 )
-from ..data import DatasetFactory
+from src.data.data_manager import DatasetManager
+# from src.data.dataset_factory import DatasetFactory
 from ..utils.error_handler import log_error
+from src.data.format import formatting_func
 class TrainCommand:
     def __init__(
         self,
@@ -24,7 +25,7 @@ class TrainCommand:
         self.config = config
         self.tracker = tracker
         self.output_dir = output_dir
-        self.sweep_id = sweep_id
+        self.validate_samples=5
     
     def execute(self):
         try:
@@ -33,11 +34,22 @@ class TrainCommand:
             if self.config["lora"]:
                 self.lora_config = LoraConfigBuilder(self.config["lora"])
                 print("Lora config:", self.lora_config.get_config_dict)
+            self.run_id= self.tracker.get_run_id()
+            print("Run id:", self.run_id)
+            
             model, tokenizer = self._load_model()
             
-            train_dataset, val_dataset, train_ladder, val_ladder = self._load_datasets()
+            compiled_formatting_func = partial(formatting_func, tokenizer=tokenizer)
+            self.data_manager = DatasetManager()
+            self.data_manager.store_datasets(self.config["datasets"])
             
+            if not self.data_manager.validate_datasets(self.validate_samples, compiled_formatting_func):
+                raise ValueError("Dataset validation failed")
+            
+            train_dataset, val_dataset, train_ladder, val_ladder = self.data_manager.load_combined_datasets()
             self.training_args = self._build_training_args()
+            self.output_dir= self.training_args.output_dir
+            
             trainer = self._build_trainer(
                 model, tokenizer, 
                 train_dataset, val_dataset,
@@ -77,11 +89,9 @@ class TrainCommand:
         else:
             raise NotImplementedError
         
-    def _load_datasets(self):
-        return DatasetFactory.load_combined_datasets(self.config["datasets"])
-    
+   
     def _build_training_args(self):
-        return ArgumentBuilder.build(self.config)
+        return ArgumentBuilder.build(self.config,self.run_id)
     
     def _build_trainer(self, model, tokenizer, train_ds, val_ds, train_ladder, val_ladder):
         return MultiDatasetTrainer(
@@ -92,7 +102,10 @@ class TrainCommand:
             eval_dataset=val_ds,
             train_idx_ladder=train_ladder,
             val_idx_ladder=val_ladder,
-            formatting_func=partial(formatting_func, tokenizer=tokenizer)
+            formatting_func=partial(formatting_func, tokenizer=tokenizer),
+            run_id=self.run_id,
+            output_dir=self.output_dir,
+            tracker=self.tracker
         )
     
     def _run_training(self, trainer):
