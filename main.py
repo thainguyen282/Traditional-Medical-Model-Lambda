@@ -1,9 +1,6 @@
 import argparse
-from typing import Dict, Any
-from pathlib import Path
-
-from src.commands import TrainCommand, SweepCommand
-from src.core import ConfigManager, WandbTracker
+from src.commands import TrainCommand
+from src.core import ConfigManager, WandbTracker,DummyTracker
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train language models")
@@ -11,8 +8,7 @@ def parse_args():
     parser.add_argument("--config", type=str, default="configs/experiments/qwen-0.6B/exp0001/config.yaml")
     parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
     parser.add_argument("--test", action="store_true", help="Test pipeline with minimal config")
-    parser.add_argument("--disable-wandb", action="store_true", help="Disable WandB logging")
-    
+    parser.add_argument("--logger",  type=str, default="wandb", help="Logger to use")
     args, unknown = parser.parse_known_args()
     
     allowed_overrides = {
@@ -36,18 +32,24 @@ def parse_args():
 def main():
     args, override_args = parse_args()
     print("Override args:", override_args)
-    
-    tracker = WandbTracker(enabled=not args.disable_wandb)
+    if args.logger == "wandb":
+        tracker = WandbTracker()
+        override_args["training.report_to"] = "wandb"
+        
+    elif args.logger == "dummy":
+        tracker=DummyTracker()
+        override_args["training.report_to"] = "none"
+    else:
+        raise ValueError(f"Unknown logger: {args.logger}")
     config_manager = ConfigManager()
-    
     try:
         config = config_manager.load(args.config, override_args)
     except ValueError as e:
         print(f"Config validation error: {e}")
         return
+    tracker.save_config(config)
         
     print("Validated config:", config)
-    
 
     command = TrainCommand(config=config,tracker= tracker)
     

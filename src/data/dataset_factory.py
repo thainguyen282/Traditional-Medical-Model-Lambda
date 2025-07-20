@@ -1,5 +1,5 @@
 from typing import Tuple, List
-from datasets import Dataset
+from datasets import Dataset, concatenate_datasets
 import sys 
 sys.path.append("/root/VeneraMedicalM1")
 from .strategies import (
@@ -39,15 +39,19 @@ class DatasetFactory:
             if train_dataset is not None:
                 print(f"Train size ({tag}): {len(train_dataset)}")
                 combine_train_datasets.append(train_dataset)
-                train_idx_ladder.append(cur_train_idx)
                 cur_train_idx += len(train_dataset)
+                train_idx_ladder.append((cur_train_idx, tag))
             
             if val_dataset is not None:
                 print(f"Validation size ({tag}): {len(val_dataset)}")
                 combine_val_datasets.append(val_dataset)
-                val_idx_ladder.append(cur_val_idx)
                 cur_val_idx += len(val_dataset)
-        
+                val_idx_ladder.append((cur_val_idx, tag))
+                
+        if len(combine_train_datasets) > 0:
+            combine_train_datasets = concatenate_datasets(combine_train_datasets)
+        if len(combine_val_datasets) > 0:
+            combine_val_datasets = concatenate_datasets(combine_val_datasets)
         return combine_train_datasets, combine_val_datasets, train_idx_ladder, val_idx_ladder
 
 if __name__ == "__main__":

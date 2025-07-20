@@ -44,5 +44,5 @@ lora:
 
 monitoring:
   wandb:
-    project: "qwen-unsloth"
+    project: "VeneraMedicalM1"
     tags: ["lora", "unsloth","qwen-0.6B","exp0001"]

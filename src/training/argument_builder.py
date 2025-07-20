@@ -5,7 +5,6 @@ class ArgumentBuilder:
     @staticmethod
     def build(config: Dict[str, Any]) -> TrainingArguments:
         train_config = config.get("training", {})
-        
         return TrainingArguments(
             output_dir=config.get("output_dir", "./outputs"),
             per_device_train_batch_size=train_config.get("per_device_train_batch_size", 2),
@@ -19,7 +18,7 @@ class ArgumentBuilder:
             logging_steps=train_config.get("logging_steps", 10),
             save_strategy=train_config.get("save_strategy", "steps"),
             save_steps=train_config.get("save_steps", 50),
-            evaluation_strategy=train_config.get("eval_strategy", "steps"),
+            eval_strategy=train_config.get("eval_strategy", "steps"),
             eval_steps=train_config.get("eval_steps", 50),
             seed=train_config.get("seed", 3407),
             report_to=train_config.get("report_to", "wandb"),

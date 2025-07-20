@@ -41,7 +41,7 @@ class FineTomeDatasetStrategy(BaseDatasetStrategy):
             batched=False,
             desc="Preformatting keys"
         )
-        split_ratio = 1- config["weight"]
+        split_ratio = 1- config["train_val_split"]
         dataset = train_dataset.train_test_split(
             test_size=split_ratio, 
             seed=42

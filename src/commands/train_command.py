@@ -3,12 +3,13 @@ from typing import Dict, Any, Optional
 from pathlib import Path
 import torch
 from transformers import TrainingArguments
-
+from functools import partial
 from ..core import ExperimentTracker
 from ..training import (
     ArgumentBuilder,
     LoraConfigBuilder,
-    MultiDatasetTrainer
+    MultiDatasetTrainer,
+    formatting_func
 )
 from ..data import DatasetFactory
 from ..utils.error_handler import log_error
@@ -27,13 +28,16 @@ class TrainCommand:
     
     def execute(self):
         try:
-            run = self._init_tracking()
-            
+            if self.tracker:
+                run = self._init_tracking()
+            if self.config["lora"]:
+                self.lora_config = LoraConfigBuilder(self.config["lora"])
+                print("Lora config:", self.lora_config.get_config_dict)
             model, tokenizer = self._load_model()
             
             train_dataset, val_dataset, train_ladder, val_ladder = self._load_datasets()
             
-            training_args = self._build_training_args()
+            self.training_args = self._build_training_args()
             trainer = self._build_trainer(
                 model, tokenizer, 
                 train_dataset, val_dataset,
@@ -52,21 +56,24 @@ class TrainCommand:
     
     def _init_tracking(self):
         return self.tracker.init(
-            project=self.config.get("monitoring", {}).get("project_name"),
+            project=self.config.get("monitoring", {}).get("project"),
             name=self.config.get("name"),
             config=self.config,
-            group=self.config.get("model"),
-            tags=self.config.get("tags"),
+            group=self.config.get("model").get("name"),
+            tags=self.config.get("monitoring", {}).get("tags"),
         )
     
     def _load_model(self):
         if self.config["unsloth"]:
-            return FastLanguageModel.from_pretrained(
+            model, tokenizer = FastLanguageModel.from_pretrained(
                 model_name=self.config["model"]["name"],
                 max_seq_length=self.config["model"]["max_seq_length"],
                 load_in_4bit=self.config["unsloth"]["load_in_4bit"],
                 attn_implementation=self.config["unsloth"]["attn_implementation"]
             )
+            if self.lora_config:
+                model = FastLanguageModel.get_peft_model(model, **self.lora_config.get_config_dict())
+            return model, tokenizer
         else:
             raise NotImplementedError
         
@@ -85,7 +92,7 @@ class TrainCommand:
             eval_dataset=val_ds,
             train_idx_ladder=train_ladder,
             val_idx_ladder=val_ladder,
-            formatting_func=self._formatting_func
+            formatting_func=partial(formatting_func, tokenizer=tokenizer)
         )
     
     def _run_training(self, trainer):
@@ -97,7 +104,3 @@ class TrainCommand:
         self.tracker.finish()
         torch.cuda.empty_cache()
     
-    @staticmethod
-    def _formatting_func(examples, tokenizer):
-        # Your formatting implementation
-        pass

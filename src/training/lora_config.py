@@ -58,6 +58,10 @@ class LoRAConfig(BaseModel):
                 UserWarning
             )
         return v
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the complete configuration as a dictionary"""
+        return self.dict()
 
     def to_peft_config(self) -> Dict[str, Any]:
         """Convert to PEFT library compatible format"""
@@ -70,6 +74,9 @@ class LoRAConfig(BaseModel):
             "use_rslora": self.use_rslora
         }
 
-def LoraConfigBuilder(config: Dict[str, Any]) -> LoRAConfig:
-    """Factory method with validation"""
-    return LoRAConfig(**config.get("lora", {}))
+class LoraConfigBuilder:
+    def __init__(self, config: Dict[str, Any]):
+        self.config = LoRAConfig(**config)
+    def get_config_dict(self):
+        return self.config.to_dict()
+        

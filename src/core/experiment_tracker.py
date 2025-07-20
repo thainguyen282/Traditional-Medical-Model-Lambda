@@ -5,6 +5,9 @@ class ExperimentTracker(ABC):
     @abstractmethod
     def init(self, **kwargs):
         pass
+    @abstractmethod
+    def save_config(self, config: dict):
+        pass
     
     @abstractmethod
     def log(self, metrics: dict):
@@ -23,7 +26,9 @@ class WandbTracker(ExperimentTracker):
         if self.enabled:
             self.run = wandb.init(**kwargs)
         return self
-    
+    def save_config(self, config: dict):
+        if self.enabled and self.run:
+            wandb.config.update(config)
     def log(self, metrics: dict):
         if self.enabled and self.run:
             wandb.log(metrics)
@@ -40,6 +45,8 @@ class DummyTracker(ExperimentTracker):
     
     def log(self, metrics: dict):
         print(f"[TRACKER] Logging metrics: {metrics}")
-    
+    def save_config(self, config: dict):
+        print(f"[TRACKER] Saving config: {config}")
+        self.config = config
     def finish(self):
         print("[TRACKER] Finished")

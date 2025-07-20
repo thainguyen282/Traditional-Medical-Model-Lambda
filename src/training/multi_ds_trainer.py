@@ -18,14 +18,20 @@ class MultiDatasetTrainer(SFTTrainer):
         self.current_train_dataset = None
         self.current_val_dataset = None
         self.current_global_step = -1
+        self.tracker= kwargs.pop("tracker", None)
 
         self.eval_step_counter = 0
         self.eval_loss_accumulator = defaultdict(list)
-        if wandb.run is not None:
-            wandb.log({
+        # if wandb.run is not None:
+        #     wandb.log({
+        #         "train/num_samples": len(self.train_dataset),
+        #         "eval/num_samples": len(self.eval_dataset) if self.eval_dataset else 0
+        #     }, commit=False)  
+        if self.tracker is not None:
+            self.tracker.log({
                 "train/num_samples": len(self.train_dataset),
                 "eval/num_samples": len(self.eval_dataset) if self.eval_dataset else 0
-            }, commit=False)  
+            })
 
     def _get_dataset_from_index(self, index, ladder):
         """Helper to find which dataset an index belongs to"""
@@ -67,8 +73,10 @@ class MultiDatasetTrainer(SFTTrainer):
             metric_name = f"eval_{tag}_loss"  # ← Must start with 'eval_'
             output[metric_name] = sum(losses) / len(losses)
         
-        if wandb.run is not None:
-            wandb.log(output, commit=True)
+        if self.tracker is not None:
+            self.tracker.log(output)
+        # if wandb.run is not None:
+        #     wandb.log(output, commit=True)
         
         self.log(output)
         
@@ -83,7 +91,6 @@ class MultiDatasetTrainer(SFTTrainer):
         end_idx = start_idx + batch_size
 
         dataset_tag = self._get_dataset_from_index(end_idx, self.eval_idx_ladder)
-        # print(f"Processing eval batch {self.eval_step_counter} for {dataset_tag}")
 
         loss, logits, labels = super().prediction_step(
             model, inputs, prediction_loss_only, ignore_keys
