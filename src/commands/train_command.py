@@ -11,9 +11,8 @@ from ..training import (
     MultiDatasetTrainer,
 )
 from src.data.data_manager import DatasetManager
-# from src.data.dataset_factory import DatasetFactory
 from ..utils.error_handler import log_error
-from src.data.format import formatting_func
+from src.data.format import format_conversations
 class TrainCommand:
     def __init__(
         self,
@@ -33,23 +32,22 @@ class TrainCommand:
                 run = self._init_tracking()
             if self.config["lora"]:
                 self.lora_config = LoraConfigBuilder(self.config["lora"])
-                print("Lora config:", self.lora_config.get_config_dict)
             self.run_id= self.tracker.get_run_id()
-            print("Run id:", self.run_id)
+            print("---------------RUN ID:---------------", self.run_id)
             
             model, tokenizer = self._load_model()
             
-            compiled_formatting_func = partial(formatting_func, tokenizer=tokenizer)
+            self.compiled_formatting_func = partial(format_conversations, tokenizer=tokenizer)
             self.data_manager = DatasetManager()
             self.data_manager.store_datasets(self.config["datasets"])
             
-            if not self.data_manager.validate_datasets(self.validate_samples, compiled_formatting_func):
+            if not self.data_manager.validate_datasets(self.validate_samples, self.compiled_formatting_func):
                 raise ValueError("Dataset validation failed")
             
             train_dataset, val_dataset, train_ladder, val_ladder = self.data_manager.load_combined_datasets()
             self.training_args = self._build_training_args()
             self.output_dir= self.training_args.output_dir
-            
+            print("---------------OUTPUT DIR:---------------", self.output_dir)
             trainer = self._build_trainer(
                 model, tokenizer, 
                 train_dataset, val_dataset,
@@ -102,7 +100,7 @@ class TrainCommand:
             eval_dataset=val_ds,
             train_idx_ladder=train_ladder,
             val_idx_ladder=val_ladder,
-            formatting_func=partial(formatting_func, tokenizer=tokenizer),
+            formatting_func=self.compiled_formatting_func,
             run_id=self.run_id,
             output_dir=self.output_dir,
             tracker=self.tracker

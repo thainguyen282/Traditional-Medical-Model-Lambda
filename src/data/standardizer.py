@@ -1,6 +1,7 @@
-from schema import TOOL_CALL_SCHEMA, BASIC_SCHEMA
+from src.data.schema import TOOL_CALL_SCHEMA, BASIC_SCHEMA
 from datasets import Dataset
 import warnings
+from datasets.features import Features, Sequence, Value
 
 class ToolCallStandardizer:
     @staticmethod
@@ -45,26 +46,60 @@ class ToolCallStandardizer:
 
 class BasicStandardizer:
     @staticmethod
+    def get_output_features():
+        """Define the exact output schema we expect"""
+        return Features({
+            "conversations": Sequence({
+                "role": Value("string"),
+                "content": Value("string")
+            })
+        })
+    @staticmethod
     def validate(sample):
-        """Validate basic message structure"""
-        return all(
-            isinstance(msg.get("role"), str) and 
-            isinstance(msg.get("content"), str)
-            for msg in sample["conversations"]
-        )
+        """Validate basic message structure (works for both single and batch)"""
+        conversations = sample["conversations"]
+        if not isinstance(conversations, list):
+            return False
+            
+        first_item = conversations[0] if conversations else None
+        is_batch = isinstance(first_item, list) if first_item else False
+        
+        if is_batch:
+            return all(
+                isinstance(msg.get("role"), str) and 
+                isinstance(msg.get("content"), str)
+                for conv in conversations
+                for msg in conv
+            )
+        else:
+            return all(
+                isinstance(msg.get("role"), str) and 
+                isinstance(msg.get("content"), str)
+                for msg in conversations
+            )
 
     @staticmethod
     def standardize(sample):
-        """Standardize basic messages"""
-        return {
-            "conversations": [
-                {
-                    "role": msg["role"],
-                    "content": msg["content"]
-                }
-                for msg in sample["conversations"]
-            ]
-        }
+        """Standardize messages (handles both single and batch processing)"""
+        conversations = sample["conversations"]
+        
+        if conversations and isinstance(conversations[0], list):
+            return {
+                "conversations": [
+                    [
+                        {"role": msg["role"], "content": msg["content"]}
+                        for msg in conv
+                    ]
+                    for conv in conversations
+                ]
+            }
+        else:
+            return {
+                "conversations": [
+                    {"role": msg["role"], "content": msg["content"]}
+                    for msg in conversations
+                ]
+            }
 
 def get_standardizer(dataset: Dataset):
     """Detect and return appropriate standardizer"""

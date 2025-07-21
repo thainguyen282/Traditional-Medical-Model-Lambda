@@ -7,14 +7,14 @@ model:
 
 datasets:
     - tag: "fine_tome"
-      train_samples: 100
+      train_samples: 10
       train_val_split: 0.7
     
     - tag: "med_sample"
       train_path: "/root/VeneraMedicalM1/training_data_v3.jsonl"
       val_path: "/root/VeneraMedicalM1/training_data_v5.jsonl"
-      train_samples: 100
-      val_samples: 50
+      train_samples: 10
+      val_samples: 5
 
 unsloth:
     load_in_4bit: true
@@ -50,6 +50,5 @@ lora:
     use_rslora: false
 
 monitoring:
-  wandb:
-    project: "VeneraMedicalM1"
-    tags: ["lora", "unsloth","qwen-0.6B","exp0001"]
+  project: "VeneraMedicalM1"
+  tags: ["lora", "unsloth","qwen-0.6B","exp0001"]

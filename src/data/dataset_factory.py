@@ -3,7 +3,8 @@ from datasets import Dataset, concatenate_datasets
 import sys
 
 sys.path.append("/root/VeneraMedicalM1")
-from .strategies import FineTomeDatasetStrategy, MedSampleDatasetStrategy
+from src.data.strategies.fine_tome import FineTomeDatasetStrategy
+from src.data.strategies.med_sample import  MedSampleDatasetStrategy
 
 
 class DatasetFactory:

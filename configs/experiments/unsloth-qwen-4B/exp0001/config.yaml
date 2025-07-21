@@ -1,0 +1,54 @@
+
+name: "unsloth/Qwen3-4B-0001"
+
+model: 
+  name: "unsloth/Qwen1-4B"
+  max_seq_length: 2048
+
+datasets:
+    - tag: "fine_tome"
+      train_samples: 10
+      train_val_split: 0.7
+    
+    - tag: "med_sample"
+      train_path: "/root/VeneraMedicalM1/training_data_v3.jsonl"
+      val_path: "/root/VeneraMedicalM1/training_data_v5.jsonl"
+      train_samples: 10
+      val_samples: 5
+
+unsloth:
+    load_in_4bit: true
+    attn_implementation: "sdpa"
+
+training:
+    output_dir: "group_outputs/outputs"
+    per_device_train_batch_size: 4
+    per_device_eval_batch_size: 4
+    num_train_epochs: 2
+    weight_decay: 0.01
+    warmup_steps: 100
+    lr_scheduler_type: "cosine"
+    optim: "adamw_8bit"
+    eval_strategy: "steps"
+    eval_steps: 10
+    save_strategy: "steps"
+    save_steps: 40
+    logging_steps: 10
+    seed: 3407
+
+lora:
+    lora_dropout: 0.1
+    target_modules: 
+      - "q_proj"
+      - "k_proj"
+      - "v_proj"
+      - "o_proj"
+      - "gate_proj"
+      - "up_proj"
+      - "down_proj"
+    bias: "none"
+    use_rslora: false
+
+monitoring:
+  project: "VeneraMedicalM1"
+  tags: ["lora", "unsloth","qwen-4B","exp0001"]

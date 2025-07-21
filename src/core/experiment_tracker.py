@@ -29,6 +29,7 @@ class WandbTracker(ExperimentTracker):
     
     def init(self, **kwargs):
         if self.enabled:
+            print("WANDB: config:", kwargs)
             self.run = wandb.init(**kwargs)
         return self
     def get_run_id(self):

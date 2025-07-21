@@ -43,10 +43,10 @@ class MultiDatasetTrainer(SFTTrainer):
                 "error/count": self.skipped_samples,
             })
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False,**kwargs):
         """Override to skip bad samples during training"""
         try:
-            return super().compute_loss(model, inputs, return_outputs)
+            return super().compute_loss(model, inputs, return_outputs, **kwargs)
         except Exception as e:
             batch_idx = self.state.global_step * self.args.per_device_train_batch_size
             dataset_tag = self._get_dataset_from_index(batch_idx, self.train_idx_ladder)
@@ -57,9 +57,9 @@ class MultiDatasetTrainer(SFTTrainer):
             
             return torch.tensor(0.0, requires_grad=True)
 
-    def prediction_step(self, model, inputs, **kwargs):
+    def prediction_step(self, model, inputs,prediction_loss_only, ignore_keys, **kwargs):
         try:
-            return super().prediction_step(model, inputs, **kwargs)
+            return super().prediction_step(model, inputs,prediction_loss_only, ignore_keys, **kwargs)
         except Exception as e:
             batch_idx = self.eval_step_counter * self.args.per_device_eval_batch_size
             dataset_tag = self._get_dataset_from_index(batch_idx, self.eval_idx_ladder)
@@ -67,7 +67,7 @@ class MultiDatasetTrainer(SFTTrainer):
             self._log_error(f"Eval error: {str(e)}", inputs, dataset_tag)
             return (None, None, None)  
 
-    def log(self, logs, **kwargs):
+    def log(self, logs,start_time=None, **kwargs):
         """Enhanced logging with error stats"""
         if torch.cuda.is_available():
             logs.update({
@@ -79,7 +79,7 @@ class MultiDatasetTrainer(SFTTrainer):
         if self.error_log:
             logs["last_error"] = self.error_log[-1][:100]  # Truncate long errors
         
-        super().log(logs, **kwargs)
+        super().log(logs, start_time,**kwargs)
 
 """"
 Explain 

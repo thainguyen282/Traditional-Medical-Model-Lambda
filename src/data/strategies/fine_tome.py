@@ -1,28 +1,29 @@
 from typing import Tuple
 from datasets import Dataset
+import sys 
+
+sys.path.append("/root/VeneraMedicalM1")
 from src.data.strategies.base import BaseDatasetStrategy
 from datasets import load_dataset
 
 def preformat(data):
-    """
-    Recursively updates dictionary keys:
-    - Changes "from" → "role"
-    - Changes "value" → "content"
-    Works with nested dictionaries and lists.
-    """
-    if "conversations" in data:
-        data["conversations"] = preformat(data["conversations"])
-        return data
-    if isinstance(data, dict):
-        new_dict = {}
-        for key, value in data.items():
-            new_key = "role" if key == "from" else ("content" if key == "value" else key)
-            new_dict[new_key] = preformat(value)
-        return new_dict
-    elif isinstance(data, list):
-        return [preformat(item) for item in data]
-    else:
-        return data
+    
+    outputs={
+        "conversations":[]
+    }
+    out_conversations=outputs["conversations"]
+    for content_data in data["conversations"]:
+        sample={}
+        if content_data["from"] == "human":
+            sample["role"] = "user"
+        elif content_data["from"] == "gpt":
+            sample["role"] = "assistant"
+        elif content_data["from"] == "system":
+            sample["role"] = "system"
+        sample["content"] = content_data["value"]
+        out_conversations.append(sample)
+    return outputs
+      
 
 
 class FineTomeDatasetStrategy(BaseDatasetStrategy):
@@ -39,7 +40,8 @@ class FineTomeDatasetStrategy(BaseDatasetStrategy):
         train_dataset = train_dataset.map(
             lambda x: preformat(x),
             batched=False,
-            desc="Preformatting keys"
+            desc="Preformatting keys",
+            remove_columns=train_dataset.column_names,
         )
         split_ratio = 1- config["train_val_split"]
         dataset = train_dataset.train_test_split(
@@ -49,3 +51,16 @@ class FineTomeDatasetStrategy(BaseDatasetStrategy):
         train_set, val_set = dataset["train"], dataset["test"]
     
         return train_set, val_set
+
+if __name__ == "__main__":
+    config={
+        "train_samples":10,
+        "train_val_split":0.2
+    }
+    strategy = FineTomeDatasetStrategy()
+    train_dataset, val_dataset = strategy.load(config)
+    for i in range(len(train_dataset)):
+        print(train_dataset[i])
+        if i==2:
+            break
+    pass

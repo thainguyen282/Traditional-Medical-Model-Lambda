@@ -2,23 +2,47 @@
 
 # ===== CONFIGURATION =====
 sweep_path="configs/experiments/qwen-0.6B/exp0001/sweep.yaml"
-project_name="my_project"  #
+project_name="VeneraMedicalM1"  
 entity="nguyenduc150202"    
 num_agents=1
 count=1
-log_dir="logs/sweeps"
+log_dir="group_outputs/logs/sweeps"
 
 # ===== ARGUMENT PARSING =====
 DRY_RUN=false
 
 while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        --dry-run) DRY_RUN=true ;;
-        *) echo "Unknown parameter: $1"; exit 1 ;;
-    esac
-    shift
+  case $1 in
+    -n|--num-agents)
+      if [[ "$2" =~ ^[0-9]+$ ]] && [[ "$2" -gt 0 ]]; then
+        num_agents="$2"
+        shift
+      else
+        echo "Error: --num-agents requires a positive integer" >&2
+        usage
+        exit 1
+      fi
+      ;;
+    --dry-run)
+      DRY_RUN=true
+      ;;
+    -h|--help)
+      show_help=true
+      ;;
+    *)
+      echo "Error: Unknown option '$1'" >&2
+      usage
+      exit 1
+      ;;
+  esac
+  shift
 done
 
+# Show help if requested
+if [ "$show_help" = true ]; then
+  usage
+  exit 0
+fi
 # ===== INITIALIZATION =====
 timestamp=$(date +%Y%m%d_%H%M%S)
 log_file="$log_dir/sweep_${timestamp}.log"
