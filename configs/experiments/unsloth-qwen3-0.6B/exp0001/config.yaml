@@ -1,8 +1,8 @@
 
-name: "unsloth/Qwen3-0.6B-0001"
+name: "unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit-0001"
 
 model: 
-  name: "unsloth/Qwen3-0.6B"
+  name: "unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit"
   max_seq_length: 2048
 
 datasets:
@@ -30,7 +30,7 @@ training:
     lr_scheduler_type: "cosine"
     optim: "adamw_8bit"
     eval_strategy: "steps"
-    eval_steps: 10
+    eval_steps: 40
     save_strategy: "steps"
     save_steps: 40
     logging_steps: 10
@@ -51,4 +51,4 @@ lora:
 
 monitoring:
   project: "VeneraMedicalM1"
-  tags: ["lora", "unsloth","qwen-0.6B","exp0001"]
+  tags: ["lora", "unsloth","unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit","exp0001"]

@@ -2,19 +2,19 @@
 name: "unsloth/Qwen3-1.7B-0001"
 
 model: 
-  name: "unsloth/Qwen1-0.7B"
+  name: "unsloth/Qwen3-1.7B-unsloth-bnb-4bit"
   max_seq_length: 2048
 
 datasets:
-    - tag: "fine_tome"
-      train_samples: 10
-      train_val_split: 0.7
+    # - tag: "fine_tome"
+    #   train_samples: 10
+    #   train_val_split: 0.7
     
     - tag: "med_sample"
       train_path: "/root/VeneraMedicalM1/training_data_v3.jsonl"
       val_path: "/root/VeneraMedicalM1/training_data_v5.jsonl"
-      train_samples: 10
-      val_samples: 5
+      train_samples: 700
+      val_samples: 100
 
 unsloth:
     load_in_4bit: true
@@ -24,17 +24,38 @@ training:
     output_dir: "group_outputs/outputs"
     per_device_train_batch_size: 4
     per_device_eval_batch_size: 4
+    gradient_accumulation_steps: 2
     num_train_epochs: 2
+    learning_rate: 2e-5
     weight_decay: 0.01
-    warmup_steps: 100
+    warmup_steps: 50
     lr_scheduler_type: "cosine"
     optim: "adamw_8bit"
+    fp16: true
     eval_strategy: "steps"
-    eval_steps: 10
+    eval_steps: 40
     save_strategy: "steps"
     save_steps: 40
+    save_total_limit: 2
     logging_steps: 10
     seed: 3407
+    gradient_checkpointing: true
+    load_best_model_at_end: true
+    metric_for_best_model: "eval_loss"
+    # output_dir: "group_outputs/outputs"
+    # per_device_train_batch_size: 4
+    # per_device_eval_batch_size: 4
+    # num_train_epochs: 2
+    # weight_decay: 0.01
+    # warmup_steps: 50
+    # lr_scheduler_type: "cosine"
+    # optim: "adamw_8bit"
+    # eval_strategy: "steps"
+    # eval_steps: 40
+    # save_strategy: "steps"
+    # save_steps: 40
+    # logging_steps: 10
+    # seed: 3407
 
 lora:
     lora_dropout: 0.1
@@ -51,4 +72,4 @@ lora:
 
 monitoring:
   project: "VeneraMedicalM1"
-  tags: ["lora", "unsloth","qwen-1.7B","exp0001"]
+  tags: ["lora", "unsloth","unsloth/Qwen3-1.7B-unsloth-bnb-4bit","exp0001"]

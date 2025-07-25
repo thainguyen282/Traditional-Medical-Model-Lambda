@@ -13,6 +13,9 @@ from ..training import (
 from src.data.data_manager import DatasetManager
 from ..utils.error_handler import log_error
 from src.data.format import format_conversations
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from unsloth.chat_templates import get_chat_template
+
 class TrainCommand:
     def __init__(
         self,
@@ -36,7 +39,6 @@ class TrainCommand:
             print("---------------RUN ID:---------------", self.run_id)
             
             model, tokenizer = self._load_model()
-            
             self.compiled_formatting_func = partial(format_conversations, tokenizer=tokenizer)
             self.data_manager = DatasetManager()
             self.data_manager.store_datasets(self.config["datasets"])
@@ -81,6 +83,14 @@ class TrainCommand:
                 load_in_4bit=self.config["unsloth"]["load_in_4bit"],
                 attn_implementation=self.config["unsloth"]["attn_implementation"]
             )
+            model_name=self.config["model"]["name"]
+            print("---------------MODEL NAME:---------------", model_name)
+            if "qwen3" in model_name.lower():
+                print("Using qwen3 tokenizer")
+                tokenizer = get_chat_template(
+                    tokenizer,
+                    chat_template = "qwen-3", # change this to the right chat_template name
+                )
             if self.lora_config:
                 model = FastLanguageModel.get_peft_model(model, **self.lora_config.get_config_dict())
             return model, tokenizer

@@ -6,7 +6,7 @@ from src.core import ConfigManager, WandbTracker,DummyTracker
 def parse_args():
     parser = argparse.ArgumentParser(description="Train language models")
     
-    parser.add_argument("--config", type=str, default="configs/experiments/qwen-0.6B/exp0001/config.yaml")
+    parser.add_argument("--config", type=str, default="configs/experiments/qwen3-0.6B/exp0001/config.yaml")
     parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
     parser.add_argument("--test", action="store_true", help="Test pipeline with minimal config")
     parser.add_argument("--logger",  type=str, default="wandb", help="Logger to use")

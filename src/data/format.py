@@ -37,6 +37,8 @@ def format_conversations(batch: Dict, tokenizer, require_tools=False) -> List[st
                 })
         if messages:
             outputs.append(tokenizer.apply_chat_template(
-                messages, tokenize=False
+                messages, tokenize=False,
+    add_generation_prompt=True,
+    enable_thinking=False 
             ))
     return outputs

@@ -1,20 +1,20 @@
 
-name: "unsloth/Qwen3-4B-0001"
+name: "unsloth/Qwen3-4B-unsloth-bnb-4bit-0001"
 
 model: 
-  name: "unsloth/Qwen1-4B"
+  name: "unsloth/Qwen3-4B-unsloth-bnb-4bit"
   max_seq_length: 2048
 
 datasets:
-    - tag: "fine_tome"
-      train_samples: 10
-      train_val_split: 0.7
+    # - tag: "fine_tome"
+    #   train_samples: 10
+    #   train_val_split: 0.7
     
     - tag: "med_sample"
       train_path: "/root/VeneraMedicalM1/training_data_v3.jsonl"
       val_path: "/root/VeneraMedicalM1/training_data_v5.jsonl"
-      train_samples: 10
-      val_samples: 5
+      train_samples: 700
+      val_samples: 100
 
 unsloth:
     load_in_4bit: true
@@ -26,16 +26,18 @@ training:
     per_device_eval_batch_size: 4
     num_train_epochs: 2
     weight_decay: 0.01
-    warmup_steps: 100
+    warmup_steps: 50
     lr_scheduler_type: "cosine"
     optim: "adamw_8bit"
     eval_strategy: "steps"
-    eval_steps: 10
+    eval_steps: 40
     save_strategy: "steps"
     save_steps: 40
     logging_steps: 10
     seed: 3407
 
+eval:
+  
 lora:
     lora_dropout: 0.1
     target_modules: 
@@ -51,4 +53,4 @@ lora:
 
 monitoring:
   project: "VeneraMedicalM1"
-  tags: ["lora", "unsloth","qwen-4B","exp0001"]
+  tags: ["lora", "unsloth","unsloth/Qwen3-4B-unsloth-bnb-4bit","exp0001"]
