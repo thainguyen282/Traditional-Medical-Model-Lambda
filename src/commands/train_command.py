@@ -89,7 +89,8 @@ class TrainCommand:
                 print("Using qwen3 tokenizer")
                 tokenizer = get_chat_template(
                     tokenizer,
-                    chat_template = "qwen-3", # change this to the right chat_template name
+                    chat_template = "qwen-3",
+                    # chat_template = "qwen",
                 )
             if self.lora_config:
                 model = FastLanguageModel.get_peft_model(model, **self.lora_config.get_config_dict())

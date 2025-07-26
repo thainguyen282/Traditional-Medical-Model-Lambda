@@ -1,7 +1,3 @@
-from .train_command import TrainCommand
-from .sweep_command import SweepCommand
+from src.commands.train_command import TrainCommand
 
-__all__ = [
-    'TrainCommand',
-    'SweepCommand'
-]
+__all__ = ["TrainCommand"]

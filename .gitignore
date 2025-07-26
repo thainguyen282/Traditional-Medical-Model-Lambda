@@ -13,3 +13,6 @@ logs
 sample
 **/wandb
 group_outputs
+VeneraMedicalM1-dataset
+**.pkl 
+**.json

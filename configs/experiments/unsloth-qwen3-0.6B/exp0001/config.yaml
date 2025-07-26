@@ -11,10 +11,12 @@ datasets:
       train_val_split: 0.7
     
     - tag: "med_sample"
-      train_path: "/root/VeneraMedicalM1/training_data_v3.jsonl"
-      val_path: "/root/VeneraMedicalM1/training_data_v5.jsonl"
+      train_path: "VeneraMedicalM1-dataset/1.8/final_data_v1.8.jsonl"
       train_samples: 10
       val_samples: 5
+
+benchmarks:
+  -path: "/root/VeneraMedicalM1/configs/evals/green.yaml"
 
 unsloth:
     load_in_4bit: true
