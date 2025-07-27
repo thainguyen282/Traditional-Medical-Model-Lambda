@@ -4,6 +4,10 @@ import yaml
 from pathlib import Path
 import warnings
 
+class BenchmarkConfig(BaseModel):
+    num_fewshot: Optional[int] = Field(None, description="Number of few-shot examples (None means default)")
+    limit: Optional[int] = Field(default=None, description="Maximum number of samples to evaluate (None means default)")
+
 class DatasetConfig(BaseModel):
     """Configuration for a single dataset"""
     tag: str = Field(..., min_length=1)
@@ -51,11 +55,7 @@ class ExperimentConfig(BaseModel):
     
 
 
-class ConfigManager:
-    def __init__(self, ):
-        # self.config_path = Path(config_path)
-        pass
-    
+class ConfigManager: 
     
     def load(self,config_path,override_args=None) -> Dict[str, Any]:
         """Load and preprocess raw YAML"""

@@ -3,11 +3,9 @@ import os
 import logging
 from unsloth import FastLanguageModel
 import lm_eval
-from lm_eval import evaluator
 from lm_eval.models.huggingface import HFLM
 from lm_eval.tasks import TaskManager
 import json 
-from lm_eval.api.instance import Instance
 import numpy as np
 import torch
 
@@ -23,24 +21,40 @@ class UnslothLM(HFLM):
         self._model = model
         self._tokenizer = tokenizer
 
-def setup_logging(log_level="INFO"):
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.FileHandler("evaluation.log"),
-            logging.StreamHandler()
-        ]
-    )
-    return logging.getLogger()
+def setup_logging(log_level="INFO", log_dir="logs"):
+    """Proper logging setup that ensures file writing works"""
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "evaluation.log")
+    
+    with open(log_file, 'w'):
+        pass
+    
+    logger = logging.getLogger()
+    logger.setLevel(log_level)
+    
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+    
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    logger.info("Logging initialized successfully")
+    return logger
 
-def load_unsloth_model(model_path):
+def load_unsloth_model(model_path,max_length=2048,dtype="float16",load_in_4bit=True):
     """Load Unsloth model with proper configuration"""
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=model_path,
-        max_seq_length=2048,
-        dtype="float16",
-        load_in_4bit=True,
+        max_seq_length=max_length,
+        dtype=dtype,
+        load_in_4bit=load_in_4bit,
     )
     return model, tokenizer
 def convert_to_serializable(obj):
@@ -67,15 +81,15 @@ def save_results(results, filename="eval_results.json"):
             results['config'] = convert_to_serializable(results['config'])
         
         serializable_results = convert_to_serializable(results)
-        
         with open(filename, 'w') as f:
             json.dump(serializable_results, f, indent=2, ensure_ascii=False)
         print(f"✅ Successfully saved results to {filename}")
     except Exception as e:
         print(f"❌ Failed to save results: {str(e)}")
 
-def evaluate_model(model_path, tasks=["mmlu"], num_fewshot=5,output_path="eval_results.json"):
-    logger = setup_logging("DEBUG")
+
+def evaluate_model(model_path, tasks=["mmlu"],benchmark_config:dict=None,max_length=2048,batch_size=8, output_dir="."):
+    logger = setup_logging("INFO",log_dir=output_dir)
     
     try:
         logger.info(f"______Loading model from {model_path}")
@@ -85,19 +99,20 @@ def evaluate_model(model_path, tasks=["mmlu"], num_fewshot=5,output_path="eval_r
         lm = UnslothLM(
             model=model,
             tokenizer=tokenizer,
-            max_length=2048,
-            batch_size=8
+            max_length=max_length,
+            batch_size=batch_size
         )
-        
+      
         logger.info(f"Starting evaluation on tasks: {tasks}")
         results = lm_eval.simple_evaluate(
             model=lm,
             tasks=tasks,
-            num_fewshot=num_fewshot,
+            num_fewshot=benchmark_config.get("num_fewshot", 5),
             task_manager=TaskManager(include_path=None),
-            limit=2,
+            limit=benchmark_config.get("limit", None),
+             random_seed=42, 
         )
-        
+        output_path=os.path.join(output_dir,"unsloth_eval_results.json")
         save_results(results, filename=output_path)
         print(lm_eval.utils.make_table(results))
         return results

@@ -1,72 +1,72 @@
 datasets:
-  mmlu_medical_tasks:
+ - name: mmlu
+   subtasks:
     - name: "mmlu_clinical_knowledge"
       description: "Medical diagnosis and treatment protocols"
       category: "clinical_medicine"
       sample_question: "What is the first-line treatment for uncomplicated malaria?"
       
-    # - name: "mmlu_college_medicine"
-    #   description: "Advanced medical concepts and principles"
-    #   category: "clinical_medicine"
-    #   sample_question: "Which cytokine is primarily responsible for septic shock?"
+    - name: "mmlu_college_medicine"
+      description: "Advanced medical concepts and principles"
+      category: "clinical_medicine"
+      sample_question: "Which cytokine is primarily responsible for septic shock?"
 
-    # - name: "mmlu_professional_medicine"
-    #   description: "Specialty practice guidelines"
-    #   category: "clinical_medicine"
-    #   sample_question: "According to ACC guidelines, when is PCI indicated for stable CAD?"
+    - name: "mmlu_professional_medicine"
+      description: "Specialty practice guidelines"
+      category: "clinical_medicine"
+      sample_question: "According to ACC guidelines, when is PCI indicated for stable CAD?"
 
-    # - name: "mmlu_anatomy"
-    #   description: "Human anatomical structures"
-    #   category: "basic_medical_sciences"
-    #   sample_question: "Which artery supplies blood to the majority of the small intestine?"
+    - name: "mmlu_anatomy"
+      description: "Human anatomical structures"
+      category: "basic_medical_sciences"
+      sample_question: "Which artery supplies blood to the majority of the small intestine?"
 
-    # - name: "mmlu_medical_genetics"
-    #   description: "Genetic disorders and inheritance patterns"
-    #   category: "basic_medical_sciences"
-    #   sample_question: "What inheritance pattern does Huntington's disease follow?"
+    - name: "mmlu_medical_genetics"
+      description: "Genetic disorders and inheritance patterns"
+      category: "basic_medical_sciences"
+      sample_question: "What inheritance pattern does Huntington's disease follow?"
 
-    # - name: "mmlu_college_biology"
-    #   description: "Cellular and molecular mechanisms"
-    #   category: "basic_medical_sciences"
-    #   sample_question: "How does cAMP function as a second messenger?"
+    - name: "mmlu_college_biology"
+      description: "Cellular and molecular mechanisms"
+      category: "basic_medical_sciences"
+      sample_question: "How does cAMP function as a second messenger?"
 
-    # - name: "mmlu_human_aging"
-    #   description: "Gerontology and aging processes"
-    #   category: "basic_medical_sciences"
-    #   sample_question: "Which protein aggregate is characteristic of Alzheimer's disease?"
+    - name: "mmlu_human_aging"
+      description: "Gerontology and aging processes"
+      category: "basic_medical_sciences"
+      sample_question: "Which protein aggregate is characteristic of Alzheimer's disease?"
 
-    # - name: "mmlu_pharmacology"
-    #   description: "Drug mechanisms and interactions"
-    #   category: "pharmacy"
-    #   sample_question: "What is the mechanism of action of warfarin?"
+    - name: "mmlu_pharmacology"
+      description: "Drug mechanisms and interactions"
+      category: "pharmacy"
+      sample_question: "What is the mechanism of action of warfarin?"
 
-    # - name: "mmlu_nutrition"
-    #   description: "Dietary science and metabolism"
-    #   category: "pharmacy"
-    #   sample_question: "Which vitamin deficiency causes beriberi?"
+    - name: "mmlu_nutrition"
+      description: "Dietary science and metabolism"
+      category: "pharmacy"
+      sample_question: "Which vitamin deficiency causes beriberi?"
 
-    # - name: "mmlu_virology"
-    #   description: "Viral infections and epidemiology"
-    #   category: "diagnostics"
-    #   sample_question: "Which virus is associated with Kaposi's sarcoma?"
+    - name: "mmlu_virology"
+      description: "Viral infections and epidemiology"
+      category: "diagnostics"
+      sample_question: "Which virus is associated with Kaposi's sarcoma?"
 
-    # - name: "mmlu_professional_psychology"
-    #   description: "Mental health diagnostics"
-    #   category: "diagnostics"
-    #   sample_question: "What are the DSM-5 criteria for major depressive disorder?"
+    - name: "mmlu_professional_psychology"
+      description: "Mental health diagnostics"
+      category: "diagnostics"
+      sample_question: "What are the DSM-5 criteria for major depressive disorder?"
 
-    # - name: "mmlu_public_health"
-    #   description: "Population health strategies"
-    #   category: "public_health"
-    #   sample_question: "What is the most effective intervention for reducing childhood malnutrition?"
+    - name: "mmlu_public_health"
+      description: "Population health strategies"
+      category: "public_health"
+      sample_question: "What is the most effective intervention for reducing childhood malnutrition?"
 
-    # - name: "mmlu_global_facts"
-    #   description: "Health statistics and demographics"
-    #   category: "public_health"
-    #   sample_question: "Which country has the highest life expectancy?"
+    - name: "mmlu_global_facts"
+      description: "Health statistics and demographics"
+      category: "public_health"
+      sample_question: "Which country has the highest life expectancy?"
 
-  config:
-    evaluation_defaults:
+   config:
       num_fewshot: 5
-      question_limit: 50
+      limit: 50
       metrics: ["accuracy", "confidence_interval"]

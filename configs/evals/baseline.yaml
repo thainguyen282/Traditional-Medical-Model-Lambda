@@ -1,0 +1,4 @@
+# models:
+#   -name: "unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit"
+#   tags: ["unsloth","baseline","unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit"]
+#   subtasks: 

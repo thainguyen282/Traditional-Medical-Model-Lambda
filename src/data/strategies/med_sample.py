@@ -42,7 +42,6 @@ class MedSampleDatasetStrategy(BaseDatasetStrategy):
                 cached_data = pickle.load(f)
                 return cached_data['train'], cached_data['val']
         
-        # Load and process fresh data
         with open(train_path, 'r') as f:
             train_dataset = Dataset.from_list([json.loads(line) for line in f])
         
@@ -51,11 +50,10 @@ class MedSampleDatasetStrategy(BaseDatasetStrategy):
         else:
             train_samples = min(train_samples, len(train_dataset))
         
-        # Create consistent split
         train_dataset = train_dataset.shuffle(seed=42).select(range(train_samples))
         dataset = train_dataset.train_test_split(
             test_size=split_ratio,
-            seed=42  # Fixed seed ensures same valset each time
+            seed=42  
         )
         
         train_set, val_set = preformat(dataset["train"]), preformat(dataset["test"])

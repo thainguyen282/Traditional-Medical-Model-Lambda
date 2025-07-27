@@ -2,7 +2,6 @@ from unsloth import FastLanguageModel
 from typing import Dict, Any, Optional
 from pathlib import Path
 import torch
-from transformers import TrainingArguments
 from functools import partial
 from ..core import ExperimentTracker
 from ..training import (
@@ -13,7 +12,6 @@ from ..training import (
 from src.data.data_manager import DatasetManager
 from ..utils.error_handler import log_error
 from src.data.format import format_conversations
-from transformers import AutoModelForCausalLM, AutoTokenizer
 from unsloth.chat_templates import get_chat_template
 
 class TrainCommand:
@@ -90,7 +88,6 @@ class TrainCommand:
                 tokenizer = get_chat_template(
                     tokenizer,
                     chat_template = "qwen-3",
-                    # chat_template = "qwen",
                 )
             if self.lora_config:
                 model = FastLanguageModel.get_peft_model(model, **self.lora_config.get_config_dict())
