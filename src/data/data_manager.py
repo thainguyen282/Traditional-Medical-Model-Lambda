@@ -1,31 +1,26 @@
 import sys
-
-sys.path.append("/root/VeneraMedicalM1")
+from dotenv import load_dotenv
+load_dotenv()
+import os
+ROOT=os.getenv("ROOT")
+sys.path.append(ROOT)
 from src.data.dataset_factory import DatasetFactory
 from datasets import concatenate_datasets
-from src.data.standardizer import (
-    get_standardizer,
-    ToolCallStandardizer,
-    BasicStandardizer,
-)
-from src.data.schema import TOOL_CALL_SCHEMA, BASIC_SCHEMA
-
+import yaml
 
 class DatasetManager:
     def __init__(
         self,
     ):
         self.library = {}
-        self.standardizers = {"tool": ToolCallStandardizer, "basic": BasicStandardizer}
-        self.default_standardizer = BasicStandardizer()
-        # self.default_schema = BASIC_SCHEMA
-        self.default_schema = BasicStandardizer.get_output_features()
 
   
-
     def store_datasets(self, config):
         for dataset_config in config:
-            tag = dataset_config["tag"]
+            path=dataset_config["path"]
+            with open(path, "r") as f:
+                base_config = yaml.safe_load(f)
+            tag = base_config["name"]
             if tag in self.library:
                 raise ValueError(
                     f"Dataset with tag {tag} already exists in the library"
@@ -97,13 +92,11 @@ if __name__ == "__main__":
     from functools import partial
 
     config = [
-        {"tag": "fine_tome", "train_samples": 100, "train_val_split": 0.7},
+        # {"tag": "fine_tome", "train_samples": 100, "train_val_split": 0.7},
         {
-            "tag": "med_sample",
-            "train_path": "/root/VeneraMedicalM1/training_data_v3.jsonl",
-            "val_path": "/root/VeneraMedicalM1/training_data_v5.jsonl",
-            "train_samples": 100,
-            "val_samples": 50,
+            "path": "configs/dataset/venera_med_m1.yaml",
+            "train_samples": 10,
+            "train_val_split": 0.2,
         },
     ]
     dataset_manager = DatasetManager()
@@ -121,3 +114,4 @@ if __name__ == "__main__":
             n_samples, partial(format_conversations, tokenizer=tokenizer)
         )
         print(f"Validation result for {model_name}: {output}")
+    combine_train_datasets,combine_val_datasets,train_idx_ladder, val_idx_ladder=dataset_manager.load_combined_datasets()

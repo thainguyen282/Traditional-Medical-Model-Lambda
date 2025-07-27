@@ -36,11 +36,7 @@ datasets:
       category: "basic_medical_sciences"
       sample_question: "Which protein aggregate is characteristic of Alzheimer's disease?"
 
-    - name: "mmlu_pharmacology"
-      description: "Drug mechanisms and interactions"
-      category: "pharmacy"
-      sample_question: "What is the mechanism of action of warfarin?"
-
+  
     - name: "mmlu_nutrition"
       description: "Dietary science and metabolism"
       category: "pharmacy"
@@ -56,16 +52,7 @@ datasets:
       category: "diagnostics"
       sample_question: "What are the DSM-5 criteria for major depressive disorder?"
 
-    - name: "mmlu_public_health"
-      description: "Population health strategies"
-      category: "public_health"
-      sample_question: "What is the most effective intervention for reducing childhood malnutrition?"
-
-    - name: "mmlu_global_facts"
-      description: "Health statistics and demographics"
-      category: "public_health"
-      sample_question: "Which country has the highest life expectancy?"
-
+  
    config:
       num_fewshot: 5
       limit: 50

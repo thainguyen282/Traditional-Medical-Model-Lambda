@@ -4,13 +4,15 @@ from typing import Tuple
 import sys
 import os
 import pickle
-
-sys.path.append("/root/VeneraMedicalM1")
+import yaml
+from dotenv import load_dotenv
+load_dotenv()
+ROOT_DIR = os.getenv("ROOT")
+sys.path.append(ROOT_DIR)
 from src.data.strategies.base import BaseDatasetStrategy
 
 def preformat(dataset):
     df = dataset.to_pandas()
-    print("len df", len(df))
 
     def strip_fields(convs):
         return [
@@ -24,18 +26,22 @@ def preformat(dataset):
     df["conversations"]=df["conversation"].apply(strip_fields)
     return Dataset.from_pandas(df[["conversations"]])
 
-class MedSampleDatasetStrategy(BaseDatasetStrategy):
- 
+class VeneraMedDatasetStrategy(BaseDatasetStrategy):
+    def __init__(self):
+        self.cache_dir = os.path.join(ROOT_DIR, "cache")
+        os.makedirs(self.cache_dir, exist_ok=True)
+        super().__init__()
     def load(self, config: dict) -> Tuple[Dataset, Dataset]:
-        train_path = config["train_path"]
+        yaml_path=os.path.join(ROOT_DIR,config["path"])
+        with open(yaml_path, 'r') as f:
+            base_config = yaml.safe_load(f)
+        train_path = base_config["train_path"]
         train_samples = config["train_samples"]
         split_ratio = config["train_val_split"]
         
-        # Generate a unique cache key based on config
         cache_key = f"{train_path}_{train_samples}_{split_ratio}"
-        cache_file = f"valset_cache_{hash(cache_key)}.pkl"
+        cache_file = os.path.join(self.cache_dir,  f"valset_cache_{hash(cache_key)}.pkl")
         
-        # Try loading cached valset
         if os.path.exists(cache_file):
             print("Loading cached valset...")
             with open(cache_file, 'rb') as f:
@@ -66,8 +72,7 @@ class MedSampleDatasetStrategy(BaseDatasetStrategy):
 
 if __name__ == "__main__":
     config = {
-        "train_path": "VeneraMedicalM1-dataset/1.8/final_data_v1.8.jsonl",
-        # "val_path": "/root/VeneraMedicalM1/training_data_v5.jsonl",
+        "path": "configs/dataset/venera_med_m1.yaml",
         "train_samples": -1,
         "train_val_split": 0.2
     }

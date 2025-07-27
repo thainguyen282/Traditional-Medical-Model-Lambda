@@ -1,8 +1,0 @@
-name: "synthesize_med"
-train_path: "/root/VeneraMedicalM1/training_data_v3.jsonl"
-test_path: "/root/VeneraMedicalM1/training_data_v5.jsonl"
-
-metadata:  
-  source: "private"
-  license: "none"
-  

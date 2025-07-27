@@ -10,11 +10,10 @@ datasets:
     #   train_samples: 10
     #   train_val_split: 0.7
     
-    - tag: "med_sample"
-      train_path: "/root/VeneraMedicalM1/training_data_v3.jsonl"
-      val_path: "/root/VeneraMedicalM1/training_data_v5.jsonl"
-      train_samples: 700
-      val_samples: 100
+    - path: "configs/dataset/venera_med_m1.yaml"
+      train_samples: -1
+      train_val_split: 0.2
+
 
 unsloth:
     load_in_4bit: true

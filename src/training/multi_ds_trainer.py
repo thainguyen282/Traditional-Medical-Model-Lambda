@@ -17,7 +17,45 @@ class MultiDatasetTrainer(SFTTrainer):
         self.error_log_path=os.path.join(self.output_dir, "training_errors.jsonl")
         self.skipped_samples = 0
         self.error_log = []
+        self.samples_seen = 0
+        train_loader = kwargs.pop(["train_dataloader"])
+        self.samples_per_epoch = len(train_loader.dataset)
+        self._train_dataloader = None 
         
+    def _get_dataset_from_index(self, batch_idx: int, ladder: list):
+        """Convert absolute batch index to dataset tag"""
+        cumulative = 0
+        for (start, end), tag in ladder:
+            if start <= batch_idx < end:
+                return tag
+            cumulative += (end - start)
+        return "unknown"
+    
+    def training_step(self, model, inputs):
+        """Override training step to track samples seen"""
+        try:
+            if self._train_dataloader is None:
+                self._train_dataloader = self.get_train_dataloader()
+                self.samples_per_epoch = len(self._train_dataloader.dataset)
+            
+            batch_size = inputs.get('input_ids', torch.tensor(0)).size(0)
+            self.samples_seen += batch_size * self.args.world_size  
+            loss = super().training_step(model, inputs)
+            
+            return loss
+            
+        except Exception as e:
+            batch_idx = self.state.global_step
+            dataset_tag = self._get_dataset_from_index(batch_idx, self.train_idx_ladder)
+            
+            error_msg = f"Training step {self.state.global_step}: {str(e)}"
+            self._log_error("training_error", error_msg, inputs, dataset_tag)
+            self.skipped_samples += batch_size  
+            
+            return torch.tensor(0.0, requires_grad=True)
+    def benchmark(self, model, inputs, prediction_loss_only, ignore_keys):
+        
+        pass
     def _log_error(self, error_type, error_msg, example=None, dataset_tag=None):
         """Logs errors to both file and W&B with structured metadata."""
         import json
@@ -35,7 +73,7 @@ class MultiDatasetTrainer(SFTTrainer):
         with open(self.error_log_path, "a") as f:
             f.write(json.dumps(error_entry) + "\n")
         
-        if self.tracker and (self.state.global_step % 10 == 0):  # Log every 10 steps
+        if self.tracker and (self.state.global_step % 10 == 0):  
             self.tracker.log({
                 "error/type": error_type,
                 "error/message": error_msg[:200], 

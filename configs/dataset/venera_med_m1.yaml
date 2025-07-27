@@ -1,0 +1,7 @@
+name: "venera_med_m1"
+train_path:  "VeneraMedicalM1-dataset/1.6/final_data_v1.6.jsonl"
+
+metadata:  
+  source: "private"
+  license: "none"
+  
