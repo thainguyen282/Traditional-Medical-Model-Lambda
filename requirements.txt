@@ -28,3 +28,7 @@ bert-score==0.3.13
 evaluate==0.4.5
 nltk==3.9.1
 rouge-score==0.1.2
+
+unsloth==2025.7.2
+setuptools==80.9.0
+lm-eval==0.4.9
