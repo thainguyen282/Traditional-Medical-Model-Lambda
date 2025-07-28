@@ -1,5 +1,5 @@
 from typing import Any
-from ..core import ExperimentTracker
+from src.core.experiment_tracker import ExperimentTracker
 
 def log_error(error: Exception, tracker: ExperimentTracker) -> None:
     error_msg = str(error)

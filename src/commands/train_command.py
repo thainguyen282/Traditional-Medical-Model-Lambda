@@ -1,16 +1,15 @@
 from unsloth import FastLanguageModel
 from typing import Dict, Any, Optional
-from pathlib import Path
 import torch
+import os
 from functools import partial
-from ..core import ExperimentTracker
-from ..training import (
-    ArgumentBuilder,
-    LoraConfigBuilder,
-    MultiDatasetTrainer,
-)
+from src.core.experiment_tracker import ExperimentTracker
+from src.training.argument_builder import ArgumentBuilder
+from src.training.lora_config import  LoraConfigBuilder
+from src.training.multi_ds_trainer import MultiDatasetTrainer
+from src.training.monitor import TrainingEvaluator
 from src.data.data_manager import DatasetManager
-from ..utils.error_handler import log_error
+from src.utils.error_handler import log_error
 from src.data.format import format_conversations
 from unsloth.chat_templates import get_chat_template
 
@@ -30,7 +29,7 @@ class TrainCommand:
     def execute(self):
         try:
             if self.tracker:
-                run = self._init_tracking()
+                self._init_tracking()
             if self.config["lora"]:
                 self.lora_config = LoraConfigBuilder(self.config["lora"])
             self.run_id= self.tracker.get_run_id()
@@ -45,17 +44,36 @@ class TrainCommand:
                 raise ValueError("Dataset validation failed")
             
             train_dataset, val_dataset, train_ladder, val_ladder = self.data_manager.load_combined_datasets()
-            self.training_args = self._build_training_args()
+            self.training_args = ArgumentBuilder.build(self.config,self.run_id)
             self.output_dir= self.training_args.output_dir
             print("---------------OUTPUT DIR:---------------", self.output_dir)
-            trainer = self._build_trainer(
-                model, tokenizer, 
-                train_dataset, val_dataset,
-                train_ladder, val_ladder
+            evaluate_output_dir=os.path.join(self.output_dir,"benchmark_evaluations")
+            os.makedirs(evaluate_output_dir, exist_ok=True)
+            self.benchmark_evaluator=TrainingEvaluator(
+                output_dir=evaluate_output_dir,
+                model=model,
+                tokenizer=tokenizer,
+                tags= self.config.get("monitoring", {}).get("tags"),
+                tracker=self.tracker
             )
-            
-            self._run_training(trainer)
-            
+
+            trainer=MultiDatasetTrainer(
+            model=model,
+            tokenizer=tokenizer,
+            args=self.training_args,
+            train_dataset=train_dataset,
+            eval_dataset=val_dataset,
+            train_idx_ladder=train_ladder,
+            val_idx_ladder=val_ladder,
+            formatting_func=self.compiled_formatting_func,
+            run_id=self.run_id,
+            tracker=self.tracker,
+            benchmark_evaluator=self.benchmark_evaluator
+        )
+            trainer.train()
+            final_metrics = trainer.evaluate()
+            self.tracker.log(final_metrics)
+                        
             return trainer
             
         except Exception as e:
@@ -94,31 +112,7 @@ class TrainCommand:
             return model, tokenizer
         else:
             raise NotImplementedError
-        
-   
-    def _build_training_args(self):
-        return ArgumentBuilder.build(self.config,self.run_id)
-    
-    def _build_trainer(self, model, tokenizer, train_ds, val_ds, train_ladder, val_ladder):
-        return MultiDatasetTrainer(
-            model=model,
-            tokenizer=tokenizer,
-            args=self.training_args,
-            train_dataset=train_ds,
-            eval_dataset=val_ds,
-            train_idx_ladder=train_ladder,
-            val_idx_ladder=val_ladder,
-            formatting_func=self.compiled_formatting_func,
-            run_id=self.run_id,
-            output_dir=self.output_dir,
-            tracker=self.tracker
-        )
-    
-    def _run_training(self, trainer):
-        trainer.train()
-        final_metrics = trainer.evaluate()
-        self.tracker.log(final_metrics)
-    
+            
     def _cleanup(self):
         self.tracker.finish()
         torch.cuda.empty_cache()

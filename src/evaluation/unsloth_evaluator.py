@@ -88,12 +88,16 @@ def save_results(results, filename="eval_results.json"):
         print(f"❌ Failed to save results: {str(e)}")
 
 
-def evaluate_model(model_path, tasks=["mmlu"],benchmark_config:dict=None,max_length=2048,batch_size=8, output_dir="."):
+def evaluate_model(model_path=None,model=None,tokenizer=None, tasks=["mmlu"],benchmark_config:dict=None,max_length=2048,batch_size=8, output_dir="."):
     logger = setup_logging("INFO",log_dir=output_dir)
     
     try:
         logger.info(f"______Loading model from {model_path}")
-        model, tokenizer = load_unsloth_model(model_path)
+        if model_path is not None:
+            print("Load model, tokenzier from path ",model_path)
+            model, tokenizer = load_unsloth_model(model_path,max_length=max_length)
+            
+        # model, tokenizer = load_unsloth_model(model_path)
         
         logger.info("Creating evaluator...")
         lm = UnslothLM(

@@ -83,12 +83,12 @@ def main(data_config_path: str, base_outdir: str) -> None:
             baseline_outdir.mkdir(exist_ok=True)
             logger.info(f"Benchmarking {config['name']}")
             benchmark(
-                data_config,
-                config["name"],
-                config["tags"],
-                str(baseline_outdir),
-                config["max_length"],
-                config["batch_size"],
+               config= data_config,
+                model_path=config["name"],
+                tags=config["tags"],
+                output_dir=str(baseline_outdir),
+               max_length= config["max_length"],
+                batch_size=config["batch_size"],
             )
         except Exception as e:
             logger.error(f"Failed to benchmark {config.get('name', 'unknown')}: {str(e)}")

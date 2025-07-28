@@ -8,7 +8,8 @@ class ArgumentBuilder:
         output_dir = train_config.get("output_dir", "./outputs")
 
         if run_id is not None:
-            output_dir = f"{output_dir}/{run_id}"
+            output_dir = f"{output_dir}/{run_id}/model"
+            print("MODEL OUTPUT DIR",output_dir)
         os.makedirs(output_dir, exist_ok=True)
         
         return TrainingArguments(
@@ -32,4 +33,6 @@ class ArgumentBuilder:
             load_best_model_at_end=True,
             metric_for_best_model="eval_loss",
             greater_is_better=False,
+            fp16=False, 
+            bf16=False
         )
