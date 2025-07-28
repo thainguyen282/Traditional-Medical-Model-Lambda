@@ -12,7 +12,7 @@ datasets:
     
     # - tag: "venera_med_m1"
     - path: "configs/dataset/venera_med_m1.yaml"
-      train_samples: 10
+      train_samples: 60
       train_val_split: 0.2
 
 benchmarks:

@@ -2,7 +2,9 @@ import yaml
 import sys 
 import os
 import shutil
-sys.path.append("/root/VeneraMedicalM1")
+from dotenv import load_dotenv
+load_dotenv()
+# ROOT=
 from src.evaluation.unsloth_evaluator import evaluate_model
 
 def benchmark(config: dict,model_path=None ,model=None,tokenizer=None, tags: list=["unsloth"], output_dir: str="./outputs",max_length=2048,batch_size=8, ):

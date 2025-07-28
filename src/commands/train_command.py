@@ -9,6 +9,7 @@ from src.training.lora_config import  LoraConfigBuilder
 from src.training.multi_ds_trainer import MultiDatasetTrainer
 from src.training.monitor import TrainingEvaluator
 from src.data.data_manager import DatasetManager
+from src.callbacks.benchmark_callback import FinalEvalCallback
 from src.utils.error_handler import log_error
 from src.data.format import format_conversations
 from unsloth.chat_templates import get_chat_template
@@ -68,12 +69,12 @@ class TrainCommand:
             formatting_func=self.compiled_formatting_func,
             run_id=self.run_id,
             tracker=self.tracker,
-            benchmark_evaluator=self.benchmark_evaluator
+            benchmark_evaluator=self.benchmark_evaluator,
+            callbacks=[FinalEvalCallback(self.benchmark_evaluator)]
         )
             trainer.train()
             final_metrics = trainer.evaluate()
             self.tracker.log(final_metrics)
-                        
             return trainer
             
         except Exception as e:

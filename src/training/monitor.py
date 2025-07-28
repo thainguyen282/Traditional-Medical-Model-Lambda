@@ -35,10 +35,10 @@ class TrainingEvaluator:
         self.state_path = self.output_dir / "eval_state.json"
         self.tracker = tracker
         
-        # Update the eval mileston when adding new tasks
+        self.end_milestone= EvalMilestone(500, "configs/evals/white.yaml")
         self.milestones = milestones or [
-             EvalMilestone(5, "configs/evals/green.yaml"),           
-            EvalMilestone(500, "configs/evals/white.yaml"),           
+            # EvalMilestone(500, "configs/evals/green.yaml"),          
+            EvalMilestone(500, "configs/evals/white.yaml"),   
             EvalMilestone(2000, "configs/evals/white.yaml"),
              EvalMilestone(5000, "configs/evals/white.yaml"),   
             EvalMilestone(10000, "configs/evals/white.yaml"),           
@@ -87,10 +87,21 @@ class TrainingEvaluator:
                 return config
         return {}
 
+    def run_final_evaluation(self) -> Dict:
+        print("Running final benchmark evaluation...")
+        with open(self.end_milestone.eval_config) as f:
+            eval_config=yaml.safe_load(f)["datasets"]
+        output_dir = self.output_dir / f"eval_final"
+        benchmark(config=eval_config,model_path= self.model_path,model= self.model,tokenizer= self.tokenizer,tags= self.tags,output_dir= output_dir,max_length= self.max_length, batch_size=self.batch_size)
+        self.state["last_eval_at"] = self.state["samples_seen"]
+        self.state["eval_history"].append({
+            "samples": self.state["samples_seen"],
+        })
+        self.save_state()
     def run_evaluation(self) -> Dict:
         """Execute MMLU benchmark"""
-        print("--------Eval at samples:", self.state["samples_seen"])
         eval_config = self.get_eval_params()
+        print("--------Eval at samples:", self.state["samples_seen"],"config:",eval_config)
         output_dir = self.output_dir / f"eval_{self.state['samples_seen']}"
         output_dir.mkdir(exist_ok=True)
         benchmark(config=eval_config,model_path= self.model_path,model= self.model,tokenizer= self.tokenizer,tags= self.tags,output_dir= output_dir,max_length= self.max_length, batch_size=self.batch_size)

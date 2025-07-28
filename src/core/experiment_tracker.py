@@ -46,6 +46,7 @@ class WandbTracker(ExperimentTracker):
     
     def finish(self):
         if self.enabled and self.run:
+            print("Call wandb finish")
             wandb.finish()
             self.run = None
 

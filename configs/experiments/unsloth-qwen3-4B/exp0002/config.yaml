@@ -6,10 +6,6 @@ model:
   max_seq_length: 2048
 
 datasets:
-    # - tag: "fine_tome"
-    #   train_samples: 10
-    #   train_val_split: 0.7
-    
     - path: "configs/dataset/venera_med_m1.yaml"
       train_samples: -1
       train_val_split: 0.2
