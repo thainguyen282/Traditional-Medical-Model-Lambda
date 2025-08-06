@@ -6,7 +6,7 @@ from functools import partial
 from src.core.experiment_tracker import ExperimentTracker
 from src.training.argument_builder import ArgumentBuilder
 from src.training.lora_config import  LoraConfigBuilder
-from src.training.multi_ds_trainer import MultiDatasetTrainer
+from src.training.multi_ds_trainer import MedTrainer
 from src.training.monitor import TrainingEvaluator
 from src.data.data_manager import DatasetManager
 from src.callbacks.benchmark_callback import FinalEvalCallback
@@ -45,11 +45,21 @@ class TrainCommand:
                 raise ValueError("Dataset validation failed")
             
             train_dataset, val_dataset, train_ladder, val_ladder = self.data_manager.load_combined_datasets()
-            self.training_args = ArgumentBuilder.build(self.config,self.run_id)
-            self.output_dir= self.training_args.output_dir
+            train_config=self.config.get("training", {})
+            output_dir=train_config.get("output_dir", "./outputs")
+            output_dir=os.path.join(output_dir,self.run_id)
+            os.makedirs(output_dir, exist_ok=True)
+            
             print("---------------OUTPUT DIR:---------------", self.output_dir)
-            evaluate_output_dir=os.path.join(self.output_dir,"benchmark_evaluations")
+            
+            model_output_dir=os.path.join(output_dir,"model")
+            evaluate_output_dir=os.path.join(output_dir,"benchmark_evaluations")
+            os.makedirs(model_output_dir, exist_ok=True)
             os.makedirs(evaluate_output_dir, exist_ok=True)
+            train_config["output_dir"] = model_output_dir
+            self.training_args = ArgumentBuilder.build(train_config=train_config)
+            os.makedirs(evaluate_output_dir, exist_ok=True)
+            
             self.benchmark_evaluator=TrainingEvaluator(
                 output_dir=evaluate_output_dir,
                 model=model,
@@ -58,7 +68,7 @@ class TrainCommand:
                 tracker=self.tracker
             )
 
-            trainer=MultiDatasetTrainer(
+            trainer=MedTrainer(
             model=model,
             tokenizer=tokenizer,
             args=self.training_args,

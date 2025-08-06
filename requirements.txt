@@ -17,6 +17,7 @@ wandb==0.21.0
 python-dotenv==1.1.1
 scikit-learn==1.7.0  # Only if needed for preprocessing
 numpy==2.3.1
+seaborn==0.13.2
 
 # GPU/CUDA (if applicable)
 xformers==0.0.29.post3  # Optional for attention optimizations

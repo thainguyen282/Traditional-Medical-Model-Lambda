@@ -3,7 +3,7 @@ from trl import SFTTrainer, SFTConfig
 import os
 
 
-class MultiDatasetTrainer(SFTTrainer):
+class MedTrainer(SFTTrainer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

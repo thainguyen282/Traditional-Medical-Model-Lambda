@@ -3,14 +3,15 @@ from transformers import TrainingArguments
 import os
 class ArgumentBuilder:
     @staticmethod
-    def build(config: Dict[str, Any], run_id: str=None) -> TrainingArguments:
-        train_config = config.get("training", {})
+    def build(train_config: Dict[str, Any],) -> TrainingArguments:
+        # train_config = config.get("training", {})
+        
         output_dir = train_config.get("output_dir", "./outputs")
 
-        if run_id is not None:
-            output_dir = f"{output_dir}/{run_id}/model"
-            print("MODEL OUTPUT DIR",output_dir)
-        os.makedirs(output_dir, exist_ok=True)
+        # if run_id is not None:
+        #     output_dir = f"{output_dir}/{run_id}/model"
+        #     print("MODEL OUTPUT DIR",output_dir)
+        # os.makedirs(output_dir, exist_ok=True)
         
         return TrainingArguments(
             output_dir=output_dir,
