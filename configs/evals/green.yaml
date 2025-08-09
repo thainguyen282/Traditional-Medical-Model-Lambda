@@ -1,12 +1,12 @@
-datasets:
-  - name: mmlu
-    subtasks:
-    - name: "mmlu_clinical_knowledge"
-      description: "Medical diagnosis and treatment protocols"
-      category: "clinical_medicine"
-      sample_question: "What is the first-line treatment for uncomplicated malaria?"
-      
-    config:
-      num_fewshot: 1
-      limit: 4
-      metrics: ["accuracy", "confidence_interval"]
+
+- name: mmlu
+  subtasks:
+  - name: "mmlu_clinical_knowledge"
+    description: "Medical diagnosis and treatment protocols"
+    category: "clinical_medicine"
+    sample_question: "What is the first-line treatment for uncomplicated malaria?"
+    
+  config:
+    num_fewshot: 1
+    limit: 4
+    metrics: ["accuracy", "confidence_interval"]

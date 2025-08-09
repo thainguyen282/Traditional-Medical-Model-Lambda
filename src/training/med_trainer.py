@@ -16,7 +16,6 @@ class MedTrainer(SFTTrainer):
         self.skipped_samples = 0
         self.error_log = []
         self.samples_seen = 0
-        self.benchmark_evaluator = kwargs.pop("benchmark_evaluator", None)
         self._train_dataloader = None
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -29,22 +28,6 @@ class MedTrainer(SFTTrainer):
                 return tag
             cumulative += end - start
         return "unknown"
-
-    def training_step(self, model, inputs, num_items_in_batch=None):
-
-        
-        if self.benchmark_evaluator:
-            new_samples = (
-                self.args.per_device_train_batch_size  # Batch per GPU
-                * self.args.world_size  # Number of GPUs
-                * self.args.gradient_accumulation_steps  # Gradient accumulation
-            )
-            self.benchmark_evaluator.update_samples(new_samples)
-            if self.benchmark_evaluator.should_evaluate():
-                self.benchmark_evaluator.run_evaluation()
-        loss = super().training_step(model, inputs, num_items_in_batch)
-
-        return loss
 
        
     def _log_error(self, error_type, error_msg, example=None, dataset_tag=None):

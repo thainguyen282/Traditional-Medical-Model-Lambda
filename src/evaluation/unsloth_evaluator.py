@@ -92,13 +92,12 @@ def evaluate_model(model_path=None,model=None,tokenizer=None, tasks=["mmlu"],ben
     logger = setup_logging("INFO",log_dir=output_dir)
     
     try:
-        logger.info(f"______Loading model from {model_path}")
+        if model_path is not None:
+            logger.info(f"______Loading model from {model_path}")
         if model_path is not None:
             print("Load model, tokenzier from path ",model_path)
             model, tokenizer = load_unsloth_model(model_path,max_length=max_length)
-            
-        # model, tokenizer = load_unsloth_model(model_path)
-        
+                    
         logger.info("Creating evaluator...")
         lm = UnslothLM(
             model=model,

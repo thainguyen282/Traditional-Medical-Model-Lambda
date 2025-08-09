@@ -1,0 +1,12 @@
+- config:
+    limit: 4
+    metrics:
+    - accuracy
+    - confidence_interval
+    num_fewshot: 1
+  name: mmlu
+  subtasks:
+  - category: clinical_medicine
+    description: Medical diagnosis and treatment protocols
+    name: mmlu_clinical_knowledge
+    sample_question: What is the first-line treatment for uncomplicated malaria?

@@ -1,0 +1,14 @@
+2025-08-09 20:44:14,703 - INFO - Logging initialized successfully
+2025-08-09 20:44:14,703 - INFO - ______Loading model from None
+2025-08-09 20:44:14,703 - INFO - Creating evaluator...
+2025-08-09 20:44:14,703 - WARNING - `pretrained` model kwarg is not of type `str`. Many other model arguments may be ignored. Please do not launch via accelerate or use `parallelize=True` if passing an existing model this way.
+2025-08-09 20:44:14,731 - WARNING - Passed an already-initialized model through `pretrained`, assuming single-process call to evaluate() or custom distributed integration
+2025-08-09 20:44:14,731 - INFO - Starting evaluation on tasks: ['mmlu_clinical_knowledge']
+2025-08-09 20:44:20,296 - INFO - Setting random seed to 42 | Setting numpy seed to 1234 | Setting torch manual seed to 1234 | Setting fewshot manual seed to 1234
+2025-08-09 20:44:20,296 - INFO - Using pre-initialized model
+2025-08-09 20:44:20,297 - ERROR - `trust_remote_code` is not supported anymore.
+Please check that the Hugging Face dataset 'cais/mmlu' isn't based on a loading script and remove `trust_remote_code`.
+If the dataset is based on a loading script, please ask the dataset author to remove it and convert it to a standard format like Parquet.
+2025-08-09 20:44:22,274 - WARNING - Overwriting default num_fewshot of mmlu_clinical_knowledge from None to 1
+2025-08-09 20:44:22,274 - INFO - Building contexts for mmlu_clinical_knowledge on rank 0...
+2025-08-09 20:44:22,298 - INFO - Running loglikelihood requests

@@ -1,0 +1,48 @@
+benchmarks:
+  -path: /root/VeneraMedicalM1/configs/evals/green.yaml
+datasets:
+- path: configs/dataset/venera_med_m1.yaml
+  train_samples: 60
+  train_val_split: 0.2
+lora:
+  bias: none
+  lora_dropout: 0.1
+  target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+  use_rslora: false
+model:
+  max_seq_length: 2048
+  name: unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit
+monitoring:
+  project: VeneraMedicalM1
+  tags:
+  - lora
+  - unsloth
+  - unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit
+  - exp0001
+name: unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit-0001
+training:
+  eval_steps: 40
+  eval_strategy: steps
+  logging_steps: 10
+  lr_scheduler_type: cosine
+  num_train_epochs: 2
+  optim: adamw_8bit
+  output_dir: group_outputs/outputs
+  per_device_eval_batch_size: 4
+  per_device_train_batch_size: 4
+  report_to: none
+  save_steps: 40
+  save_strategy: steps
+  seed: 3407
+  warmup_steps: 100
+  weight_decay: 0.01
+unsloth:
+  attn_implementation: sdpa
+  load_in_4bit: true
