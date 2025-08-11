@@ -6,6 +6,10 @@ from dotenv import load_dotenv
 load_dotenv()
 from src.evaluation.unsloth_evaluator import evaluate_model
 
+class Benchmarker:
+    def __init__(self):
+        pass 
+    
 def benchmark(config: dict,model_path=None ,model=None,tokenizer=None, tags: list=["unsloth"], output_dir: str="./outputs",max_length=2048,batch_size=8, ):
     
     for dataset in config:

@@ -46,8 +46,8 @@ class TrainingEvaluator:
                     print(
                         f"Baseline experiment with train_config path {train_config_path} and eval_config {eval_config_path} already exists"
                     )
-                    return True
-        return False
+                    return baseline_dir_path
+        return None
 
     def run_final_evaluation(
         self,
@@ -65,8 +65,9 @@ class TrainingEvaluator:
         with open(self.eval_config_path) as f:
             eval_config = yaml.safe_load(f)
         if not trained:
-            if self.is_exist_baseline(train_config):
-                return
+            exist_baseline = self.is_exist_baseline(train_config)
+            if exist_baseline:
+                return exist_baseline
 
             output_dir = os.path.join(self.base_line_output_dir, str(uuid4()))
             print("Run baseline benchmark on output dir", output_dir)
@@ -91,3 +92,4 @@ class TrainingEvaluator:
             max_length=max_length,
             batch_size=batch_size,
         )
+        return output_dir

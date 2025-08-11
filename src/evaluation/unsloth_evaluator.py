@@ -9,18 +9,6 @@ import json
 import numpy as np
 import torch
 
-class UnslothLM(HFLM):
-    """Wrapper for Unsloth models to work with lm_eval"""
-    def __init__(self, model, tokenizer, max_length=2048, batch_size=8):
-        super().__init__(
-            pretrained=model,
-            tokenizer=tokenizer,
-            max_length=max_length,
-            batch_size=batch_size,
-        )
-        self._model = model
-        self._tokenizer = tokenizer
-
 def setup_logging(log_level="INFO", log_dir="logs"):
     """Proper logging setup that ensures file writing works"""
     os.makedirs(log_dir, exist_ok=True)
@@ -88,7 +76,8 @@ def save_results(results, filename="eval_results.json"):
         print(f"❌ Failed to save results: {str(e)}")
 
 
-def evaluate_model(model_path=None,model=None,tokenizer=None, tasks=["mmlu"],benchmark_config:dict=None,max_length=2048,batch_size=8, output_dir="."):
+def evaluate_model(model_path=None,model=None,tokenizer=None, tasks=["mmlu"],benchmark_config:dict=None,max_length=2048,batch_size=8, output_dir=".",random_seed=42):
+    print("bechmark_config",benchmark_config)
     logger = setup_logging("INFO",log_dir=output_dir)
     
     try:
@@ -113,7 +102,7 @@ def evaluate_model(model_path=None,model=None,tokenizer=None, tasks=["mmlu"],ben
             num_fewshot=benchmark_config.get("num_fewshot", 5),
             task_manager=TaskManager(include_path=None),
             limit=benchmark_config.get("limit", None),
-             random_seed=42, 
+             random_seed=random_seed, 
         )
         output_path=os.path.join(output_dir,"unsloth_eval_results.json")
         save_results(results, filename=output_path)
@@ -123,6 +112,7 @@ def evaluate_model(model_path=None,model=None,tokenizer=None, tasks=["mmlu"],ben
     except Exception as e:
         logger.error(f"Evaluation failed: {str(e)}", exc_info=True)
         raise
+
 
 if __name__ == "__main__":
     model_path="unsloth/Qwen3-4B-unsloth-bnb-4bit"
