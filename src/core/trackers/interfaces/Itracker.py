@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import wandb
 from uuid import uuid4
 
-class ExperimentTracker(ABC):
+class ITracker(ABC):
     @abstractmethod
     def init(self, **kwargs):
         pass
