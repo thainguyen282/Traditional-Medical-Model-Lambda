@@ -15,8 +15,8 @@ datasets:
       train_samples: 60
       train_val_split: 0.2
 
-benchmarks:
-  -path: "/root/VeneraMedicalM1/configs/evals/green.yaml"
+# benchmark:
+#   -path: "/root/VeneraMedicalM1/configs/evals/green.yaml"
 
 unsloth:
     load_in_4bit: true

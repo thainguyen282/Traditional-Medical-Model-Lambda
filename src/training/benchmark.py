@@ -7,22 +7,19 @@ import yaml
 from src.evaluation.benchmark import benchmark
 from uuid import uuid4
 
-
-@dataclass
-class EvalMilestone:
-    samples_interval: int
-    eval_config: str
-
-
 class TrainingEvaluator:
     def __init__(
         self,
         base_line_output_dir: str = "baseline",
+        eval_config_path:str="",
         tracker=None,
     ):
         self.base_line_output_dir = base_line_output_dir
         self.tracker = tracker
-        self.eval_config_path = "configs/evals/green.yaml"
+        if len(eval_config_path):
+            self.eval_config_path=eval_config_path
+        else:
+            self.eval_config_path = "configs/evals/medical_mmlu.yaml"
 
     def set_eval_config_path(self, eval_config_path):
         self.eval_config_path = eval_config_path

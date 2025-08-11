@@ -5,9 +5,10 @@ from src.core.config_manager import ConfigManager
 def parse_args():
     parser = argparse.ArgumentParser(description="Train language models")
     
-    parser.add_argument("--config", type=str, default="/root/VeneraMedicalM1/configs/experiments/unsloth-qwen3-0.6B/exp0001/config.yaml")
+    parser.add_argument("--config", type=str, default="configs/experiments/unsloth-qwen3-0.6B/exp0001/config.yaml")
     parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
     parser.add_argument("--test", action="store_true", help="Test pipeline with minimal config")
+    parser.add_argument("--dry_run_config",type="str",default="configs/experiments/dry_run.yaml")
     parser.add_argument("--logger",  type=str, default="wandb", help="Logger to use")
     args, unknown = parser.parse_known_args()
     
@@ -32,6 +33,11 @@ def parse_args():
 def main():
     args, override_args = parse_args()
     print("Override args:", override_args)
+    if args.test:
+        print("Run test mode with minimal set up")
+        args.config=args.dry_run_config
+        args.logger="dummy"
+        
     if args.logger == "wandb":
         tracker = WandbTracker()
         override_args["training.report_to"] = "wandb"
@@ -41,6 +47,7 @@ def main():
         override_args["training.report_to"] = "none"
     else:
         raise ValueError(f"Unknown logger: {args.logger}")
+    
     config_manager = ConfigManager()
     try:
         config = config_manager.load(args.config, override_args)
