@@ -1,7 +1,13 @@
 import argparse
 from src.commands import TrainCommand
-from src.core.experiment_tracker import WandbTracker,DummyTracker
+# from src.core.experiment_tracker import WandbTracker,DummyTracker
+from src.core.trackers.wandb_tracker import WandbTracker
+from src.core.trackers.dummy_tracker import DummyTracker
+from src.core.trackers.interfaces.Itracker import ITracker
 from src.core.config_manager import ConfigManager
+from src.core.loggers.term_logger import TerminalLogger
+from src.core.loggers.dual_logger import DualLogger
+from src.core.loggers.interfaces.Ilogger import ILogger
 def parse_args():
     parser = argparse.ArgumentParser(description="Train language models")
     
@@ -9,7 +15,8 @@ def parse_args():
     parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
     parser.add_argument("--test", action="store_true", help="Test pipeline with minimal config")
     parser.add_argument("--dry_run_config",type="str",default="configs/experiments/dry_run.yaml")
-    parser.add_argument("--logger",  type=str, default="wandb", help="Logger to use")
+    parser.add_argument("--tracker",  type=str, default="wandb", help="tracker to save metrics. Accepted values: wandb, dummy")
+    parser.add_argument("--logger",  type=str, default="dual", help="logger to save training output. Accepted values: dual(log to both console and file), terminal (terminal)")
     args, unknown = parser.parse_known_args()
     
     allowed_overrides = {
@@ -36,17 +43,27 @@ def main():
     if args.test:
         print("Run test mode with minimal set up")
         args.config=args.dry_run_config
-        args.logger="dummy"
+        args.tracker="dummy"
+        args.logger="terminal"
         
-    if args.logger == "wandb":
+    tracker:ITracker
+    logger:ILogger
+    if args.logger == "dual":
+        logger = DualLogger()
+    elif args.logger == "terminal":
+        logger = TerminalLogger()
+    else:
+        raise ValueError(f"Unknown logger: {args.logger}")
+    
+    if args.tracker == "wandb":
         tracker = WandbTracker()
         override_args["training.report_to"] = "wandb"
         
-    elif args.logger == "dummy":
+    elif args.tracker == "dummy":
         tracker=DummyTracker()
         override_args["training.report_to"] = "none"
     else:
-        raise ValueError(f"Unknown logger: {args.logger}")
+        raise ValueError(f"Unknown tracker: {args.tracker}")
     
     config_manager = ConfigManager()
     try:
@@ -58,7 +75,7 @@ def main():
         
     print("Validated config:", config)
 
-    command = TrainCommand(config=config,tracker= tracker)
+    command = TrainCommand(config=config,tracker= tracker,logger=logger)
     
     command.execute()
 if __name__ == "__main__":

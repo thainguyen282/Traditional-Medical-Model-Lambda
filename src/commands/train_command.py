@@ -4,28 +4,32 @@ import torch
 import os
 import copy
 from functools import partial
-from src.core.experiment_tracker import ExperimentTracker
+from src.core.loggers.interfaces.Ilogger import ILogger
+from src.core.trackers.interfaces.Itracker import ITracker
 from src.training.argument_builder import ArgumentBuilder
 from src.training.lora_config import LoraConfigBuilder
 from src.training.med_trainer import MedTrainer
+from src.core.loggers.term_logger import TerminalLogger
 
 from src.data.data_manager import DatasetManager
 from src.utils.error_handler import log_error
 from src.data.format import format_conversations
 from unsloth.chat_templates import get_chat_template
-from src.training.benchmark import TrainingEvaluator
+from src.evaluation.benchmark import Benchmarker
 
 
 class TrainCommand:
     def __init__(
         self,
         config: Dict[str, Any],
-        tracker: ExperimentTracker,
+        tracker: Optional[ITracker] = None,
+        logger: Optional[ILogger] = None,
         output_dir: str = "./outputs",
         sweep_id: Optional[str] = None,
     ):
         self.config = config
         self.tracker = tracker
+        self.logger=logger or TerminalLogger()
         self.output_dir = output_dir
         self.validate_samples = 5
 
@@ -37,10 +41,12 @@ class TrainCommand:
                 self.lora_config = LoraConfigBuilder(self.config["lora"])
             self.run_id = self.tracker.get_run_id()
             print("---------------RUN ID:---------------", self.run_id)
+            
             # [ For benchmark in later step
             non_trained_model, _ = self._load_model()
             cloned_config = copy.deepcopy(self.config)
             # ]
+            
             model, tokenizer = self._load_model()
             self.compiled_formatting_func = partial(
                 format_conversations, tokenizer=tokenizer
@@ -73,52 +79,62 @@ class TrainCommand:
             os.makedirs(evaluate_output_dir, exist_ok=True)
 
             print("cloned_config",cloned_config, cloned_config.get("benchmark", {}).get("path", ""),)
-            self.benchmark_evaluator = TrainingEvaluator(
+            self.benchmark_evaluator = Benchmarker(
+                logger=self.logger,
                 tracker=self.tracker,
-                eval_config_path=cloned_config.get("benchmark", {}).get("path", ""),
             )
 
-            # trainer = MedTrainer(
-            #     model=model,
-            #     tokenizer=tokenizer,
-            #     args=self.training_args,
-            #     train_dataset=train_dataset,
-            #     eval_dataset=val_dataset,
-            #     train_idx_ladder=train_ladder,
-            #     val_idx_ladder=val_ladder,
-            #     formatting_func=self.compiled_formatting_func,
-            #     run_id=self.run_id,
-            #     tracker=self.tracker,
-            #     benchmark_evaluator=self.benchmark_evaluator,
-            # )
-
-            # trainer.train()
-            # final_metrics = trainer.evaluate()
-            self.benchmark_evaluator.run_final_evaluation(
-                output_dir=None,
-                train_config=cloned_config,
-                model_path=None,
-                model=non_trained_model,
+            trainer = MedTrainer(
+                model=model,
                 tokenizer=tokenizer,
-                trained=False,
-                tags=self.config.get("monitoring", {}).get("tags"),
+                args=self.training_args,
+                train_dataset=train_dataset,
+                eval_dataset=val_dataset,
+                train_idx_ladder=train_ladder,
+                val_idx_ladder=val_ladder,
+                formatting_func=self.compiled_formatting_func,
+                run_id=self.run_id,
+                tracker=self.tracker,
+                benchmark_evaluator=self.benchmark_evaluator,
             )
 
-            # self.benchmark_evaluator.run_final_evaluation(
-            #     output_dir=evaluate_output_dir,
-            #     train_config=self.config,
-            #     model_path=None,
-            #     model=model,
-            #     tokenizer=tokenizer,
-            #     trained=True,
-            #     tags=self.config.get("monitoring", {}).get("tags")
-            # )
+            trainer.train()
+            final_metrics = trainer.evaluate()
+            model_name=self.config["model"]["name"]
+            self.benchmark_evaluator.run_multiple(
+                configs=[
+                    {
+                        "benchmark_tags": ["Baseline",model_name],
+                        "eval_config": self.config,
+                        "train_config": cloned_config,
+                        "model_path": None,
+                        "model": non_trained_model,
+                        "tokenizer": tokenizer,
+                        "tags": self.config.get("monitoring", {}).get("tags"),
+                        "output_dir": evaluate_output_dir,
+                        "max_length": 2048,
+                        "batch_size": 8,
+                    },
+                    {
+                        "benchmark_tags": self.config.get("monitoring", {}).get("tags"),
+                        "eval_config": self.config,
+                        "train_config": cloned_config,
+                        "model_path": None,
+                        "model": non_trained_model,
+                        "tokenizer": tokenizer,
+                        "tags": self.config.get("monitoring", {}).get("tags"),
+                        "output_dir": evaluate_output_dir,
+                        "max_length": 2048,
+                        "batch_size": 8,
+                    }
+                    
+                ]
+            )
+         
 
-            # self.tracker.log(final_metrics)
-            # return trainer
-
+           
         except Exception as e:
-            log_error(e, self.tracker)
+            self.logger.error(str(e))
             raise
         finally:
             self._cleanup()

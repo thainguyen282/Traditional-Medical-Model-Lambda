@@ -6,16 +6,23 @@ sys.path.append(os.getenv("ROOT"))
 
 import yaml
 import shutil
+from uuid import uuid4
+from datetime import datetime
+
 from src.evaluation.evaluators.unsloth_adapter import UnslothAdapter
 from src.core.loggers.term_logger import  TerminalLogger
 from src.core.loggers.interfaces.Ilogger import ILogger
 from src.evaluation.evaluators.intefaces.Ilm_evaluator import IlmEvaluator
 from src.core.trackers.interfaces.Itracker import ITracker
 from src.core.trackers.dummy_tracker import DummyTracker
-from uuid import uuid4
+from src.utils.timer import Timer
 
 class Benchmarker:
-    def __init__(self, baseline_dir="group_outputs/baseline/",tracker:ITracker=None,logger:ILogger=None):
+    def __init__(self, baseline_dir="group_outputs/baseline/",history_path="group_outputs/benchmark_history.log",tracker:ITracker=None,logger:ILogger=None):
+        if not os.path.exists(history_path):
+            with open(history_path, 'w', encoding='utf-8') as f:
+                f.write("")
+        self.history_path=history_path
         self.baseline_dir=baseline_dir
         self.logger=logger or TerminalLogger()
         self.tracker=tracker or DummyTracker()
@@ -61,7 +68,7 @@ class Benchmarker:
             tasks=[]
             if dataset.get("subtasks"):
                 tasks=[item["name"] for item in dataset["subtasks"]]
-            
+        
             os.makedirs(output_dir, exist_ok=True)
             output_path=os.path.join(output_dir,f"{dataset_name}.json")
             
@@ -78,7 +85,35 @@ class Benchmarker:
                 random_seed=42,
                 save_ouput_path=output_path,
                 print_output=True
+                
             )
+    def run_multiple(self,configs):
+        multiple_id=uuid4().hex
+        self.logger.info("Running multiple benchmarks")
+        for config in configs:
+            # (benchmark_tags,eval_config,train_config, model_path,model,tokenizer,tags,output_dir,max_length,batch_size)=config
+            benchmark_tags=config.get("benchmark_tags")
+            eval_config=config.get("eval_config")
+            train_config=config.get("train_config")
+            model_path=config.get("model_path")
+            model=config.get("model")
+            tokenizer=config.get("tokenizer")
+            tags=config.get("tags")
+            output_dir=config.get("output_dir")
+            max_length=config.get("max_length",2048)
+            batch_size=config.get("batch_size",8)
+            self.logger.info(f"Running benchmark with tags {benchmark_tags}")
+            Timer.reset()
+            start_time=Timer.start()
+            run_output_path=self.run(eval_config,train_config, model_path=model_path,model=model,tokenizer=tokenizer,  tags=tags, output_dir=output_dir,max_length=max_length,batch_size=batch_size)
+            end_time=Timer.end()
+            duration=Timer.duration()
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            message = f"Ran benchmark group id {multiple_id} with tags {benchmark_tags}, on {run_output_path}. Start Time: {start_time}, End Time: {end_time}, Duration: {duration} "
+            log_entry = f"{timestamp} -  {message}\n"
+            self.logger.info(message)
+            with open(self.history_path, "a", encoding="utf-8") as f:
+                f.write(log_entry)
     def run(self,eval_config: str|dict,train_config: str|dict,  model_path=None ,model=None,tokenizer=None,  tags: list=["unsloth"], output_dir: str="./outputs",max_length=2048,batch_size=8,trained=True, rerun=False ):
     
         if isinstance(eval_config,str):
@@ -86,13 +121,17 @@ class Benchmarker:
                 with open(eval_config, "r") as f:
                     eval_config = yaml.safe_load(f)
             else:
-                raise ValueError(f"Unsupported eval config path {eval_config}")
+                message = f"Unsupported eval config path {eval_config}"
+                self.logger.error(message)
+                raise ValueError(message)
         if isinstance(train_config,str):
             if train_config.endswith(".yaml"):
                 with open(train_config, "r") as f:
                     train_config = yaml.safe_load(f)
             else:
-                raise ValueError(f"Unsupported trainconfig path {train_config}")
+                message = f"Unsupported train config path {train_config}"
+                self.logger.error(message)
+                raise ValueError(message)
       
       
         if not trained :
@@ -122,19 +161,59 @@ class Benchmarker:
        
            
 if __name__=="__main__":
+    from unsloth import FastLanguageModel
     import os
     import shutil
     eval_config_path = "configs/evals/minimal_mmlu.yaml"
     train_config_path = "configs/experiments/dry_run.yaml"
     model_path="unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit"
     # model_path="group_outputs/outputs/04813fc9/checkpoint-2"
+    load_in_4bit=True
+    max_length=2048
+    batch_size=8
+    dtype="float16"
+    model, tokenizer = FastLanguageModel.from_pretrained(
+                model_name=model_path,
+                max_seq_length=max_length,
+                dtype=dtype,
+                load_in_4bit=load_in_4bit,
+            )
     tags=["unsloth"]
-    output_dir="group_outputs/benchmark/unsloth/test_m1"
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)    
+    baseline_output_dir="group_outputs/benchmark/unsloth/test_m1"
+    trained_output_dir="group_outputs/benchmark/unsloth/test_m2"
+    if os.path.exists(baseline_output_dir):
+        shutil.rmtree(baseline_output_dir)    
+    if os.path.exists(trained_output_dir):
+        shutil.rmtree(trained_output_dir)
     benchmarker=Benchmarker()
-    benchmarker.run(eval_config=eval_config_path,train_config=train_config_path,model_path= model_path, tags=tags, tokenizer=None, output_dir=output_dir)
-    benchmarker.run(eval_config=eval_config_path,train_config=train_config_path,model_path= model_path, tags=tags, tokenizer=None, output_dir=output_dir,trained=False)
-    benchmarker.run(eval_config=eval_config_path,train_config=train_config_path,model_path= model_path, tags=tags, tokenizer=None, output_dir=output_dir,trained=False,rerun=True)
+    # benchmarker.run(eval_config=eval_config_path,train_config=train_config_path,model_path= model_path, tags=tags, tokenizer=None, output_dir=output_dir)
+    # benchmarker.run(eval_config=eval_config_path,train_config=train_config_path,model_path= model_path, tags=tags, tokenizer=None, output_dir=output_dir,trained=False)
+    # benchmarker.run(eval_config=eval_config_path,train_config=train_config_path,model_path= model_path, tags=tags, tokenizer=None, output_dir=output_dir,trained=False,rerun=True)
     
+    multi_exps=[
+        {
+            "benchmark_tags":"Base line unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit",
+            "eval_config":eval_config_path,
+            "train_config":train_config_path,
+            "model_path":model_path,
+            
+            "tags":tags,
+            "output_dir":baseline_output_dir,
+            "trained":False
+        },
+        {
+            "benchmark_tags":"trained unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit",
+            "eval_config":eval_config_path,
+            "train_config":train_config_path,
+            # "model_path":"",
+            "model":model,
+            "tokenizer":tokenizer,
+            "tags":tags,
+            "output_dir":trained_output_dir,
+            "trained":True
+        },
+       
+        
+    ]
+    benchmarker.run_multiple(multi_exps)
         

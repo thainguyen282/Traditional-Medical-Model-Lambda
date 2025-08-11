@@ -3,16 +3,8 @@ from transformers import TrainingArguments
 import os
 class ArgumentBuilder:
     @staticmethod
-    def build(train_config: Dict[str, Any],) -> TrainingArguments:
-        # train_config = config.get("training", {})
-        
-        output_dir = train_config.get("output_dir", "./outputs")
-
-        # if run_id is not None:
-        #     output_dir = f"{output_dir}/{run_id}/model"
-        #     print("MODEL OUTPUT DIR",output_dir)
-        # os.makedirs(output_dir, exist_ok=True)
-        
+    def build(train_config: Dict[str, Any],) -> TrainingArguments:        
+        output_dir = train_config.get("output_dir", "./outputs")        
         return TrainingArguments(
             output_dir=output_dir,
             per_device_train_batch_size=train_config.get("per_device_train_batch_size", 2),
