@@ -1,8 +1,6 @@
 
 
 from abc import ABC, abstractmethod
-import os
-from datetime import datetime
 
 class ILogger(ABC):
     """Interface for Logger implementations."""
