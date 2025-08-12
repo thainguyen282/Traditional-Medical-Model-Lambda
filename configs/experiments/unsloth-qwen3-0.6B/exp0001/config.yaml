@@ -6,17 +6,13 @@ model:
   max_seq_length: 2048
 
 datasets:
-    # - path: "configs/dataset/finetome.yaml"
-    #   train_samples: 10
-    #   train_val_split: 0.7
-    
-    # - tag: "venera_med_m1"
     - path: "configs/dataset/venera_med_m1.yaml"
-      train_samples: 60
+      train_samples: 30
       train_val_split: 0.2
 
-# benchmark:
-#   -path: "/root/VeneraMedicalM1/configs/evals/green.yaml"
+benchmark:
+  path: "configs/evals/minimal_mmlu.yaml"
+  
 
 unsloth:
     load_in_4bit: true
@@ -27,16 +23,22 @@ training:
     per_device_train_batch_size: 4
     per_device_eval_batch_size: 4
     num_train_epochs: 2
+    learning_rate: 2e-5
     weight_decay: 0.01
-    warmup_steps: 100
+    warmup_steps: 50
     lr_scheduler_type: "cosine"
     optim: "adamw_8bit"
     eval_strategy: "steps"
     eval_steps: 40
-    save_strategy: "steps"
-    save_steps: 40
+    save_total_limit: 2
     logging_steps: 10
+    fp16: False 
+    bp16: False
+    save_steps: 40
     seed: 3407
+    gradient_checkpointing: true
+    load_best_model_at_end: true
+    metric_for_best_model: "eval_loss"
 
 lora:
     lora_dropout: 0.1
@@ -49,7 +51,7 @@ lora:
       - "up_proj"
       - "down_proj"
     bias: "none"
-    use_rslora: false
+    use_rslora: false         
 
 monitoring:
   project: "VeneraMedicalM1"

@@ -55,5 +55,5 @@
 
   config:
     num_fewshot: 5
-    limit: 50
+    limit: 200
     metrics: ["accuracy", "confidence_interval"]

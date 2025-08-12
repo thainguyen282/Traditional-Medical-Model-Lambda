@@ -1,6 +1,7 @@
 import argparse
+import yaml
+import os
 from src.commands import TrainCommand
-# from src.core.experiment_tracker import WandbTracker,DummyTracker
 from src.core.trackers.wandb_tracker import WandbTracker
 from src.core.trackers.dummy_tracker import DummyTracker
 from src.core.trackers.interfaces.Itracker import ITracker
@@ -12,9 +13,10 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Train language models")
     
     parser.add_argument("--config", type=str, default="configs/experiments/unsloth-qwen3-0.6B/exp0001/config.yaml")
+    parser.add_argument("--base_config",type=str,default="configs/experiments/base_config.yaml", help="Base config file to load")
     parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
     parser.add_argument("--test", action="store_true", help="Test pipeline with minimal config")
-    parser.add_argument("--dry_run_config",type="str",default="configs/experiments/dry_run.yaml")
+    parser.add_argument("--dry_run_config",type=str,default="configs/experiments/dry_run.yaml")
     parser.add_argument("--tracker",  type=str, default="wandb", help="tracker to save metrics. Accepted values: wandb, dummy")
     parser.add_argument("--logger",  type=str, default="dual", help="logger to save training output. Accepted values: dual(log to both console and file), terminal (terminal)")
     args, unknown = parser.parse_known_args()
@@ -66,6 +68,10 @@ def main():
         raise ValueError(f"Unknown tracker: {args.tracker}")
     
     config_manager = ConfigManager()
+    base_config_path=args.base_config
+    
+    with open(base_config_path, 'r') as f:
+        base_config = yaml.safe_load(f)
     try:
         config = config_manager.load(args.config, override_args)
     except ValueError as e:
@@ -75,7 +81,7 @@ def main():
         
     print("Validated config:", config)
 
-    command = TrainCommand(config=config,tracker= tracker,logger=logger)
+    command = TrainCommand(config=config,tracker= tracker,logger=logger,base_config=base_config)
     
     command.execute()
 if __name__ == "__main__":

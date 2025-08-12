@@ -26,6 +26,9 @@ class ArgumentBuilder:
             load_best_model_at_end=True,
             metric_for_best_model="eval_loss",
             greater_is_better=False,
-            fp16=False, 
-            bf16=False
+            
+            fp16=train_config.get("fp16", False), 
+            bf16=train_config.get("bf16", True), 
+            deepspeed=train_config.get("deepspeed", None),
+
         )

@@ -1,0 +1,51 @@
+[2025-08-12 00:04:01] [ERROR] Your setup doesn't support bf16/gpu. You need Ampere+ GPU with cuda>=11.0
+[2025-08-12 00:05:49] [INFO] Running multiple benchmarks
+[2025-08-12 00:05:49] [INFO] Running benchmark with tags ['Baseline', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit']
+[2025-08-12 00:05:49] [ERROR] Unsupported eval config path 
+[2025-08-12 00:05:49] [ERROR] Unsupported eval config path 
+[2025-08-12 01:33:12] [INFO] Running multiple benchmarks
+[2025-08-12 01:33:12] [INFO] Running benchmark with tags ['Baseline', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit']
+[2025-08-12 01:33:12] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/waf2o927/benchmark_evaluations
+[2025-08-12 01:33:12] [INFO] Creating evaluator...
+[2025-08-12 01:33:12] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/waf2o927/benchmark_evaluations/mmlu.json
+[2025-08-12 01:33:12] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge', 'mmlu_college_medicine', 'mmlu_professional_medicine', 'mmlu_anatomy', 'mmlu_medical_genetics', 'mmlu_college_biology', 'mmlu_human_aging', 'mmlu_nutrition', 'mmlu_virology', 'mmlu_professional_psychology']
+[2025-08-12 01:35:36] [INFO] Running multiple benchmarks
+[2025-08-12 01:35:36] [INFO] Running benchmark with tags ['Baseline', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit']
+[2025-08-12 01:35:36] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/1zsyt3n9/benchmark_evaluations
+[2025-08-12 01:35:36] [INFO] Creating evaluator...
+[2025-08-12 01:35:36] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/1zsyt3n9/benchmark_evaluations/mmlu.json
+[2025-08-12 01:35:36] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge', 'mmlu_college_medicine', 'mmlu_professional_medicine', 'mmlu_anatomy', 'mmlu_medical_genetics', 'mmlu_college_biology', 'mmlu_human_aging', 'mmlu_nutrition', 'mmlu_virology', 'mmlu_professional_psychology']
+[2025-08-12 02:08:04] [ERROR] DualLogger.info() takes 2 positional arguments but 3 were given
+[2025-08-12 02:10:14] [INFO] eval config {'path': 'configs/evals/minimal_mmlu.yaml'}
+[2025-08-12 02:10:14] [INFO] Benchmark evaluation path: configs/evals/minimal_mmlu.yaml 
+[2025-08-12 02:10:14] [INFO] Running multiple benchmarks
+[2025-08-12 02:10:14] [INFO] Running benchmark with tags ['Baseline', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit']
+[2025-08-12 02:10:14] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/9f7a0cb8/benchmark_evaluations
+[2025-08-12 02:10:14] [INFO] Creating evaluator...
+[2025-08-12 02:10:14] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/9f7a0cb8/benchmark_evaluations/mmlu.json
+[2025-08-12 02:10:14] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-08-12 02:10:23] [INFO]  Successfully saved results to group_outputs/outputs/9f7a0cb8/benchmark_evaluations/mmlu.json
+[2025-08-12 02:10:23] [INFO] Ran benchmark group id 712b8fa45b79403b9c7d29d126a837d2 with tags ['Baseline', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit'], on group_outputs/outputs/9f7a0cb8/benchmark_evaluations. Start Time: 39864112.52294006, End Time: 39864121.205255754, Duration: 0h 0m 8.68s 
+[2025-08-12 02:10:23] [INFO] Running benchmark with tags ['Trained', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit']
+[2025-08-12 02:10:23] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/9f7a0cb8/benchmark_evaluations
+[2025-08-12 02:10:23] [INFO] Creating evaluator...
+[2025-08-12 02:10:23] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/9f7a0cb8/benchmark_evaluations/mmlu.json
+[2025-08-12 02:10:23] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-08-12 02:10:32] [INFO]  Successfully saved results to group_outputs/outputs/9f7a0cb8/benchmark_evaluations/mmlu.json
+[2025-08-12 02:10:32] [INFO] Ran benchmark group id 712b8fa45b79403b9c7d29d126a837d2 with tags ['Trained', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit'], on group_outputs/outputs/9f7a0cb8/benchmark_evaluations. Start Time: 39864121.205535635, End Time: 39864129.99975346, Duration: 0h 0m 8.79s 
+[2025-08-12 02:16:33] [INFO] Benchmark evaluation path: configs/evals/minimal_mmlu.yaml 
+[2025-08-12 02:16:33] [INFO] Running multiple benchmarks
+[2025-08-12 02:16:33] [INFO] Running benchmark with tags ['Baseline', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit']
+[2025-08-12 02:16:33] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/02f83cf9/benchmark_evaluations
+[2025-08-12 02:16:33] [INFO] Creating evaluator...
+[2025-08-12 02:16:33] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/02f83cf9/benchmark_evaluations/mmlu.json
+[2025-08-12 02:16:33] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-08-12 02:16:41] [INFO]  Successfully saved results to group_outputs/outputs/02f83cf9/benchmark_evaluations/mmlu.json
+[2025-08-12 02:16:41] [INFO] Ran benchmark group id 4b8fec258dbb401d825f835558583218 with tags ['Baseline', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit'], on group_outputs/outputs/02f83cf9/benchmark_evaluations. Start Time: 39864491.59688373, End Time: 39864499.49283763, Duration: 0h 0m 7.90s 
+[2025-08-12 02:16:41] [INFO] Running benchmark with tags ['Trained', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit']
+[2025-08-12 02:16:41] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/02f83cf9/benchmark_evaluations
+[2025-08-12 02:16:41] [INFO] Creating evaluator...
+[2025-08-12 02:16:41] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/02f83cf9/benchmark_evaluations/mmlu.json
+[2025-08-12 02:16:41] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-08-12 02:16:49] [INFO]  Successfully saved results to group_outputs/outputs/02f83cf9/benchmark_evaluations/mmlu.json
+[2025-08-12 02:16:49] [INFO] Ran benchmark group id 4b8fec258dbb401d825f835558583218 with tags ['Trained', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit'], on group_outputs/outputs/02f83cf9/benchmark_evaluations. Start Time: 39864499.49318493, End Time: 39864507.36386975, Duration: 0h 0m 7.87s 

@@ -12,7 +12,6 @@ from src.training.med_trainer import MedTrainer
 from src.core.loggers.term_logger import TerminalLogger
 
 from src.data.data_manager import DatasetManager
-from src.utils.error_handler import log_error
 from src.data.format import format_conversations
 from unsloth.chat_templates import get_chat_template
 from src.evaluation.benchmark import Benchmarker
@@ -25,8 +24,10 @@ class TrainCommand:
         tracker: Optional[ITracker] = None,
         logger: Optional[ILogger] = None,
         output_dir: str = "./outputs",
+        base_config: Optional[Dict[str, Any]] = None,
         sweep_id: Optional[str] = None,
     ):
+        self.base_config = base_config or {}
         self.config = config
         self.tracker = tracker
         self.logger=logger or TerminalLogger()
@@ -101,31 +102,33 @@ class TrainCommand:
             trainer.train()
             final_metrics = trainer.evaluate()
             model_name=self.config["model"]["name"]
+            eval_config = self.config.get("benchmark", self.base_config.get("benchmark", {})).get("path", "")
+            self.logger.info(f"Benchmark evaluation path: {eval_config} ")
             self.benchmark_evaluator.run_multiple(
                 configs=[
                     {
                         "benchmark_tags": ["Baseline",model_name],
-                        "eval_config": self.config,
+                        "eval_config": eval_config,
                         "train_config": cloned_config,
                         "model_path": None,
                         "model": non_trained_model,
                         "tokenizer": tokenizer,
                         "tags": self.config.get("monitoring", {}).get("tags"),
                         "output_dir": evaluate_output_dir,
-                        "max_length": 2048,
-                        "batch_size": 8,
+                        "max_length": self.config.get("model", {}).get("max_length", 2048),
+                        "batch_size": self.base_config.get("benchmark", {}).get("batch_size", 8),
                     },
                     {
-                        "benchmark_tags": self.config.get("monitoring", {}).get("tags"),
-                        "eval_config": self.config,
+                        "benchmark_tags":["Trained",model_name],
+                        "eval_config": eval_config,
                         "train_config": cloned_config,
                         "model_path": None,
                         "model": non_trained_model,
                         "tokenizer": tokenizer,
                         "tags": self.config.get("monitoring", {}).get("tags"),
                         "output_dir": evaluate_output_dir,
-                        "max_length": 2048,
-                        "batch_size": 8,
+                        "max_length": self.config.get("model", {}).get("max_length", 2048),
+                        "batch_size": self.base_config.get("benchmark", {}).get("batch_size", 8),
                     }
                     
                 ]
