@@ -1,5 +1,5 @@
 
-name: "unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit-0001"
+name: "unsloth/Qwen3-1.7B-unsloth-bnb-4bit"
 
 model: 
   name: "unsloth/Qwen3-1.7B-unsloth-bnb-4bit"
