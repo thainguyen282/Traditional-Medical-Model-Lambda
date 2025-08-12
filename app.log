@@ -100,3 +100,54 @@
 [2025-08-12 02:36:14] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
 [2025-08-12 02:36:23] [INFO]  Successfully saved results to group_outputs/outputs/ouoe0fqa/benchmark_evaluations/mmlu.json
 [2025-08-12 02:36:23] [INFO] Ran benchmark group id 124fa3f6154d45118a37dc2b583410ff with tags ['Trained', 'unsloth/Qwen3-4B-unsloth-bnb-4bit'], on group_outputs/outputs/ouoe0fqa/benchmark_evaluations. Start Time: 39865672.775988914, End Time: 39865681.497347325, Duration: 0h 0m 8.72s 
+[2025-08-12 02:56:20] [ERROR] api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+[2025-08-12 02:56:28] [ERROR] api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+[2025-08-12 02:58:10] [INFO] Benchmark evaluation path: configs/evals/minimal_mmlu.yaml 
+[2025-08-12 02:58:10] [INFO] Running multiple benchmarks
+[2025-08-12 02:58:10] [INFO] Running benchmark with tags ['Baseline', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit']
+[2025-08-12 02:58:10] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/a0ulw2fl/benchmark_evaluations
+[2025-08-12 02:58:10] [INFO] Creating evaluator...
+[2025-08-12 02:58:10] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/a0ulw2fl/benchmark_evaluations/mmlu.json
+[2025-08-12 02:58:10] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-08-12 02:58:18] [INFO]  Successfully saved results to group_outputs/outputs/a0ulw2fl/benchmark_evaluations/mmlu.json
+[2025-08-12 02:58:18] [INFO] Ran benchmark group id 4f7299cc38324e05a2f37cf077b58ce0 with tags ['Baseline', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit'], on group_outputs/outputs/a0ulw2fl/benchmark_evaluations. Start Time: 928.475916722, End Time: 936.115124462, Duration: 0h 0m 7.64s 
+[2025-08-12 02:58:18] [INFO] Running benchmark with tags ['Trained', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit']
+[2025-08-12 02:58:18] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/a0ulw2fl/benchmark_evaluations
+[2025-08-12 02:58:18] [INFO] Creating evaluator...
+[2025-08-12 02:58:18] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/a0ulw2fl/benchmark_evaluations/mmlu.json
+[2025-08-12 02:58:18] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-08-12 02:58:21] [INFO]  Successfully saved results to group_outputs/outputs/a0ulw2fl/benchmark_evaluations/mmlu.json
+[2025-08-12 02:58:21] [INFO] Ran benchmark group id 4f7299cc38324e05a2f37cf077b58ce0 with tags ['Trained', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit'], on group_outputs/outputs/a0ulw2fl/benchmark_evaluations. Start Time: 936.115603922, End Time: 939.26662724, Duration: 0h 0m 3.15s 
+[2025-08-12 02:59:05] [INFO] Benchmark evaluation path: configs/evals/minimal_mmlu.yaml 
+[2025-08-12 02:59:05] [INFO] Running multiple benchmarks
+[2025-08-12 02:59:05] [INFO] Running benchmark with tags ['Baseline', 'unsloth/Qwen3-1.7B-unsloth-bnb-4bit']
+[2025-08-12 02:59:05] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/q2gkjp6k/benchmark_evaluations
+[2025-08-12 02:59:05] [INFO] Creating evaluator...
+[2025-08-12 02:59:05] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/q2gkjp6k/benchmark_evaluations/mmlu.json
+[2025-08-12 02:59:05] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-08-12 02:59:09] [INFO]  Successfully saved results to group_outputs/outputs/q2gkjp6k/benchmark_evaluations/mmlu.json
+[2025-08-12 02:59:09] [INFO] Ran benchmark group id a14b27b77271468793badac030016f5d with tags ['Baseline', 'unsloth/Qwen3-1.7B-unsloth-bnb-4bit'], on group_outputs/outputs/q2gkjp6k/benchmark_evaluations. Start Time: 982.925049464, End Time: 986.857687022, Duration: 0h 0m 3.93s 
+[2025-08-12 02:59:09] [INFO] Running benchmark with tags ['Trained', 'unsloth/Qwen3-1.7B-unsloth-bnb-4bit']
+[2025-08-12 02:59:09] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/q2gkjp6k/benchmark_evaluations
+[2025-08-12 02:59:09] [INFO] Creating evaluator...
+[2025-08-12 02:59:09] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/q2gkjp6k/benchmark_evaluations/mmlu.json
+[2025-08-12 02:59:09] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-08-12 02:59:11] [INFO]  Successfully saved results to group_outputs/outputs/q2gkjp6k/benchmark_evaluations/mmlu.json
+[2025-08-12 02:59:11] [INFO] Ran benchmark group id a14b27b77271468793badac030016f5d with tags ['Trained', 'unsloth/Qwen3-1.7B-unsloth-bnb-4bit'], on group_outputs/outputs/q2gkjp6k/benchmark_evaluations. Start Time: 986.858203538, End Time: 989.597934473, Duration: 0h 0m 2.74s 
+[2025-08-12 03:33:07] [INFO] Benchmark evaluation path: configs/evals/medical_mmlu.yaml 
+[2025-08-12 03:33:07] [INFO] Running multiple benchmarks
+[2025-08-12 03:33:07] [INFO] Running benchmark with tags ['Baseline', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit']
+[2025-08-12 03:33:07] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/cfisi6gn/benchmark_evaluations
+[2025-08-12 03:33:07] [INFO] Creating evaluator...
+[2025-08-12 03:33:07] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/cfisi6gn/benchmark_evaluations/mmlu.json
+[2025-08-12 03:33:07] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge', 'mmlu_college_medicine', 'mmlu_professional_medicine', 'mmlu_anatomy', 'mmlu_medical_genetics', 'mmlu_college_biology', 'mmlu_human_aging', 'mmlu_nutrition', 'mmlu_virology', 'mmlu_professional_psychology']
+[2025-08-12 03:34:18] [INFO]  Successfully saved results to group_outputs/outputs/cfisi6gn/benchmark_evaluations/mmlu.json
+[2025-08-12 03:34:18] [INFO] Ran benchmark group id 18948bd9547a4dfdbd0fe5abd29d045e with tags ['Baseline', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit'], on group_outputs/outputs/cfisi6gn/benchmark_evaluations. Start Time: 3025.369997718, End Time: 3095.968447513, Duration: 0h 1m 10.60s 
+[2025-08-12 03:34:18] [INFO] Running benchmark with tags ['Trained', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit']
+[2025-08-12 03:34:18] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/cfisi6gn/benchmark_evaluations
+[2025-08-12 03:34:18] [INFO] Creating evaluator...
+[2025-08-12 03:34:18] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/cfisi6gn/benchmark_evaluations/mmlu.json
+[2025-08-12 03:34:18] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge', 'mmlu_college_medicine', 'mmlu_professional_medicine', 'mmlu_anatomy', 'mmlu_medical_genetics', 'mmlu_college_biology', 'mmlu_human_aging', 'mmlu_nutrition', 'mmlu_virology', 'mmlu_professional_psychology']
+[2025-08-12 03:35:04] [INFO]  Successfully saved results to group_outputs/outputs/cfisi6gn/benchmark_evaluations/mmlu.json
+[2025-08-12 03:35:04] [INFO] Ran benchmark group id 18948bd9547a4dfdbd0fe5abd29d045e with tags ['Trained', 'unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit'], on group_outputs/outputs/cfisi6gn/benchmark_evaluations. Start Time: 3095.969168457, End Time: 3142.045717745, Duration: 0h 0m 46.08s 
+[2025-08-12 03:35:34] [ERROR] --load_best_model_at_end requires the saving steps to be a round multiple of the evaluation steps, but found 50, which is not a round multiple of 40.
