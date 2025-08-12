@@ -33,7 +33,7 @@ training:
     save_total_limit: 2
     logging_steps: 10
     fp16: False 
-    bp16: False
+    bf16: False
     save_steps: 40
     seed: 3407
     gradient_checkpointing: true

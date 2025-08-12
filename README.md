@@ -7,7 +7,14 @@ To run with test experiemnt
 ```bash
 python main.py --test
 ```
-
+To run multiple mini experiment
+```bash
+./scripts/multi_experiments_mini.sh
+```
+To run full scale:
+```bash
+./scripts/multi_experiments.sh
+```
 
 
 Run with deepspeed:

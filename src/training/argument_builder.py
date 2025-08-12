@@ -26,6 +26,7 @@ class ArgumentBuilder:
             load_best_model_at_end=True,
             metric_for_best_model="eval_loss",
             greater_is_better=False,
+            auto_find_batch_size=True,
             
             fp16=train_config.get("fp16", False), 
             bf16=train_config.get("bf16", True), 
