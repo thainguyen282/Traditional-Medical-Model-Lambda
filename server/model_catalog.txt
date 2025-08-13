@@ -1,0 +1,4 @@
+This is catalog of trained model.
+nltzx8a6: Qwen 0.6 trained on 10k questions
+p4nhb9kq: Qweb 4B trained on 10k questions
+tpxk3hjg: Qwen 1.7B trained on 10k questions
