@@ -51,4 +51,4 @@ lora:
 
 monitoring:
   project: "VeneraMedicalM1"
-  tags: ["lora", "unsloth","unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit","exp0001"]
+  tags: ["lora", "unsloth","unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit","exp0002"]
