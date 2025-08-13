@@ -2,6 +2,7 @@ import torch
 from unsloth import FastLanguageModel
 # checkpoint_path="/root/weights/VeneraMedicalM1/outputs/p4nhb9kq/model/checkpoint-1126"
 checkpoint_path="/root/weights/VeneraMedicalM1/outputs/nltzx8a6/model/checkpoint-1126"
+#  or some thing like  unsloth/Qwen3-0.6B-Base-unsloth-bnb-4bit
 model, tokenizer = FastLanguageModel.from_pretrained(
     model_name=checkpoint_path, 
     # max_seq_length=2048, 
@@ -43,7 +44,6 @@ with torch.inference_mode():
             do_sample=True,
         )
 
-    # Decode generated tokens (skip input prompt)
 generated_text = tokenizer.decode(
     outputs[0][inputs["input_ids"].shape[1]:], 
     skip_special_tokens=True
