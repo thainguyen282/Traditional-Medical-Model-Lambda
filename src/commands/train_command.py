@@ -117,6 +117,8 @@ class TrainCommand:
                         "output_dir": evaluate_output_dir,
                         "max_length": self.config.get("model", {}).get("max_length", 2048),
                         "batch_size": self.base_config.get("benchmark", {}).get("batch_size", 8),
+                        "trained": False,
+                        "rerun": True,
                     },
                     {
                         "benchmark_tags":["Trained",model_name],
@@ -129,6 +131,8 @@ class TrainCommand:
                         "output_dir": evaluate_output_dir,
                         "max_length": self.config.get("model", {}).get("max_length", 2048),
                         "batch_size": self.base_config.get("benchmark", {}).get("batch_size", 8),
+                        "trained": True,
+                        "rerun": True,
                     }
                     
                 ]
