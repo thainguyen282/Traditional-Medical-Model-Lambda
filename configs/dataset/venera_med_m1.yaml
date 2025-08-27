@@ -1,5 +1,5 @@
 name: "venera_med_m1"
-train_path:  "VeneraMedicalM1-dataset/3.6/training_data_v3.6b.jsonl"
+train_path:  "VeneraMedicalM1-dataset/3.0/training_data_v3.6c.jsonl"
 
 metadata:  
   source: "private"

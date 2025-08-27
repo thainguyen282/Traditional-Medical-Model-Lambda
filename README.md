@@ -15,7 +15,10 @@ To run full scale:
 ```bash
 ./scripts/multi_experiments.sh
 ```
-
+To run single experiement 
+```bash
+python main.py --config configs/experiments/unsloth-qwen3-4B/exp0001/config.yaml \
+```
 
 Run with deepspeed:
 ```bash
