@@ -7,12 +7,16 @@ To run with test experiemnt
 ```bash
 python main.py --test
 ```
+sudo apt update
+sudo apt install python3.11-dev build-essential
+sudo apt install cmake libffi-dev
+
 To run multiple mini experiment
 ```bash
 ./scripts/multi_experiments_mini.sh
 ```
 To run full scale:
-```bash
+```bashCurated sample datasets
 ./scripts/multi_experiments.sh
 ```
 To run single experiement 

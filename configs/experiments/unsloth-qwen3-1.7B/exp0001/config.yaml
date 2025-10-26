@@ -1,14 +1,14 @@
 
-name: "unsloth/Qwen3-1.7B-unsloth-bnb-4bit-0001"
+name: "unsloth/Qwen3-4B-Instruct-2507-exp001"
 
 model: 
-  name: "unsloth/Qwen3-1.7B-unsloth-bnb-4bit"
+  name: "unsloth/Qwen3-4B-Instruct-2507"
   max_seq_length: 2048
 
 datasets:
   
     - path: "configs/dataset/venera_med_m1.yaml"
-      train_samples: 30
+      train_samples: 5000
       train_val_split: 0.2
 
 
@@ -43,13 +43,12 @@ training:
     metric_for_best_model: "eval_loss"
 
 lora:
-    lora_dropout: 0.1
     target_modules: 
       - "q_proj"
       - "k_proj"
       - "v_proj"
-      - "o_proj"
-      - "gate_proj"
+      # - "o_proj"
+      # - "gate_proj"
       - "up_proj"
       - "down_proj"
     bias: "none"
@@ -57,4 +56,4 @@ lora:
 
 monitoring:
   project: "VeneraMedicalM1"
-  tags: ["lora", "unsloth","unsloth/Qwen3-1.7B-unsloth-bnb-4bit","exp0001"]
+  tags: ["lora", "unsloth","unsloth/Qwen3-4B-Instruct-2507","exp0001"]

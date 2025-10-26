@@ -17,8 +17,7 @@ class LoRAConfig(BaseModel):
         description="Scaling factor for LoRA weights"
     )
     lora_dropout: float = Field(
-        default=0.1,
-        ge=0.0,
+        default=0.0,
         le=0.5,
         description="Dropout probability for LoRA layers"
     )
@@ -27,8 +26,8 @@ class LoRAConfig(BaseModel):
             "q_proj",
             "k_proj",
             "v_proj",
-            "o_proj",
-            "gate_proj",
+            # "o_proj",
+            # "gate_proj",
             "up_proj",
             "down_proj"
         ],

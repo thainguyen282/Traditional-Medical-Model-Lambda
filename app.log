@@ -186,3 +186,43 @@
 [2025-08-27 06:20:39] [ERROR] Data processing error: CAS service error : IO Error: No space left on device (os error 28)
 [2025-08-27 06:38:18] [ERROR] Some modules are dispatched on the CPU or the disk. Make sure you have enough GPU RAM to fit the quantized model. If you want to dispatch the model on the CPU or the disk while keeping these modules in 32-bit, you need to set `llm_int8_enable_fp32_cpu_offload=True` and pass a custom `device_map` to `from_pretrained`. Check https://huggingface.co/docs/transformers/main/en/main_classes/quantization#offload-between-cpu-and-gpu for more details. 
 [2025-08-27 06:41:06] [ERROR] Some modules are dispatched on the CPU or the disk. Make sure you have enough GPU RAM to fit the quantized model. If you want to dispatch the model on the CPU or the disk while keeping these modules in 32-bit, you need to set `llm_int8_enable_fp32_cpu_offload=True` and pass a custom `device_map` to `from_pretrained`. Check https://huggingface.co/docs/transformers/main/en/main_classes/quantization#offload-between-cpu-and-gpu for more details. 
+[2025-10-22 07:41:16] [ERROR] stat: path should be string, bytes, os.PathLike or integer, not NoneType
+[2025-10-22 07:42:04] [ERROR] nsloth/Qwen3-4B-Instruct-2507/*.json (repository not found)
+[2025-10-22 07:42:54] [ERROR] Unsloth: unsloth/Qwen3-4B-Instruct-2507 is not supported in your current Unsloth version! Please update Unsloth via:
+
+pip uninstall unsloth unsloth_zoo -y
+pip install --upgrade --no-cache-dir "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
+pip install --upgrade --no-cache-dir "git+https://github.com/unslothai/unsloth-zoo.git"
+
+[2025-10-22 07:51:39] [INFO] Benchmark evaluation path: configs/evals/minimal_mmlu.yaml 
+[2025-10-22 07:51:39] [INFO] Running multiple benchmarks
+[2025-10-22 07:51:39] [INFO] Running benchmark with tags ['Baseline', 'unsloth/Qwen3-4B-Instruct-2507']
+[2025-10-22 07:51:39] [INFO] Run baseline benchmark on output dir group_outputs/baseline/a2395973-1ce1-4f27-af9e-7d4ec03e049a
+[2025-10-22 07:51:39] [INFO] Creating evaluator...
+[2025-10-22 07:51:39] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/baseline/a2395973-1ce1-4f27-af9e-7d4ec03e049a/mmlu.json
+[2025-10-22 07:51:39] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-10-22 07:51:51] [INFO]  Successfully saved results to group_outputs/baseline/a2395973-1ce1-4f27-af9e-7d4ec03e049a/mmlu.json
+[2025-10-22 07:51:51] [INFO] Ran benchmark group id d2a84ace330940ada7be661d506c0b53 with tags ['Baseline', 'unsloth/Qwen3-4B-Instruct-2507'], on group_outputs/baseline/a2395973-1ce1-4f27-af9e-7d4ec03e049a. Start Time: 1197.283048095, End Time: 1209.054437095, Duration: 0h 0m 11.77s 
+[2025-10-22 07:51:51] [INFO] Running benchmark with tags ['Trained', 'unsloth/Qwen3-4B-Instruct-2507']
+[2025-10-22 07:51:51] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/uw1qokik/benchmark_evaluations
+[2025-10-22 07:51:51] [INFO] Creating evaluator...
+[2025-10-22 07:51:51] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/uw1qokik/benchmark_evaluations/mmlu.json
+[2025-10-22 07:51:51] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-10-22 07:51:56] [INFO]  Successfully saved results to group_outputs/outputs/uw1qokik/benchmark_evaluations/mmlu.json
+[2025-10-22 07:51:56] [INFO] Ran benchmark group id d2a84ace330940ada7be661d506c0b53 with tags ['Trained', 'unsloth/Qwen3-4B-Instruct-2507'], on group_outputs/outputs/uw1qokik/benchmark_evaluations. Start Time: 1209.055034965, End Time: 1213.81556066, Duration: 0h 0m 4.76s 
+[2025-10-22 08:29:44] [INFO] Benchmark evaluation path: configs/evals/minimal_mmlu.yaml 
+[2025-10-22 08:29:44] [INFO] Running multiple benchmarks
+[2025-10-22 08:29:44] [INFO] Running benchmark with tags ['Baseline', 'unsloth/Qwen3-4B-Instruct-2507']
+[2025-10-22 08:29:44] [INFO] Run baseline benchmark on output dir group_outputs/baseline/ac197ed9-b519-482f-a571-ba36ba27ff19
+[2025-10-22 08:29:44] [INFO] Creating evaluator...
+[2025-10-22 08:29:44] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/baseline/ac197ed9-b519-482f-a571-ba36ba27ff19/mmlu.json
+[2025-10-22 08:29:44] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-10-22 08:29:50] [INFO]  Successfully saved results to group_outputs/baseline/ac197ed9-b519-482f-a571-ba36ba27ff19/mmlu.json
+[2025-10-22 08:29:50] [INFO] Ran benchmark group id bd8b549232d349a0b57fa6dc5c801282 with tags ['Baseline', 'unsloth/Qwen3-4B-Instruct-2507'], on group_outputs/baseline/ac197ed9-b519-482f-a571-ba36ba27ff19. Start Time: 3482.122910482, End Time: 3487.86082926, Duration: 0h 0m 5.74s 
+[2025-10-22 08:29:50] [INFO] Running benchmark with tags ['Trained', 'unsloth/Qwen3-4B-Instruct-2507']
+[2025-10-22 08:29:50] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/xtlxlfq3/benchmark_evaluations
+[2025-10-22 08:29:50] [INFO] Creating evaluator...
+[2025-10-22 08:29:50] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/xtlxlfq3/benchmark_evaluations/mmlu.json
+[2025-10-22 08:29:50] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2025-10-22 08:29:54] [INFO]  Successfully saved results to group_outputs/outputs/xtlxlfq3/benchmark_evaluations/mmlu.json
+[2025-10-22 08:29:54] [INFO] Ran benchmark group id bd8b549232d349a0b57fa6dc5c801282 with tags ['Trained', 'unsloth/Qwen3-4B-Instruct-2507'], on group_outputs/outputs/xtlxlfq3/benchmark_evaluations. Start Time: 3487.861416564, End Time: 3492.335297066, Duration: 0h 0m 4.47s 
