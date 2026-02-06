@@ -12,7 +12,7 @@ from src.core.loggers.interfaces.Ilogger import ILogger
 def parse_args():
     parser = argparse.ArgumentParser(description="Train language models")
     
-    parser.add_argument("--config", type=str, default="configs/experiments/unsloth-qwen3-0.6B/exp0001/config.yaml")
+    parser.add_argument("--config", type=str, default="configs/experiments/unsloth-qwen3-4B/exp0001/config.yaml")
     parser.add_argument("--base_config",type=str,default="configs/experiments/base_config.yaml", help="Base config file to load")
     parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
     parser.add_argument("--test", action="store_true", help="Test pipeline with minimal config")

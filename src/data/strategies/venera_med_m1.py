@@ -1,5 +1,6 @@
 import json
-from datasets import Dataset
+from datasets import Dataset, load_dataset
+from huggingface_hub import hf_hub_download
 from typing import Tuple
 import sys
 import os
@@ -35,7 +36,7 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
         yaml_path=os.path.join(ROOT_DIR,config["path"])
         with open(yaml_path, 'r') as f:
             base_config = yaml.safe_load(f)
-        train_path = base_config["train_path"]
+        train_path = os.path.join(ROOT_DIR, base_config["train_path"])
         train_samples = config["train_samples"]
         split_ratio = config["train_val_split"]
         
@@ -48,8 +49,28 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
                 cached_data = pickle.load(f)
                 return cached_data['train'], cached_data['val']
         
-        with open(train_path, 'r') as f:
-            train_dataset = Dataset.from_list([json.loads(line) for line in f])
+        # Try loading from local path first, then from Hugging Face if not found
+        if not os.path.exists(train_path):
+            print(f"Local file not found at {train_path}, downloading from Hugging Face...")
+            try:
+                # Create directory if it doesn't exist
+                os.makedirs(os.path.dirname(train_path), exist_ok=True)
+                # Download file directly from HF Hub
+                hf_file_path = hf_hub_download(
+                    repo_id="venera-ai/VeneraMedicalM1-dataset",
+                    filename="3.0/training_data_v3.6c.jsonl",
+                    repo_type="dataset"
+                )
+                # Load from downloaded file
+                with open(hf_file_path, 'r') as f:
+                    train_dataset = Dataset.from_list([json.loads(line) for line in f])
+            except Exception as e:
+                print(f"Failed to download from Hugging Face: {e}")
+                print("Please ensure internet connection and HF_TOKEN is set if needed.")
+                raise
+        else:
+            with open(train_path, 'r') as f:
+                train_dataset = Dataset.from_list([json.loads(line) for line in f])
         
         if train_samples == -1:
             train_samples = len(train_dataset)

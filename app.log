@@ -226,3 +226,16 @@ pip install --upgrade --no-cache-dir "git+https://github.com/unslothai/unsloth-z
 [2025-10-22 08:29:50] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
 [2025-10-22 08:29:54] [INFO]  Successfully saved results to group_outputs/outputs/xtlxlfq3/benchmark_evaluations/mmlu.json
 [2025-10-22 08:29:54] [INFO] Ran benchmark group id bd8b549232d349a0b57fa6dc5c801282 with tags ['Trained', 'unsloth/Qwen3-4B-Instruct-2507'], on group_outputs/outputs/xtlxlfq3/benchmark_evaluations. Start Time: 3487.861416564, End Time: 3492.335297066, Duration: 0h 0m 4.47s 
+[2026-02-06 01:26:14] [ERROR] API key must be 40 characters long, yours was 86
+[2026-02-06 01:26:42] [ERROR] API key must be 40 characters long, yours was 36
+[2026-02-06 01:27:52] [ERROR] API key must be 40 characters long, yours was 36
+[2026-02-06 01:29:51] [ERROR] API key must be 40 characters long, yours was 36
+[2026-02-06 01:30:31] [ERROR] API key must be 40 characters long, yours was 86
+[2026-02-06 01:34:44] [ERROR] [Errno 13] Permission denied: '/root/VeneraMedicalM1'
+[2026-02-06 01:37:00] [ERROR] [Errno 2] No such file or directory: '/home/huyen/VeneraMedicalM1/configs/dataset/venera_med_m1.yaml'
+[2026-02-06 01:39:13] [ERROR] [Errno 2] No such file or directory: 'VeneraMedicalM1-dataset/3.0/training_data_v3.6c.jsonl'
+[2026-02-06 01:46:10] [ERROR] Couldn't find any data file at /home/huyen/TMModel/venera-ai/VeneraMedicalM1-dataset. Couldn't find 'venera-ai/VeneraMedicalM1-dataset' on the Hugging Face Hub either: LocalEntryNotFoundError: An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
+[2026-02-06 01:46:59] [ERROR] Couldn't find any data file at /home/huyen/TMModel/venera-ai/VeneraMedicalM1-dataset. Couldn't find 'venera-ai/VeneraMedicalM1-dataset' on the Hugging Face Hub either: LocalEntryNotFoundError: An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
+[2026-02-06 01:48:13] [ERROR] Couldn't find any data file at /home/huyen/TMModel/venera-ai/VeneraMedicalM1-dataset. Couldn't find 'venera-ai/VeneraMedicalM1-dataset' on the Hugging Face Hub either: LocalEntryNotFoundError: An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
+[2026-02-06 01:49:50] [ERROR] Couldn't find any data file at /home/huyen/TMModel/venera-ai/VeneraMedicalM1-dataset. Couldn't find 'venera-ai/VeneraMedicalM1-dataset' on the Hugging Face Hub either: LocalEntryNotFoundError: An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
+[2026-02-06 01:51:33] [ERROR] An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
