@@ -100,6 +100,12 @@ class TrainCommand:
             )
 
             trainer.train()
+            self.tracker.init(
+                project=self.config.get("monitoring", {}).get("project"),
+                name=f"{self.config.get('name')}-eval",
+                config=self.config,
+            )
+
             final_metrics = trainer.evaluate()
             model_name=self.config["model"]["name"]
             eval_config = self.config.get("benchmark", self.base_config.get("benchmark", {})).get("path", "")
@@ -180,5 +186,5 @@ class TrainCommand:
             raise NotImplementedError
 
     def _cleanup(self):
-        self.tracker.finish()
+        # self.tracker.finish()
         torch.cuda.empty_cache()

@@ -256,3 +256,25 @@ pip install --upgrade --no-cache-dir "git+https://github.com/unslothai/unsloth-z
 [2026-02-10 03:45:18] [ERROR] TrainingArguments.__init__() got an unexpected keyword argument 'evaluation_strategy'
 [2026-02-10 03:48:23] [ERROR] 'int' object has no attribute 'mean'
 [2026-02-10 03:54:18] [ERROR] 'int' object has no attribute 'mean'
+[2026-02-10 07:25:46] [ERROR] 'int' object has no attribute 'mean'
+[2026-02-10 07:31:24] [ERROR] 'int' object has no attribute 'mean'
+[2026-02-10 07:37:34] [ERROR] 'int' object has no attribute 'mean'
+[2026-02-10 07:42:54] [ERROR] MedTrainer.compute_loss() got an unexpected keyword argument 'num_items_in_batch'
+[2026-02-10 07:46:14] [ERROR] You must call wandb.init() before wandb.log()
+[2026-02-10 07:50:57] [ERROR] You must call wandb.init() before wandb.log()
+[2026-02-10 07:54:27] [INFO] Benchmark evaluation path: configs/evals/minimal_mmlu.yaml 
+[2026-02-10 07:54:27] [INFO] Running multiple benchmarks
+[2026-02-10 07:54:27] [INFO] Running benchmark with tags ['Baseline', 'unsloth/Qwen3-4B-unsloth-bnb-4bit']
+[2026-02-10 07:54:27] [INFO] Run baseline benchmark on output dir group_outputs/baseline/31a8f9d3-0bd3-4437-8088-a8759696eeed
+[2026-02-10 07:54:27] [INFO] Creating evaluator...
+[2026-02-10 07:54:27] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/baseline/31a8f9d3-0bd3-4437-8088-a8759696eeed/mmlu.json
+[2026-02-10 07:54:27] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-02-10 07:54:45] [INFO]  Successfully saved results to group_outputs/baseline/31a8f9d3-0bd3-4437-8088-a8759696eeed/mmlu.json
+[2026-02-10 07:54:45] [INFO] Ran benchmark group id 7d1271173f4244d695921182251987f8 with tags ['Baseline', 'unsloth/Qwen3-4B-unsloth-bnb-4bit'], on group_outputs/baseline/31a8f9d3-0bd3-4437-8088-a8759696eeed. Start Time: 1981.213416653, End Time: 1999.953444574, Duration: 0h 0m 18.74s 
+[2026-02-10 07:54:45] [INFO] Running benchmark with tags ['Trained', 'unsloth/Qwen3-4B-unsloth-bnb-4bit']
+[2026-02-10 07:54:45] [INFO] Run benchmark ontrained model  on output dir group_outputs/outputs/j2qi17ix/benchmark_evaluations
+[2026-02-10 07:54:45] [INFO] Creating evaluator...
+[2026-02-10 07:54:45] [INFO] Running benchmark on dataset mmlu OUTPUT PATH group_outputs/outputs/j2qi17ix/benchmark_evaluations/mmlu.json
+[2026-02-10 07:54:45] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-02-10 07:54:54] [INFO]  Successfully saved results to group_outputs/outputs/j2qi17ix/benchmark_evaluations/mmlu.json
+[2026-02-10 07:54:54] [INFO] Ran benchmark group id 7d1271173f4244d695921182251987f8 with tags ['Trained', 'unsloth/Qwen3-4B-unsloth-bnb-4bit'], on group_outputs/outputs/j2qi17ix/benchmark_evaluations. Start Time: 1999.954284573, End Time: 2007.9946399, Duration: 0h 0m 8.04s 
