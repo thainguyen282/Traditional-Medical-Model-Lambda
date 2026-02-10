@@ -239,3 +239,20 @@ pip install --upgrade --no-cache-dir "git+https://github.com/unslothai/unsloth-z
 [2026-02-06 01:48:13] [ERROR] Couldn't find any data file at /home/huyen/TMModel/venera-ai/VeneraMedicalM1-dataset. Couldn't find 'venera-ai/VeneraMedicalM1-dataset' on the Hugging Face Hub either: LocalEntryNotFoundError: An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
 [2026-02-06 01:49:50] [ERROR] Couldn't find any data file at /home/huyen/TMModel/venera-ai/VeneraMedicalM1-dataset. Couldn't find 'venera-ai/VeneraMedicalM1-dataset' on the Hugging Face Hub either: LocalEntryNotFoundError: An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
 [2026-02-06 01:51:33] [ERROR] An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
+[2026-02-10 02:24:25] [ERROR] module 'wandb' has no attribute 'init'
+[2026-02-10 02:28:41] [ERROR] An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
+[2026-02-10 02:36:12] [ERROR] An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
+[2026-02-10 02:41:40] [ERROR] An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
+[2026-02-10 02:56:31] [ERROR] An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
+[2026-02-10 03:02:57] [ERROR] 'conversation'
+[2026-02-10 03:18:16] [ERROR] 'int' object has no attribute 'mean'
+[2026-02-10 03:20:14] [ERROR] 'int' object has no attribute 'mean'
+[2026-02-10 03:21:26] [ERROR] 'int' object has no attribute 'mean'
+[2026-02-10 03:27:07] [ERROR] Unsloth: The `formatting_func` should return a list of processed strings.
+[2026-02-10 03:29:58] [ERROR] Unsloth: The `formatting_func` should return a list of processed strings.
+[2026-02-10 03:32:40] [ERROR] 'int' object has no attribute 'mean'
+[2026-02-10 03:35:34] [ERROR] 'int' object has no attribute 'mean'
+[2026-02-10 03:41:56] [ERROR] 'int' object has no attribute 'mean'
+[2026-02-10 03:45:18] [ERROR] TrainingArguments.__init__() got an unexpected keyword argument 'evaluation_strategy'
+[2026-02-10 03:48:23] [ERROR] 'int' object has no attribute 'mean'
+[2026-02-10 03:54:18] [ERROR] 'int' object has no attribute 'mean'

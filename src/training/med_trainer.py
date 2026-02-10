@@ -1,36 +1,35 @@
 import torch
-from trl import SFTTrainer, SFTConfig
+from trl import SFTTrainer
 import os
 
 
 class MedTrainer(SFTTrainer):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+        # Pop custom kwargs TRƯỚC khi gọi super()
         self.train_idx_ladder = kwargs.pop("train_idx_ladder", [])
         self.eval_idx_ladder = kwargs.pop("val_idx_ladder", [])
         self.dataset_names = kwargs.pop("dataset_names", {})
         self.tracker = kwargs.pop("tracker", None)
-        self.output_dir = kwargs.pop("output_dir", "temp")
-        self.error_log_path = os.path.join(self.output_dir, "training_errors.jsonl")
+        self.benchmark_evaluator = kwargs.pop("benchmark_evaluator", None)
+        
+        # Gọi super().__init__
+        super().__init__(*args, **kwargs)
+        
+        # Setup error logging
+        self.error_log_path = os.path.join(self.args.output_dir, "training_errors.jsonl")
         self.skipped_samples = 0
         self.error_log = []
         self.samples_seen = 0
-        self._train_dataloader = None
-
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = self.model.to(self.device)
 
     def _get_dataset_from_index(self, batch_idx: int, ladder: list):
-        cumulative = 0
+        """Get dataset tag from batch index using ladder"""
         for (start, end), tag in ladder:
             if start <= batch_idx < end:
                 return tag
-            cumulative += end - start
         return "unknown"
 
-       
     def _log_error(self, error_type, error_msg, example=None, dataset_tag=None):
+        """Log training errors to file and tracker"""
         import json
         from datetime import datetime
 
@@ -43,22 +42,26 @@ class MedTrainer(SFTTrainer):
             "example": example if example else None,
         }
 
+        # Đảm bảo thư mục tồn tại
+        os.makedirs(os.path.dirname(self.error_log_path), exist_ok=True)
+        
         with open(self.error_log_path, "a") as f:
             f.write(json.dumps(error_entry) + "\n")
 
+        # Log to tracker if available
         if self.tracker and (self.state.global_step % 10 == 0):
             self.tracker.log(
                 {
                     "error/type": error_type,
-                    "error/message": error_msg[:200],
+                    "error/message": str(error_msg)[:200],
                     "error/dataset": dataset_tag,
                     "error/count": self.skipped_samples,
                 }
             )
 
-
     def log(self, logs, start_time=None, **kwargs):
-        """Enhanced logging with error stats"""
+        """Enhanced logging with GPU memory and error stats"""
+        # Add GPU memory stats
         if torch.cuda.is_available():
             logs.update(
                 {
@@ -67,26 +70,36 @@ class MedTrainer(SFTTrainer):
                 }
             )
 
+        # Add error tracking stats
         logs["skipped_samples"] = self.skipped_samples
         if self.error_log:
-            logs["last_error"] = self.error_log[-1][:100] 
+            logs["last_error"] = str(self.error_log[-1])[:100]
 
         super().log(logs, start_time, **kwargs)
 
 
-""""
-Explain 
-global_step = 10
+"""
+Batch Index Calculation Explanation:
 
-gradient_accumulation_steps = 2
+Given:
+- global_step = 10
+- gradient_accumulation_steps = 2
+- per_device_train_batch_size = 8
+- world_size = 2 (2 GPUs)
+- len(dataset) = 1000
 
-per_device_train_batch_size = 8
-
-world_size = 2 (2 GPUs)
-
-len(dataset) = 1000
+Calculations:
 absolute_batch_idx = global_step * gradient_accumulation_steps
+                   = 10 * 2 = 20
+
 total_batch_size = per_device_train_batch_size * world_size
+                 = 8 * 2 = 16
+
 start_idx = absolute_batch_idx * total_batch_size
- end_idx = start_idx + total_batch_size
+          = 20 * 16 = 320
+
+end_idx = start_idx + total_batch_size
+        = 320 + 16 = 336
+
+So at global_step=10, we're processing samples 320-336 from the dataset.
 """
