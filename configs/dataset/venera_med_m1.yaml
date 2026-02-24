@@ -1,6 +1,4 @@
 name: "venera_med_m1"
 train_path: "TMdata/proccessed/dong_y_conversation.jsonl"
-
 metadata:  
-  source: "private"
-  license: "none"
+  source: "local"

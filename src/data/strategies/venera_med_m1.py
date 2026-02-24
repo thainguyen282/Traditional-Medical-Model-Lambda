@@ -1,12 +1,10 @@
-import json
 import os
 import sys
 import pickle
 import yaml
 from typing import Tuple
 
-from datasets import Dataset
-from huggingface_hub import hf_hub_download
+from datasets import Dataset, load_dataset
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -24,33 +22,47 @@ from src.data.strategies.base import BaseDatasetStrategy
 # Utils
 # =========================
 
+def convert_to_conversations(example):
+    """
+    Convert TradMedD format -> conversations format
+    Giả định dataset có dạng:
+    {
+        "question": "...",
+        "answer": "..."
+    }
+    """
+
+    if "conversations" in example:
+        return example
+
+    if "question" in example and "answer" in example:
+        return {
+            "conversations": [
+                {"role": "user", "content": example["question"]},
+                {"role": "assistant", "content": example["answer"]},
+            ]
+        }
+
+    raise ValueError(
+        f"Không nhận diện được format dataset. Keys hiện có: {list(example.keys())}"
+    )
+
+
 def preformat(dataset: Dataset) -> Dataset:
     """
-    Chuẩn hoá dataset về format `conversations`
-    Phù hợp cho SFTTrainer / Unsloth
+    Chuẩn hoá dataset về format conversations
     """
 
-    # Nếu đã đúng format thì thôi
-    if "conversations" in dataset.column_names:
-        return dataset
-
-    if "conversation" not in dataset.column_names:
-        raise ValueError(
-            f"Dataset phải có cột 'conversation' hoặc 'conversations'. "
-            f"Hiện có: {dataset.column_names}"
-        )
-
-    dataset = dataset.rename_column("conversation", "conversations")
+    if "conversations" not in dataset.column_names:
+        dataset = dataset.map(convert_to_conversations)
 
     def validate(example):
         convs = example["conversations"]
 
         if not isinstance(convs, list):
-            raise ValueError(f"`conversations` phải là list, nhận được {type(convs)}")
+            raise ValueError("`conversations` phải là list")
 
         for msg in convs:
-            if not isinstance(msg, dict):
-                raise ValueError(f"Message phải là dict, nhận được {type(msg)}")
             if "role" not in msg or "content" not in msg:
                 raise ValueError(f"Message thiếu role/content: {msg}")
 
@@ -70,27 +82,14 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
         os.makedirs(self.cache_dir, exist_ok=True)
 
     def load(self, config: dict) -> Tuple[Dataset, Dataset]:
-        """
-        config lấy trực tiếp từ YAML:
-        datasets:
-          - path
-            train_samples
-            train_val_split
-        """
 
-        # ---- Load dataset YAML ----
-        yaml_path = os.path.join(ROOT_DIR, config["path"])
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            base_config = yaml.safe_load(f)
-
-        train_path = os.path.join(ROOT_DIR, base_config["train_path"])
         train_samples = config.get("train_samples", -1)
         split_ratio = config.get("train_val_split", 0.2)
 
         # ---- Cache ----
-        cache_key = f"{train_path}_{train_samples}_{split_ratio}"
+        cache_key = f"TradMedD_{train_samples}_{split_ratio}"
         cache_file = os.path.join(
-            self.cache_dir, f"venera_med_cache_{hash(cache_key)}.pkl"
+            self.cache_dir, f"tradmedd_cache_{hash(cache_key)}.pkl"
         )
 
         if os.path.exists(cache_file):
@@ -99,31 +98,17 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
                 cached = pickle.load(f)
                 return cached["train"], cached["val"]
 
-        # ---- Load dataset ----
-        if os.path.exists(train_path):
-            print(f"📂 Loading local dataset: {train_path}")
-            with open(train_path, "r", encoding="utf-8") as f:
-                records = [json.loads(line) for line in f]
+        # ---- Load dataset from HF ----
+        print("⬇️ Loading dataset from Hugging Face Hub...")
+
+        dataset = load_dataset("Maverfrick/TradMedD")
+
+        # Nếu có nhiều split
+        if "train" in dataset:
+            dataset = dataset["train"]
         else:
-            print("⚠️ Local dataset not found, downloading from HF Hub...")
-            repo_id = base_config.get(
-                "repo_id", "venera-ai/VeneraMedicalM1-dataset"
-            )
-            filename = base_config.get(
-                "filename", "3.0/training_data_v3.6c.jsonl"
-            )
-
-            hf_path = hf_hub_download(
-                repo_id=repo_id,
-                filename=filename,
-                repo_type="dataset",
-            )
-
-            print(f"⬇️ Downloaded dataset to: {hf_path}")
-            with open(hf_path, "r", encoding="utf-8") as f:
-                records = [json.loads(line) for line in f]
-
-        dataset = Dataset.from_list(records)
+            # lấy split đầu tiên nếu không có train
+            dataset = list(dataset.values())[0]
 
         print("📊 Dataset columns:", dataset.column_names)
         print("🔎 First sample:", dataset[0])
@@ -142,7 +127,7 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
         train_set = preformat(split["train"])
         val_set = preformat(split["test"])
 
-        # ---- Cache result ----
+        # ---- Cache ----
         with open(cache_file, "wb") as f:
             pickle.dump({"train": train_set, "val": val_set}, f)
 
@@ -156,7 +141,6 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
 
 if __name__ == "__main__":
     config = {
-        "path": "configs/dataset/venera_med_m1.yaml",
         "train_samples": -1,
         "train_val_split": 0.2,
     }
