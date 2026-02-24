@@ -6,7 +6,7 @@ model:
 
 datasets:
   - path: "configs/dataset/venera_med_m1.yaml"
-    train_samples: -1 
+    train_samples: -1
     train_val_split: 0.2
 
 benchmark:
@@ -20,7 +20,7 @@ training:
   output_dir: "group_outputs/outputs"
   per_device_train_batch_size: 4
   per_device_eval_batch_size: 4
-  num_train_epochs: 10
+  num_train_epochs: 2
   learning_rate: 2e-5
   weight_decay: 0.01
   warmup_steps: 50

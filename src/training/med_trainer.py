@@ -19,7 +19,6 @@ class MedTrainer(SFTTrainer):
         self.error_log = []
         self.samples_seen = 0
 
-    # ✅ PHẢI NẰM TRONG CLASS
     def compute_loss(
         self,
         model,
