@@ -352,3 +352,15 @@ pip install --upgrade --no-cache-dir "git+https://github.com/unslothai/unsloth-z
 [2026-02-24 05:34:57] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
 [2026-02-24 05:35:19] [INFO] Successfully saved results to group_outputs/baseline/270c460d-be6a-46cb-938c-a401101f7e45/mmlu.json
 [2026-02-24 05:35:19] [INFO] Ran benchmark group id fee07437bc3a4d35811bc1b92fadd913 with tags ['Baseline'], on group_outputs/baseline/270c460d-be6a-46cb-938c-a401101f7e45. Start: 7335.082402219, End: 7356.802126725, Duration: 0h 0m 21.72s
+[2026-02-27 01:26:19] [ERROR] Unsloth: No config file found - are you sure the `model_name` is correct?
+If you're using a model on your local device, confirm if the folder location exists.
+If you're using a HuggingFace online model, check if it exists.
+[2026-02-27 01:28:00] [ERROR] Unsloth: FP8 quantization is only supported on L4 and higher GPUs with compute capability 8.9 or higher. You are using NVIDIA A100-SXM4-40GB. Refer to https://developer.nvidia.com/cuda-gpus for more details.
+[2026-02-27 01:36:07] [INFO] Running multiple benchmarks
+[2026-02-27 01:36:07] [INFO] Running benchmark with tags ['Baseline']
+[2026-02-27 01:36:07] [INFO] Run baseline benchmark on group_outputs/baseline/a88c22ec-e581-4928-8776-4912f0f21b05
+[2026-02-27 01:36:07] [INFO] Creating evaluator...
+[2026-02-27 01:36:07] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/a88c22ec-e581-4928-8776-4912f0f21b05/mmlu.json
+[2026-02-27 01:36:07] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-02-27 01:36:44] [INFO] Successfully saved results to group_outputs/baseline/a88c22ec-e581-4928-8776-4912f0f21b05/mmlu.json
+[2026-02-27 01:36:44] [INFO] Ran benchmark group id dcce9a9e739d446da1608f1170fa6366 with tags ['Baseline'], on group_outputs/baseline/a88c22ec-e581-4928-8776-4912f0f21b05. Start: 890.952356863, End: 928.158738645, Duration: 0h 0m 37.21s
