@@ -24,16 +24,21 @@ from src.data.strategies.base import BaseDatasetStrategy
 
 def convert_to_conversations(example):
     """
-    Convert TradMedD format -> conversations format
-    Giả định dataset có dạng:
-    {
-        "question": "...",
-        "answer": "..."
-    }
+    Convert dataset format -> conversations format
+    Supports:
+    - TradMedInstructData format with "messages" field
+    - TradMedD format with "question" and "answer" fields
+    - Direct "conversations" field
     """
 
     if "conversations" in example:
         return example
+    
+    # TradMedInstructData format: messages -> conversations
+    if "messages" in example:
+        return {
+            "conversations": example["messages"]
+        }
 
     if "question" in example and "answer" in example:
         return {
@@ -101,7 +106,13 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
         # ---- Load dataset from HF ----
         print("⬇️ Loading dataset from Hugging Face Hub...")
 
-        dataset = load_dataset("Maverfrick/TradMedD")
+        # Get the data source from config if available, otherwise use default
+        data_source = config.get("data", "Maverfrick/TradMedInstructData")
+        # Extract dataset ID if it's a full URL
+        if "https://huggingface.co/datasets/" in data_source:
+            data_source = data_source.replace("https://huggingface.co/datasets/", "")
+        
+        dataset = load_dataset(data_source)
 
         # Nếu có nhiều split
         if "train" in dataset:
