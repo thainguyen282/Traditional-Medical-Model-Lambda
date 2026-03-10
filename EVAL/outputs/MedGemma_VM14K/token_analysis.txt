@@ -1,0 +1,22 @@
+Model: google-medgemma-1.5-4b-it
+Dataset: VM14K_Vietnamese
+============================================================
+STRATIFIED TOKEN PERFORMANCE ANALYSIS
+============================================================
+------------------------------
+
+Total Questions: 564
+Total Inference Time: 21.46s
+Overall Tokens/Second: 32067.42
+Total Tokens: 688216
+Total Prompt Tokens: 0
+Total Completion Tokens: 2355
+Avg Tokens per Question: 1220.2
+Questions per Second: 26.28
+
+BATCH TOKEN PERFORMANCE BY MEDICAL TOPIC:
+=======================================================
+
+Topic batch analysis was disabled.
+
+Difficulty batch analysis was disabled.
