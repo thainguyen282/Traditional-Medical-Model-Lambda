@@ -21,3 +21,6 @@ baseline
 app.log
 tm311
 TM-env/
+CPT/cpt_qwen3_medical/
+CPT/_unsloth_temporary_saved_buffers/
+_unsloth_temporary_saved_buffers/
