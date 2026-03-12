@@ -4,9 +4,8 @@ from datasets import load_dataset
 from unsloth import FastLanguageModel
 from unsloth import UnslothTrainer, UnslothTrainingArguments
 
-
 MODEL_NAME = "unsloth/Qwen3-4B-Instruct-2507"
-DATASET_PATH = "test_data.jsonl"
+# DATASET_PATH = ""
 OUTPUT_DIR = "cpt_qwen3_medical"
 
 MAX_SEQ_LENGTH = 2048
@@ -37,46 +36,30 @@ model = FastLanguageModel.get_peft_model(
     ],
 )
 
-
 dataset = load_dataset(
-    "json",
-    data_files=DATASET_PATH,
-    split="train"
+    "parquet",
+    data_files={
+        "train": "train-00000-of-00001.parquet",
+        "test": "test-00000-of-00001.parquet",
+    },
 )
 
-
-def tokenize(example):
-    return tokenizer(
-        example["text"],
-        truncation=True,
-        max_length=MAX_SEQ_LENGTH,
-    )
-
-dataset = dataset.map(tokenize, batched=True)
-
+dataset = dataset["train"]
 
 training_args = UnslothTrainingArguments(
-    
     output_dir=OUTPUT_DIR,
-
     per_device_train_batch_size=2,
     gradient_accumulation_steps=4,
-
-    warmup_steps=2,
-    max_steps=20,
-
-    learning_rate=2e-4,
+    warmup_steps=200,
+    max_steps=2000,
+    learning_rate=5e-5,
     embedding_learning_rate=2e-5,
-
     fp16=False,
     bf16=True,
-
     logging_steps=1,
-
     optim="adamw_8bit",
     lr_scheduler_type="cosine",
-
-    save_steps=10,
+    save_steps=40,
     save_total_limit=2,
 )
 
