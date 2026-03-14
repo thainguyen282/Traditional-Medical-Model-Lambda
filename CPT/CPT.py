@@ -13,12 +13,12 @@ MAX_SEQ_LENGTH = 2048
 model, tokenizer = FastLanguageModel.from_pretrained(
     model_name=MODEL_NAME,
     max_seq_length=MAX_SEQ_LENGTH,
-    load_in_4bit=True,
+    load_in_4bit=False,
 )
 
 model = FastLanguageModel.get_peft_model(
     model,
-    r=256,
+    r=32,
     lora_alpha=256,
     lora_dropout=0,
     bias="none",
@@ -31,8 +31,8 @@ model = FastLanguageModel.get_peft_model(
         "gate_proj",
         "up_proj",
         "down_proj",
-        "embed_tokens",
-        "lm_head",
+        # "embed_tokens",
+        # "lm_head",
     ],
 )
 
@@ -53,7 +53,7 @@ training_args = UnslothTrainingArguments(
     warmup_steps=200,
     max_steps=2000,
     learning_rate=5e-5,
-    embedding_learning_rate=2e-5,
+    # embedding_learning_rate=2e-5,
     fp16=False,
     bf16=True,
     logging_steps=1,
