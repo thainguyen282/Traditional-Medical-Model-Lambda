@@ -5,11 +5,12 @@ from unsloth import FastLanguageModel
 from unsloth import UnslothTrainer, UnslothTrainingArguments
 
 MODEL_NAME = "unsloth/Qwen3-4B-Instruct-2507"
-# DATASET_PATH = ""
 OUTPUT_DIR = "cpt_qwen3_medical"
-
 MAX_SEQ_LENGTH = 2048
 
+# =========================
+# LOAD MODEL
+# =========================
 model, tokenizer = FastLanguageModel.from_pretrained(
     model_name=MODEL_NAME,
     max_seq_length=MAX_SEQ_LENGTH,
@@ -24,28 +25,86 @@ model = FastLanguageModel.get_peft_model(
     bias="none",
     use_rslora=True,
     target_modules=[
-        "q_proj",
-        "k_proj",
-        "v_proj",
-        "o_proj",
-        "gate_proj",
-        "up_proj",
-        "down_proj",
-        # "embed_tokens",
-        # "lm_head",
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "gate_proj", "up_proj", "down_proj",
     ],
 )
 
+# =========================
+# LOAD DATASET
+# =========================
 dataset = load_dataset(
     "parquet",
     data_files={
         "train": "train-00000-of-00001.parquet",
-        "test": "test-00000-of-00001.parquet",
     },
-)
+)["train"]
 
-dataset = dataset["train"]
+print("Columns:", dataset.column_names)
+print("Sample:", dataset[0])
 
+# =========================
+# HELPER: CLEAN + SIMPLIFY TEXT
+# =========================
+def clean_text(text):
+    text = text.strip()
+    text = text.replace("\n", " ")
+    text = " ".join(text.split())
+    return text
+
+def simple_explanation(text):
+    """
+    Fake 'explanation' bằng cách:
+    - rút gọn
+    - giữ ý chính
+    """
+    text = clean_text(text)
+
+    # cắt bớt để tránh quá dài + giống hệt input
+    if len(text) > 300:
+        text = text[:300] + "..."
+
+    return text
+
+# =========================
+# FORMAT → CHAT TEMPLATE
+# =========================
+def format_text(example):
+    raw_text = example.get("text", "").strip()
+
+    if not raw_text:
+        return {"text": ""}
+
+    explanation = simple_explanation(raw_text)
+
+    messages = [
+        {
+            "role": "system",
+            "content": "Bạn là bác sĩ AI, giải thích kiến thức y học cổ truyền một cách dễ hiểu."
+        },
+        {
+            "role": "user",
+            "content": "Hãy giải thích nội dung sau một cách dễ hiểu:\n\n" + raw_text
+        },
+        {
+            "role": "assistant",
+            "content": explanation
+        },
+    ]
+
+    text = tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=False
+    )
+
+    return {"text": text}
+
+dataset = dataset.map(format_text)
+
+# =========================
+# TRAIN
+# =========================
 training_args = UnslothTrainingArguments(
     output_dir=OUTPUT_DIR,
     per_device_train_batch_size=2,
@@ -53,7 +112,6 @@ training_args = UnslothTrainingArguments(
     warmup_steps=200,
     max_steps=2000,
     learning_rate=5e-5,
-    # embedding_learning_rate=2e-5,
     fp16=False,
     bf16=True,
     logging_steps=1,

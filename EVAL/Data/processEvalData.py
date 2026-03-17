@@ -1,302 +1,340 @@
 import os
-import io
 import json
-import time
-import hashlib
+import uuid
 import random
-import requests
-import argparse
+import time
+import re
 import pandas as pd
-import google.generativeai as genai
-from pathlib import Path
-
-# ─── CONFIG ──────────────────────────────────────────────────────────────────
-import os
+from tqdm import tqdm
 from dotenv import load_dotenv
+import google.generativeai as genai
 
-load_dotenv()
-
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE")
-GEMINI_MODEL    = "gemini-2.5-flash"
-OUTPUT_FILE     = "tcm_mcq_dataset.jsonl"
-
-HF_REPO         = "Maverfrick/Continued-Pretraining-Vietnamese-TCM"
-
-# Map split name → tên file parquet trong repo (thư mục data/)
-PARQUET_FILES   = {
-    "train": "train-00000-of-00001.parquet",
-    "test":  "test-00000-of-00001.parquet",
-}
-
-MAX_ROWS        = 200
-SLEEP_BETWEEN   = 1.5
-TEXT_COLUMN     = "text"
-
-MEDICAL_TOPICS  = [
-    "Eastern Medicine", "General Medicine", "Cardiology", "Pulmonology",
-    "Nephrology", "Gastroenterology", "Neurology", "Hematology",
-    "Ophthalmology", "Dermatology", "Gynecology", "Pediatrics",
-    "Orthopedics", "Geriatrics", "Pharmacology",
+# ======================
+# CONFIG
+# ======================
+PARQUET_FILES = [
+    "train-00000-of-00001.parquet",
+    "test-00000-of-00001.parquet",
 ]
 
-# ─── PROMPT ──────────────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """Bạn là chuyên gia Y học cổ truyền Việt Nam. Nhiệm vụ là tạo câu hỏi trắc nghiệm từ đoạn văn bản y học.
+OUTPUT_FILE = "tcm_mcq.jsonl"
+MAX_SAMPLES_PER_FILE = 200
+MAX_CONTEXT_LENGTH = 1000
 
-Yêu cầu:
-- Tạo đúng 1 câu hỏi trắc nghiệm 4 đáp án từ đoạn văn bản
-- Câu hỏi phải liên quan trực tiếp đến nội dung trong đoạn văn
-- Có đúng 1 đáp án đúng, 3 đáp án sai nhưng hợp lý (không quá lộ liễu)
-- Đáp án sai phải liên quan đến chủ đề y học để tránh dễ đoán
-- Độ khó: Easy (khái niệm cơ bản), Moderate (ứng dụng lâm sàng), Hard (phân tích/chẩn đoán phức tạp)
+# ======================
+# LOAD ENV + MULTI KEYS
+# ======================
+load_dotenv()
 
-Trả về JSON thuần túy (không có markdown), theo schema:
-{
-  "difficulty_level": "Easy|Moderate|Hard",
-  "medical_topic": ["topic1"],
-  "question": "...",
-  "options": ["...", "...", "...", "..."],
-  "answer": "A|B|C|D"
-}
+API_KEYS = os.getenv("GEMINI_API_KEYS", "").split(",")
 
-Chủ đề hợp lệ: Eastern Medicine, General Medicine, Cardiology, Pulmonology, Nephrology,
-Gastroenterology, Neurology, Hematology, Ophthalmology, Dermatology, Gynecology,
-Pediatrics, Orthopedics, Geriatrics, Pharmacology
+if not API_KEYS or API_KEYS == [""]:
+    raise ValueError("❌ No API keys found in GEMINI_API_KEYS")
 
-QUAN TRỌNG: Chỉ trả về JSON, không thêm text nào khác."""
+key_index = 0
+key_fail_count = {k: 0 for k in API_KEYS}
+key_cooldown = {k: 0 for k in API_KEYS}
 
 
-# ─── PARQUET LOADER ───────────────────────────────────────────────────────────
+def get_next_key():
+    global key_index
 
-def hf_parquet_url(filename: str) -> str:
-    return f"https://huggingface.co/datasets/{HF_REPO}/resolve/main/data/{filename}"
+    for _ in range(len(API_KEYS)):
+        key = API_KEYS[key_index]
+        key_index = (key_index + 1) % len(API_KEYS)
 
+        if time.time() < key_cooldown[key]:
+            continue
 
-def load_parquet_from_url(url: str, hf_token: str | None = None) -> pd.DataFrame:
-    headers = {"Authorization": f"Bearer {hf_token}"} if hf_token else {}
-    print(f"⬇️  Downloading: {url}")
-    resp = requests.get(url, headers=headers, timeout=180, stream=True)
-    resp.raise_for_status()
+        return key
 
-    total = int(resp.headers.get("content-length", 0))
-    buf   = io.BytesIO()
-    downloaded = 0
-    for chunk in resp.iter_content(chunk_size=256 * 1024):
-        buf.write(chunk)
-        downloaded += len(chunk)
-        if total:
-            print(
-                f"\r   {downloaded/1e6:.1f} / {total/1e6:.1f} MB "
-                f"({downloaded/total*100:.0f}%)",
-                end="", flush=True,
-            )
-    print()
-    buf.seek(0)
-    return pd.read_parquet(buf)
-
-
-def load_texts(parquet_arg: str, split: str, hf_token: str | None = None) -> list[str]:
-    """
-    Load texts từ parquet. Thứ tự ưu tiên:
-      1. File local tồn tại  → đọc trực tiếp
-      2. URL (bắt đầu http)  → download
-      3. Split name / filename → tự build HF URL
-    """
-    local = Path(parquet_arg)
-    if local.exists():
-        print(f"📂 Reading local parquet: {local}")
-        df = pd.read_parquet(local)
-    elif parquet_arg.startswith("http"):
-        df = load_parquet_from_url(parquet_arg, hf_token)
-    else:
-        # parquet_arg có thể là split name ("train"/"test") hoặc tên file parquet
-        filename = PARQUET_FILES.get(parquet_arg) \
-                or PARQUET_FILES.get(split) \
-                or parquet_arg
-        url = hf_parquet_url(filename)
-        df  = load_parquet_from_url(url, hf_token)
-
-    print(f"✅ Loaded {len(df)} rows | columns: {list(df.columns)}")
-
-    # Detect cột text
-    col = TEXT_COLUMN
-    if col not in df.columns:
-        str_cols = [c for c in df.columns if df[c].dtype == object]
-        if str_cols:
-            col = str_cols[0]
-            print(f"⚠️  Cột '{TEXT_COLUMN}' không tồn tại, dùng '{col}'")
-        else:
-            raise ValueError(f"Không tìm thấy cột text trong {list(df.columns)}")
-
-    return df[col].dropna().astype(str).tolist()
-
-
-# ─── MCQ HELPERS ─────────────────────────────────────────────────────────────
-
-def make_id(text: str) -> str:
-    return hashlib.md5(text.encode()).hexdigest()
-
-
-def parse_gemini_response(raw: str) -> dict | None:
-    raw = raw.strip()
-    # Strip markdown code fence nếu có
-    if raw.startswith("```"):
-        lines = raw.splitlines()
-        end   = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
-        raw   = "\n".join(lines[1:end])
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        s = raw.find("{")
-        e = raw.rfind("}") + 1
-        if s != -1 and e > s:
-            try:
-                return json.loads(raw[s:e])
-            except json.JSONDecodeError:
-                pass
     return None
 
 
-def build_mcq_record(gj: dict, source_text: str) -> dict:
-    """Chuyển Gemini JSON → format JSONL mong muốn (với shuffle đáp án)"""
-    raw_opts = gj.get("options", [])
+def get_model():
+    key = get_next_key()
 
-    # Strip prefix A./B./C./D.
-    clean = []
-    for opt in raw_opts:
-        for p in ("A. ", "B. ", "C. ", "D. ", "A.", "B.", "C.", "D."):
-            if opt.startswith(p):
-                opt = opt[len(p):]
-                break
-        clean.append(opt.strip())
+    if not key:
+        print("⛔ All API keys exhausted. Sleeping 30s...")
+        time.sleep(30)
+        return get_model()
 
-    answer_letter = gj.get("answer", "A").strip().upper()
-    correct_idx   = {"A": 0, "B": 1, "C": 2, "D": 3}.get(answer_letter, 0)
-
-    # Shuffle giữ track đáp án đúng
-    indices           = list(range(len(clean)))
-    random.shuffle(indices)
-    shuffled_opts     = [clean[i] for i in indices]
-    new_answer_idx    = indices.index(correct_idx)
-    new_answer_letter = "ABCD"[new_answer_idx]
-
-    # Validate topics
-    raw_topics   = gj.get("medical_topic", ["Eastern Medicine"])
-    if isinstance(raw_topics, str):
-        raw_topics = [raw_topics]
-    valid_topics = [t for t in raw_topics if t in MEDICAL_TOPICS] or ["Eastern Medicine"]
-
-    return {
-        "id":               make_id(source_text[:100]),
-        "difficulty_level": gj.get("difficulty_level", "Moderate"),
-        "medical_topic":    valid_topics,
-        "question":         gj.get("question", "").strip(),
-        "options":          shuffled_opts,
-        "option_map":       indices,
-        "answer":           new_answer_letter,
-        "answer_index":     new_answer_idx,
-    }
+    genai.configure(api_key=key)
+    return genai.GenerativeModel("gemini-2.5-flash"), key
 
 
-def generate_mcq(model: genai.GenerativeModel, text: str) -> dict | None:
-    prompt = f"Đoạn văn bản y học:\n\n{text[:3000]}\n\nHãy tạo 1 câu hỏi trắc nghiệm từ đoạn trên."
-    try:
-        resp = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.7,
-                max_output_tokens=512,
-            ),
-        )
-        parsed = parse_gemini_response(resp.text)
-        if parsed:
-            return build_mcq_record(parsed, text)
-        print(f"  ⚠️  Parse lỗi: {resp.text[:120]}...")
-    except Exception as e:
-        print(f"  ❌ Gemini error: {e}")
-    return None
+# ======================
+# RATE LIMIT GLOBAL
+# ======================
+LAST_CALL = 0
+MIN_INTERVAL = 1.5
 
 
-# ─── MAIN ────────────────────────────────────────────────────────────────────
+def rate_limit():
+    global LAST_CALL
+    now = time.time()
+    wait = MIN_INTERVAL - (now - LAST_CALL)
+    if wait > 0:
+        time.sleep(wait)
+    LAST_CALL = time.time()
 
-def main():
-    ap = argparse.ArgumentParser(description="Generate TCM MCQ dataset with Gemini")
-    ap.add_argument(
-        "--parquet", default="train",
-        help=(
-            "Nguồn dữ liệu parquet. Có thể là:\n"
-            "  - 'train' hoặc 'test'  (auto-download từ HuggingFace)\n"
-            "  - Path file local      (vd: ./train-00000-of-00001.parquet)\n"
-            "  - URL trực tiếp        (vd: https://...parquet)"
-        ),
-    )
-    ap.add_argument("--split",     default="train",       help="Tên split khi tự build URL (train|test)")
-    ap.add_argument("--hf-token",  default=None,          help="HuggingFace token (dataset private)")
-    ap.add_argument("--max-rows",  type=int, default=MAX_ROWS, help="Số rows tối đa (default: 200, 0=toàn bộ)")
-    ap.add_argument("--output",    default=OUTPUT_FILE,   help="File JSONL đầu ra")
-    ap.add_argument("--api-key",   default=GEMINI_API_KEY,help="Gemini API key")
-    ap.add_argument("--sleep",     type=float, default=SLEEP_BETWEEN, help="Giây chờ giữa Gemini calls")
-    ap.add_argument("--resume",    action="store_true",   help="Tiếp tục từ lần chạy trước")
-    args = ap.parse_args()
 
-    if args.api_key == "YOUR_GEMINI_API_KEY_HERE":
-        print("❌  Set GEMINI_API_KEY hoặc dùng --api-key <key>")
-        return
+# ======================
+# LOAD EXISTING
+# ======================
+def load_existing_questions(file_path):
+    questions = set()
 
-    # Setup Gemini
-    genai.configure(api_key=args.api_key)
-    model = genai.GenerativeModel(GEMINI_MODEL, system_instruction=SYSTEM_PROMPT)
-
-    # Load parquet → list of texts
-    try:
-        texts = load_texts(args.parquet, args.split, args.hf_token)
-    except Exception as e:
-        print(f"❌  Không load được parquet: {e}")
-        return
-
-    # Giới hạn rows
-    limit = args.max_rows if args.max_rows and args.max_rows > 0 else len(texts)
-    texts = texts[:limit]
-
-    # Resume: đọc IDs đã có
-    existing_ids = set()
-    output_path  = Path(args.output)
-    if args.resume and output_path.exists():
-        with open(output_path, encoding="utf-8") as f:
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
             for line in f:
                 try:
-                    existing_ids.add(json.loads(line)["id"])
-                except Exception:
-                    pass
-        print(f"📂 Resume: đã có {len(existing_ids)} records")
+                    q = json.loads(line)["question"]
+                    questions.add(normalize_text(q))
+                except:
+                    continue
 
-    success = failed = 0
-    print(f"\n🚀 Xử lý {len(texts)} rows → {args.output}\n")
+    return questions
 
-    with open(output_path, "a" if args.resume else "w", encoding="utf-8") as out_f:
-        for i, text in enumerate(texts):
-            rid = make_id(text[:100])
-            if rid in existing_ids:
-                print(f"  ⏭️  Row {i} đã có, bỏ qua")
+
+# ======================
+# HELPERS
+# ======================
+def generate_id():
+    return uuid.uuid4().hex
+
+
+def normalize_text(text):
+    return re.sub(r"\s+", " ", text.strip().lower())
+
+
+def shuffle_options(options, correct_index):
+    indexed = list(enumerate(options))
+    random.shuffle(indexed)
+
+    new_options = [opt for _, opt in indexed]
+    option_map = [orig_idx for orig_idx, _ in indexed]
+
+    new_correct_index = option_map.index(correct_index)
+
+    return new_options, option_map, new_correct_index
+
+
+def clean_json(text):
+    text = re.sub(r"```json|```", "", text)
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    return text[start:end]
+
+
+def safe_parse(text):
+    try:
+        text = clean_json(text)
+        return json.loads(text)
+    except:
+        return None
+
+
+def is_bad_question(q):
+    q = q.lower()
+    blacklist = [
+        "đoạn văn", "nội dung sau", "dưới đây",
+        "theo đoạn", "dựa vào", "cho đoạn"
+    ]
+    return any(x in q for x in blacklist)
+
+
+# ======================
+# GEMINI CALL (MULTI KEY)
+# ======================
+def call_gemini(context, retries=5):
+    prompt = f"""
+Tạo 1 câu hỏi trắc nghiệm y học cổ truyền từ kiến thức dưới đây.
+
+YÊU CẦU:
+- Câu hỏi phải TỰ ĐỨNG ĐỘC LẬP
+- KHÔNG dùng các cụm như:
+  "theo đoạn văn", "dựa vào nội dung sau", "cho đoạn sau"
+- Giống đề thi thật
+
+- Có 4 đáp án
+- Chỉ 1 đáp án đúng
+- Không giải thích
+- Tiếng Việt
+
+Format JSON:
+{{
+"question": "...",
+"options": ["...", "...", "...", "..."],
+"answer_text": "đáp án đúng"
+}}
+
+Kiến thức:
+{context}
+"""
+
+    delay = 1
+
+    for attempt in range(retries):
+        model, key = get_model()
+
+        try:
+            rate_limit()
+
+            res = model.generate_content(prompt)
+
+            if not res.text:
+                raise ValueError("Empty response")
+
+            data = safe_parse(res.text)
+
+            if not data:
+                raise ValueError("JSON parse failed")
+
+            if (
+                "question" in data and
+                "options" in data and
+                "answer_text" in data and
+                len(data["options"]) == 4
+            ):
+                return data
+
+            raise ValueError("Invalid schema")
+
+        except Exception as e:
+            err = str(e)
+            print(f"[Retry {attempt+1}] Key={key[:8]}... Error:", err[:120])
+
+            key_fail_count[key] += 1
+
+            # quota / rate limit
+            if "quota" in err.lower() or "429" in err:
+                key_cooldown[key] = time.time() + 60
+                print(f"⏳ Cooldown 60s: {key[:8]}...")
+
+            # fail nhiều → cooldown lâu hơn
+            if key_fail_count[key] >= 3:
+                key_cooldown[key] = time.time() + 120
+                key_fail_count[key] = 0
+
+            time.sleep(delay)
+            delay = min(delay * 2, 10)
+
+    return None
+
+
+# ======================
+# PROCESS ANSWER
+# ======================
+def process_answer(options, answer_text):
+    if answer_text not in options:
+        return None
+
+    correct_index = options.index(answer_text)
+
+    new_options, option_map, new_index = shuffle_options(
+        options, correct_index
+    )
+
+    return new_options, option_map, new_index, answer_text
+
+
+def infer_topic(text):
+    text = text.lower()
+    topics = ["Eastern Medicine"]
+
+    if "phế" in text:
+        topics.append("Pulmonology")
+    if "thận" in text:
+        topics.append("Nephrology")
+    if "tâm" in text:
+        topics.append("Cardiology")
+    if "thần kinh" in text:
+        topics.append("Neurology")
+
+    return list(set(topics))
+
+
+def infer_difficulty(text):
+    l = len(text)
+    if l < 80:
+        return "Easy"
+    elif l < 200:
+        return "Moderate"
+    return "Hard"
+
+
+# ======================
+# MAIN PROCESS
+# ======================
+def process_parquet(file_path, f, existing_questions):
+    df = pd.read_parquet(file_path)
+    df = df.sample(min(MAX_SAMPLES_PER_FILE, len(df)))
+
+    for _, row in tqdm(df.iterrows(), total=len(df)):
+        try:
+            context = " ".join([str(v) for v in row.values])
+            context = context[:MAX_CONTEXT_LENGTH]
+
+            data = call_gemini(context)
+            if not data:
+                print("❌ Skip: Gemini failed")
                 continue
 
-            print(f"  🔄 [{i+1}/{len(texts)}]", end=" ")
-            record = generate_mcq(model, text)
+            question = data["question"]
+            options = data["options"]
+            answer_text = data["answer_text"]
 
-            if record:
-                out_f.write(json.dumps(record, ensure_ascii=False) + "\n")
-                out_f.flush()
-                success += 1
-                print(f"✅ [{record['difficulty_level']}] {record['question'][:70]}...")
-            else:
-                failed += 1
-                print("❌ Bỏ qua")
+            if is_bad_question(question):
+                print("⚠️ Skip: bad question")
+                continue
 
-            time.sleep(args.sleep)
+            norm_q = normalize_text(question)
+            if norm_q in existing_questions:
+                print("⚠️ Skip: duplicate")
+                continue
 
-    print(f"\n🎉 Hoàn thành!")
-    print(f"   ✅ Thành công : {success}")
-    print(f"   ❌ Thất bại   : {failed}")
-    print(f"   📄 Output     : {output_path.resolve()}")
+            processed = process_answer(options, answer_text)
+            if not processed:
+                print("⚠️ Skip: answer mismatch")
+                continue
+
+            options, option_map, new_idx, answer_text = processed
+
+            sample = {
+                "id": generate_id(),
+                "difficulty_level": infer_difficulty(question),
+                "medical_topic": infer_topic(question),
+                "question": question,
+                "options": options,
+                "option_map": option_map,
+                "answer": answer_text,
+                "answer_index": new_idx
+            }
+
+            f.write(json.dumps(sample, ensure_ascii=False) + "\n")
+            f.flush()
+
+            existing_questions.add(norm_q)
+
+            # random delay chống detect
+            time.sleep(random.uniform(1.5, 3.5))
+
+        except Exception as e:
+            print("🔥 Unexpected error:", str(e)[:100])
+            continue
+
+
+def main():
+    existing_questions = load_existing_questions(OUTPUT_FILE)
+    print(f"Loaded {len(existing_questions)} existing questions")
+
+    with open(OUTPUT_FILE, "a", encoding="utf-8") as f:
+        for file in PARQUET_FILES:
+            print(f"\n🚀 Processing {file}...")
+            process_parquet(file, f, existing_questions)
+
+    print("\n✅ Done!")
 
 
 if __name__ == "__main__":
