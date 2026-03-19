@@ -125,10 +125,12 @@ class TrainCommand:
             # --------------------------------------------------
             # TRAIN
             # --------------------------------------------------
-            trainer.train()
-
+            # trainer.train()
+            trainer.train(
+                resume_from_checkpoint="CPT/cpt_qwen3_medical/checkpoint-1240"
+            )
             # --------------------------------------------------
-            # 🔥 HARD MEMORY CLEANUP
+            # HARD MEMORY CLEANUP
             # --------------------------------------------------
             if trainer:
                 trainer.model = None
