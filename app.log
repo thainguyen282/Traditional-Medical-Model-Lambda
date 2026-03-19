@@ -397,3 +397,12 @@ If you're using a HuggingFace online model, check if it exists.
 [2026-03-10 11:12:20] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
 [2026-03-10 11:13:01] [INFO] Successfully saved results to group_outputs/baseline/326758fd-378f-4a94-92b3-80b815e2bab1/mmlu.json
 [2026-03-10 11:13:01] [INFO] Ran benchmark group id f068bd38858341e89805e696c2b8d441 with tags ['Baseline'], on group_outputs/baseline/326758fd-378f-4a94-92b3-80b815e2bab1. Start: 2103.197465912, End: 2143.786138701, Duration: 0h 0m 40.59s
+[2026-03-19 10:11:49] [INFO] Running multiple benchmarks
+[2026-03-19 10:11:49] [INFO] Running benchmark with tags ['Baseline']
+[2026-03-19 10:11:49] [INFO] Run baseline benchmark on group_outputs/baseline/34e9b0e5-192c-4049-9370-24fd46094a0d
+[2026-03-19 10:11:49] [INFO] Creating evaluator...
+[2026-03-19 10:11:49] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/34e9b0e5-192c-4049-9370-24fd46094a0d/mmlu.json
+[2026-03-19 10:11:49] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-03-19 10:12:30] [INFO] Successfully saved results to group_outputs/baseline/34e9b0e5-192c-4049-9370-24fd46094a0d/mmlu.json
+[2026-03-19 10:12:30] [INFO] Ran benchmark group id 332ac99662b944d2930f95bfc079c953 with tags ['Baseline'], on group_outputs/baseline/34e9b0e5-192c-4049-9370-24fd46094a0d. Start: 1387.642078037, End: 1428.470448444, Duration: 0h 0m 40.83s
+[2026-03-19 15:27:14] [ERROR] CUDA out of memory. Tried to allocate 836.00 MiB. GPU 0 has a total capacity of 39.38 GiB of which 352.25 MiB is free. Process 5616 has 31.67 GiB memory in use. Including non-PyTorch memory, this process has 1.08 GiB memory in use. Process 4323 has 6.27 GiB memory in use. Of the allocated memory 555.59 MiB is allocated by PyTorch, and 26.41 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

@@ -1,0 +1,22 @@
+Model: unsloth-qwen3-4b-instruct
+Dataset: VM14K_Vietnamese
+============================================================
+STRATIFIED TOKEN PERFORMANCE ANALYSIS
+============================================================
+------------------------------
+
+Total Questions: 105
+Total Inference Time: 179.93s
+Overall Tokens/Second: 123.72
+Total Tokens: 22260
+Total Prompt Tokens: 0
+Total Completion Tokens: 420
+Avg Tokens per Question: 212.0
+Questions per Second: 0.58
+
+BATCH TOKEN PERFORMANCE BY MEDICAL TOPIC:
+=======================================================
+
+Topic batch analysis was disabled.
+
+Difficulty batch analysis was disabled.
