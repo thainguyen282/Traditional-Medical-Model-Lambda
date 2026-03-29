@@ -11,6 +11,7 @@ class MedTrainer(SFTTrainer):
         self.dataset_names = kwargs.pop("dataset_names", {})
         self.tracker = kwargs.pop("tracker", None)
         self.benchmark_evaluator = kwargs.pop("benchmark_evaluator", None)
+        self.run_id = kwargs.pop("run_id", None)
 
         super().__init__(*args, **kwargs)
 

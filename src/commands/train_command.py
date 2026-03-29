@@ -125,10 +125,36 @@ class TrainCommand:
             # --------------------------------------------------
             # TRAIN
             # --------------------------------------------------
-            # trainer.train()
-            trainer.train(
-                resume_from_checkpoint="CPT/cpt_qwen3_medical/checkpoint-1240"
+            trainer.train()
+
+            # --------------------------------------------------
+            # SAVE TRAINED MODEL
+            # --------------------------------------------------
+            trainer.save_model(model_output_dir)
+            tokenizer.save_pretrained(model_output_dir)
+            self.logger.info(f"Trained model saved to {model_output_dir}")
+
+            # --------------------------------------------------
+            # EVAL TRAINED MODEL (with LoRA)
+            # --------------------------------------------------
+            FastLanguageModel.for_inference(model)
+            eval_config = self.config.get("benchmark", {}).get("path", "")
+
+            benchmark_evaluator.run_multiple(
+                configs=[
+                    {
+                        "benchmark_tags": ["Trained"],
+                        "eval_config": eval_config,
+                        "train_config": copy.deepcopy(self.config),
+                        "model": model,
+                        "tokenizer": tokenizer,
+                        "output_dir": eval_output_dir,
+                        "trained": True,
+                        "rerun": True,
+                    }
+                ]
             )
+
             # --------------------------------------------------
             # HARD MEMORY CLEANUP
             # --------------------------------------------------
@@ -140,11 +166,10 @@ class TrainCommand:
             gc.collect()
             torch.cuda.empty_cache()
             torch.cuda.ipc_collect()
-
             torch.cuda.synchronize()
 
             # --------------------------------------------------
-            # Load fresh baseline (NO LORA)
+            # EVAL BASELINE (NO LORA)
             # --------------------------------------------------
             with torch.no_grad():
                 baseline_model, baseline_tokenizer = self._load_baseline_model()
@@ -152,8 +177,6 @@ class TrainCommand:
                 baseline_model.eval()
                 for param in baseline_model.parameters():
                     param.requires_grad = False
-
-                eval_config = self.config.get("benchmark", {}).get("path", "")
 
                 benchmark_evaluator.run_multiple(
                     configs=[

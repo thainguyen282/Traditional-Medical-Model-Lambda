@@ -1,0 +1,22 @@
+Model: qwen3-4b-cpt-sft-lora
+Dataset: VM14K_Vietnamese
+============================================================
+STRATIFIED TOKEN PERFORMANCE ANALYSIS
+============================================================
+------------------------------
+
+Total Questions: 564
+Total Inference Time: 1210.78s
+Overall Tokens/Second: 4683.21
+Total Tokens: 5670343
+Total Prompt Tokens: 0
+Total Completion Tokens: 20364
+Avg Tokens per Question: 10053.8
+Questions per Second: 0.47
+
+BATCH TOKEN PERFORMANCE BY MEDICAL TOPIC:
+=======================================================
+
+Topic batch analysis was disabled.
+
+Difficulty batch analysis was disabled.

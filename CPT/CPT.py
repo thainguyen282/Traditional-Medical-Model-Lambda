@@ -109,8 +109,8 @@ training_args = UnslothTrainingArguments(
     output_dir=OUTPUT_DIR,
     per_device_train_batch_size=2,
     gradient_accumulation_steps=4,
-    warmup_steps=200,
-    max_steps=2000,
+    warmup_steps=2,
+    max_steps=40,
     learning_rate=5e-5,
     fp16=False,
     bf16=True,
@@ -134,5 +134,12 @@ trainer.train()
 
 trainer.save_model(OUTPUT_DIR)
 tokenizer.save_pretrained(OUTPUT_DIR)
+
+# Merge LoRA vào base model để SFT có thể dùng làm base
+MERGED_DIR = "cpt_qwen3_medical_merged"
+merged_model = model.merge_and_unload()
+merged_model.save_pretrained(MERGED_DIR)
+tokenizer.save_pretrained(MERGED_DIR)
+print(f"Merged model saved to {MERGED_DIR}")
 
 print("Training complete.")
