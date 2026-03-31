@@ -3,7 +3,6 @@ from typing import Dict, Any, Optional
 import torch
 import os
 import copy
-from functools import partial
 import gc
 
 from src.core.loggers.interfaces.Ilogger import ILogger
@@ -14,7 +13,7 @@ from src.training.med_trainer import MedTrainer
 from src.core.loggers.term_logger import TerminalLogger
 
 from src.data.data_manager import DatasetManager
-from src.data.format import format_conversations
+from src.data.format import conversations_to_prompt_completion
 from unsloth.chat_templates import get_chat_template
 from src.evaluation.benchmark import Benchmarker
 
@@ -62,25 +61,29 @@ class TrainCommand:
             # --------------------------------------------------
             model, tokenizer = self._load_training_model()
 
-            formatting_func = partial(
-                format_conversations,
-                tokenizer=tokenizer,
-            )
-
             # --------------------------------------------------
             # Dataset
             # --------------------------------------------------
             data_manager = DatasetManager()
             data_manager.store_datasets(self.config["datasets"])
 
-            if not data_manager.validate_datasets(
-                self.validate_samples,
-                formatting_func,
-            ):
+            if not data_manager.validate_datasets(self.validate_samples):
                 raise ValueError("Dataset validation failed")
 
             train_dataset, val_dataset, train_ladder, val_ladder = (
                 data_manager.load_combined_datasets()
+            )
+
+            # Convert conversations → prompt/completion for Unsloth completion masking
+            train_dataset = train_dataset.map(
+                conversations_to_prompt_completion,
+                remove_columns=["conversations"],
+                desc="Converting train to prompt/completion",
+            )
+            val_dataset = val_dataset.map(
+                conversations_to_prompt_completion,
+                remove_columns=["conversations"],
+                desc="Converting val to prompt/completion",
             )
 
             # --------------------------------------------------
@@ -97,6 +100,7 @@ class TrainCommand:
             eval_output_dir = os.path.join(output_dir, "benchmark_evaluations")
 
             train_config["output_dir"] = model_output_dir
+            train_config["max_seq_length"] = self.config["model"].get("max_seq_length", 2048)
 
             training_args = ArgumentBuilder.build(train_config=train_config)
 
@@ -116,7 +120,6 @@ class TrainCommand:
                 eval_dataset=val_dataset,
                 train_idx_ladder=train_ladder,
                 val_idx_ladder=val_ladder,
-                formatting_func=formatting_func,
                 run_id=self.run_id,
                 tracker=self.tracker,
                 benchmark_evaluator=benchmark_evaluator,
@@ -219,7 +222,7 @@ class TrainCommand:
             max_seq_length=self.config["model"]["max_seq_length"],
             load_in_4bit=self.config["unsloth"]["load_in_4bit"],
             attn_implementation=self.config["unsloth"]["attn_implementation"],
-            device_map="auto",
+            device_map={"": 0},
         )
 
         model_name = self.config["model"]["name"]
@@ -249,7 +252,7 @@ class TrainCommand:
             max_seq_length=self.config["model"]["max_seq_length"],
             load_in_4bit=self.config["unsloth"]["load_in_4bit"],
             attn_implementation=self.config["unsloth"]["attn_implementation"],
-            device_map="auto",
+            device_map={"": 0},
         )
 
         model_name = self.config["model"]["name"]

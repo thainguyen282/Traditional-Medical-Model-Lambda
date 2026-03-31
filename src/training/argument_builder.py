@@ -1,12 +1,13 @@
 from typing import Dict, Any
-from transformers import TrainingArguments
+from trl import SFTConfig
+
 
 class ArgumentBuilder:
     @staticmethod
-    def build(train_config: Dict[str, Any]) -> TrainingArguments:
+    def build(train_config: Dict[str, Any]) -> SFTConfig:
         output_dir = train_config.get("output_dir", "./outputs")
 
-        return TrainingArguments(
+        return SFTConfig(
             output_dir=output_dir,
             per_device_train_batch_size=train_config.get("per_device_train_batch_size", 2),
             gradient_accumulation_steps=train_config.get("gradient_accumulation_steps", 4),
@@ -35,4 +36,8 @@ class ArgumentBuilder:
 
             fp16=train_config.get("fp16", False),
             bf16=train_config.get("bf16", False),
+
+            # SFT-specific: only compute loss on completion tokens
+            # completion_only_loss auto-detects from prompt/completion columns
+            max_length=train_config.get("max_seq_length", 2048),
         )

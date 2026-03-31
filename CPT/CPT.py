@@ -84,7 +84,7 @@ def format_text(example):
         },
         {
             "role": "user",
-            "content": "Hãy giải thích nội dung sau một cách dễ hiểu:\n\n" + raw_text
+            "content": raw_text
         },
         {
             "role": "assistant",
@@ -109,8 +109,8 @@ training_args = UnslothTrainingArguments(
     output_dir=OUTPUT_DIR,
     per_device_train_batch_size=2,
     gradient_accumulation_steps=4,
-    warmup_steps=2,
-    max_steps=40,
+    warmup_steps=200,
+    max_steps=2000,
     learning_rate=5e-5,
     fp16=False,
     bf16=True,

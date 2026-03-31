@@ -105,7 +105,7 @@ pure_eval==0.2.3
 pyarrow==23.0.1
 pydantic==2.12.5
 pydantic_core==2.41.5
-Pygments==2.19.2
+Pygments==2.20.0
 pyparsing==3.3.2
 pytablewriter==1.2.1
 python-dateutil==2.9.0.post0
@@ -150,7 +150,7 @@ typing-inspection==0.4.2
 typing_extensions==4.15.0
 tyro==1.0.7
 tzdata==2025.3
-unsloth @ git+https://github.com/unslothai/unsloth.git@a6c1f893fc87c0973f9c32e59ca3d7d54ffb9724
+unsloth @ git+https://github.com/unslothai/unsloth.git@9451bb1bacc7cb5b7b9f2ad3448a19b4c7752bbd
 unsloth_zoo==2026.3.6
 urllib3==2.6.3
 wandb==0.25.0

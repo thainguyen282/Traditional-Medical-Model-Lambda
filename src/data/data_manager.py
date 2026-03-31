@@ -29,28 +29,22 @@ class DatasetManager:
             print("---------------processed dataset-----------------",tag)
             self.library[tag] = {"train": train_set, "val": val_set, "tag": tag}
 
-    def validate_datasets(self, n_samples, formatting_func=None):
-
+    def validate_datasets(self, n_samples):
         for tag in self.library:
-
             train_dataset = self.library[tag]["train"]
             val_dataset = self.library[tag]["val"]
 
-            for i in range(min(len(train_dataset), n_samples)):
-                try:
-                    formatting_func(train_dataset[i])
-                except Exception as e:
-                    print(
-                        f"Error formatting train dataset {tag} at index {i} sample {train_dataset[i]} : {e}"
-                    )
-            for i in range(min(len(val_dataset), n_samples)):
-                try:
-                    formatting_func(val_dataset[i])
-                except Exception as e:
-                    print(
-                        f"Error formatting val dataset {tag} at index {i} sample {val_dataset[i]} : {e}"
-                    )
-                    return False
+            for ds_name, ds in [("train", train_dataset), ("val", val_dataset)]:
+                for i in range(min(len(ds), n_samples)):
+                    sample = ds[i]
+                    convs = sample.get("conversations") or sample.get("messages")
+                    if not convs or not isinstance(convs, list):
+                        print(f"Error: {tag} {ds_name}[{i}] missing conversations field")
+                        return False
+                    for msg in convs:
+                        if "role" not in msg or "content" not in msg:
+                            print(f"Error: {tag} {ds_name}[{i}] message missing role/content: {msg}")
+                            return False
         return True
 
     def load_combined_datasets(self):
