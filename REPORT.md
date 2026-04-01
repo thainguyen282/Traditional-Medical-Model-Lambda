@@ -2,7 +2,7 @@
 
 **Ngày: 31/03/2026**
 
-### 🔎 Nhận xét chung 3 model
+### Nhận xét chung 3 model
 
 - **Qwen3-4B-Gốc**
   - Accuracy:
