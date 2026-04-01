@@ -46,7 +46,7 @@
 
 ---
 
-### ⚖️ Kết luận nhanh
+### Kết luận nhanh
 
 - **Tốt nhất tổng thể:** Qwen3-4B-Gốc  
 - **Tốt nhất domain YHCT:** Qwen3-4B-CPT (nhưng thiếu ổn định)  
