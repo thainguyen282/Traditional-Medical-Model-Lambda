@@ -4,6 +4,7 @@ model:
   # Dùng model đã merge CPT LoRA (output của CPT/CPT.py)
   # Đổi về "unsloth/Qwen3-4B-Instruct-2507" nếu muốn SFT từ model gốc
   name: "CPT/cpt_qwen3_medical_merged"
+  # name: "unsloth/Qwen3-4B-Instruct-2507"
   max_seq_length: 2048
 
 datasets:
@@ -29,31 +30,37 @@ training:
   lr_scheduler_type: "cosine"
   optim: "adamw_8bit"
   eval_strategy: "steps"
-  eval_steps: 200
+  eval_steps: 40
   save_total_limit: 2
   logging_steps: 10
   fp16: false
   bf16: true
-  save_steps: 200
+  save_steps: 40
   seed: 3407
   gradient_checkpointing: true
   load_best_model_at_end: true
   metric_for_best_model: "eval_loss"
 
 lora:
-  r: 32
-  lora_alpha: 32
+  r: 8
+  lora_alpha: 16
   lora_dropout: 0
   target_modules:
     - "q_proj"
-    - "k_proj"
     - "v_proj"
-    - "o_proj"
-    - "gate_proj"
-    - "up_proj"
-    - "down_proj"
   bias: "none"
   use_rslora: false
+
+layer_freeze:
+  freeze_ratio: 0.5  # Freeze 50% bottom layers
+
+ewc:
+  enabled: true
+  lambda: 500  # EWC penalty strength
+  num_samples: 200  # Samples to estimate Fisher information
+  fisher_dataset: "parquet"
+  fisher_data_files: "CPT/train-00000-of-00001.parquet"  # CPT data đông y
+  fisher_max_length: 512
 
 monitoring:
   project: "VeneraMedicalM1"

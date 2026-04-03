@@ -486,3 +486,78 @@ If you're using a HuggingFace online model, check if it exists.
 [2026-03-31 14:31:27] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
 [2026-03-31 14:31:40] [INFO] Successfully saved results to group_outputs/baseline/3800f5da-e464-46c9-8d59-a408c063458f/mmlu.json
 [2026-03-31 14:31:40] [INFO] Ran benchmark group id 64413fe596be475e956b1c2db57039ca with tags ['Baseline'], on group_outputs/baseline/3800f5da-e464-46c9-8d59-a408c063458f. Start: 9376.113252816, End: 9388.906017623, Duration: 0h 0m 12.79s
+[2026-04-02 14:21:57] [INFO] Trained model saved to group_outputs/outputs/6yt43sln/model
+[2026-04-02 14:21:57] [INFO] Running multiple benchmarks
+[2026-04-02 14:21:57] [INFO] Running benchmark with tags ['Trained']
+[2026-04-02 14:21:57] [INFO] Run benchmark on trained model → group_outputs/outputs/6yt43sln/benchmark_evaluations
+[2026-04-02 14:21:57] [INFO] Creating evaluator...
+[2026-04-02 14:21:57] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/6yt43sln/benchmark_evaluations/mmlu.json
+[2026-04-02 14:21:57] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-02 14:22:17] [INFO] Successfully saved results to group_outputs/outputs/6yt43sln/benchmark_evaluations/mmlu.json
+[2026-04-02 14:22:17] [INFO] Ran benchmark group id ffd38691ffbc47af8570fac15a303a6f with tags ['Trained'], on group_outputs/outputs/6yt43sln/benchmark_evaluations. Start: 1320.644440886, End: 1339.979006429, Duration: 0h 0m 19.33s
+[2026-04-02 14:22:37] [INFO] Running multiple benchmarks
+[2026-04-02 14:22:37] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-02 14:22:37] [INFO] Run baseline benchmark on group_outputs/baseline/cde75009-bf50-48fe-b13d-ea69e1db2f36
+[2026-04-02 14:22:37] [INFO] Creating evaluator...
+[2026-04-02 14:22:37] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/cde75009-bf50-48fe-b13d-ea69e1db2f36/mmlu.json
+[2026-04-02 14:22:37] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-02 14:22:50] [INFO] Successfully saved results to group_outputs/baseline/cde75009-bf50-48fe-b13d-ea69e1db2f36/mmlu.json
+[2026-04-02 14:22:50] [INFO] Ran benchmark group id 13afba65dad1407f85381bb8493b9ab4 with tags ['Baseline'], on group_outputs/baseline/cde75009-bf50-48fe-b13d-ea69e1db2f36. Start: 1360.260664479, End: 1372.932397782, Duration: 0h 0m 12.67s
+[2026-04-02 14:56:00] [INFO] Trained model saved to group_outputs/outputs/ans8x48r/model
+[2026-04-02 14:56:00] [INFO] Running multiple benchmarks
+[2026-04-02 14:56:00] [INFO] Running benchmark with tags ['Trained']
+[2026-04-02 14:56:00] [INFO] Run benchmark on trained model → group_outputs/outputs/ans8x48r/benchmark_evaluations
+[2026-04-02 14:56:00] [INFO] Creating evaluator...
+[2026-04-02 14:56:00] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/ans8x48r/benchmark_evaluations/mmlu.json
+[2026-04-02 14:56:00] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-02 14:56:14] [INFO] Successfully saved results to group_outputs/outputs/ans8x48r/benchmark_evaluations/mmlu.json
+[2026-04-02 14:56:14] [INFO] Ran benchmark group id 27d4d28543bb42ef98e79086dfc120b6 with tags ['Trained'], on group_outputs/outputs/ans8x48r/benchmark_evaluations. Start: 3363.337724832, End: 3377.321684173, Duration: 0h 0m 13.98s
+[2026-04-02 14:56:33] [INFO] Running multiple benchmarks
+[2026-04-02 14:56:33] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-02 14:56:33] [INFO] Run baseline benchmark on group_outputs/baseline/a8e4d879-476a-493d-8303-5eb2c6067d4e
+[2026-04-02 14:56:33] [INFO] Creating evaluator...
+[2026-04-02 14:56:33] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/a8e4d879-476a-493d-8303-5eb2c6067d4e/mmlu.json
+[2026-04-02 14:56:33] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-02 14:56:46] [INFO] Successfully saved results to group_outputs/baseline/a8e4d879-476a-493d-8303-5eb2c6067d4e/mmlu.json
+[2026-04-02 14:56:46] [INFO] Ran benchmark group id 07395bd7162f4a9880380d88bb31a3d8 with tags ['Baseline'], on group_outputs/baseline/a8e4d879-476a-493d-8303-5eb2c6067d4e. Start: 3396.588777414, End: 3409.240741072, Duration: 0h 0m 12.65s
+[2026-04-02 15:09:02] [INFO] Froze 18/36 bottom layers (ratio=0.5)
+[2026-04-02 15:09:16] [ERROR] index -1 is out of bounds for dimension 1 with size 0
+[2026-04-02 15:11:18] [INFO] Froze 18/36 bottom layers (ratio=0.5)
+[2026-04-02 15:23:02] [INFO] Trained model saved to group_outputs/outputs/vxx1j33i/model
+[2026-04-02 15:23:02] [INFO] Running multiple benchmarks
+[2026-04-02 15:23:02] [INFO] Running benchmark with tags ['Trained']
+[2026-04-02 15:23:02] [INFO] Run benchmark on trained model → group_outputs/outputs/vxx1j33i/benchmark_evaluations
+[2026-04-02 15:23:02] [INFO] Creating evaluator...
+[2026-04-02 15:23:02] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/vxx1j33i/benchmark_evaluations/mmlu.json
+[2026-04-02 15:23:02] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-02 15:23:16] [INFO] Successfully saved results to group_outputs/outputs/vxx1j33i/benchmark_evaluations/mmlu.json
+[2026-04-02 15:23:16] [INFO] Ran benchmark group id b84cacb948cf419aac33498c1171aa32 with tags ['Trained'], on group_outputs/outputs/vxx1j33i/benchmark_evaluations. Start: 4985.845263797, End: 4999.669642685, Duration: 0h 0m 13.82s
+[2026-04-02 15:23:36] [INFO] Running multiple benchmarks
+[2026-04-02 15:23:36] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-02 15:23:36] [INFO] Run baseline benchmark on group_outputs/baseline/09889e58-5c08-42ec-bc30-55e2af808c44
+[2026-04-02 15:23:36] [INFO] Creating evaluator...
+[2026-04-02 15:23:36] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/09889e58-5c08-42ec-bc30-55e2af808c44/mmlu.json
+[2026-04-02 15:23:36] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-02 15:23:48] [INFO] Successfully saved results to group_outputs/baseline/09889e58-5c08-42ec-bc30-55e2af808c44/mmlu.json
+[2026-04-02 15:23:48] [INFO] Ran benchmark group id 0235314fe923449690c076d34dc8002f with tags ['Baseline'], on group_outputs/baseline/09889e58-5c08-42ec-bc30-55e2af808c44. Start: 5018.927215931, End: 5031.636380674, Duration: 0h 0m 12.71s
+[2026-04-02 15:55:23] [INFO] Froze 18/36 bottom layers (ratio=0.5)
+[2026-04-02 15:55:36] [ERROR] Dataset scripts are no longer supported, but found CPT.py
+[2026-04-02 15:57:25] [INFO] Froze 18/36 bottom layers (ratio=0.5)
+[2026-04-02 16:00:00] [INFO] Froze 18/36 bottom layers (ratio=0.5)
+[2026-04-02 16:11:57] [INFO] Trained model saved to group_outputs/outputs/0nebib07/model
+[2026-04-02 16:11:57] [INFO] Running multiple benchmarks
+[2026-04-02 16:11:57] [INFO] Running benchmark with tags ['Trained']
+[2026-04-02 16:11:57] [INFO] Run benchmark on trained model → group_outputs/outputs/0nebib07/benchmark_evaluations
+[2026-04-02 16:11:57] [INFO] Creating evaluator...
+[2026-04-02 16:11:57] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/0nebib07/benchmark_evaluations/mmlu.json
+[2026-04-02 16:11:57] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-02 16:12:11] [INFO] Successfully saved results to group_outputs/outputs/0nebib07/benchmark_evaluations/mmlu.json
+[2026-04-02 16:12:11] [INFO] Ran benchmark group id af118a8a4e8b494a9d777c922b4d45ac with tags ['Trained'], on group_outputs/outputs/0nebib07/benchmark_evaluations. Start: 7920.556494316, End: 7934.536738907, Duration: 0h 0m 13.98s
+[2026-04-02 16:12:31] [INFO] Running multiple benchmarks
+[2026-04-02 16:12:31] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-02 16:12:31] [INFO] Run baseline benchmark on group_outputs/baseline/a453e086-bb53-440f-83b2-46773bb36226
+[2026-04-02 16:12:31] [INFO] Creating evaluator...
+[2026-04-02 16:12:31] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/a453e086-bb53-440f-83b2-46773bb36226/mmlu.json
+[2026-04-02 16:12:31] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-02 16:12:44] [INFO] Successfully saved results to group_outputs/baseline/a453e086-bb53-440f-83b2-46773bb36226/mmlu.json
+[2026-04-02 16:12:44] [INFO] Ran benchmark group id be4fa8ec5c314bfc92b64cd887e4d3ce with tags ['Baseline'], on group_outputs/baseline/a453e086-bb53-440f-83b2-46773bb36226. Start: 7954.328414469, End: 7967.150962638, Duration: 0h 0m 12.82s

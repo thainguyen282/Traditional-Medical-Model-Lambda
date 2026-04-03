@@ -12,11 +12,11 @@ EASY DIFFICULTY - Topics Ranked by Accuracy:
 ------------------------------------------------------------
 
 Rank 1: Eastern Medicine
- - Accuracy: 42.11% (8/19)
+ - Accuracy: 52.63% (10/19)
  - Total Questions: 19
- - Incorrect Answers: 11
- - Deviations: 4
- - Incorrect due to Deviation: 4 (36.36%)
+ - Incorrect Answers: 9
+ - Deviations: 1
+ - Incorrect due to Deviation: 1 (11.11%)
 
 Rank 2: Pulmonology
  - Accuracy: 0.00% (0/1)
@@ -36,24 +36,24 @@ Rank 1: Neurology
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 2: Cardiology
- - Accuracy: 50.00% (1/2)
- - Total Questions: 2
- - Incorrect Answers: 1
+Rank 2: Pulmonology
+ - Accuracy: 100.00% (1/1)
+ - Total Questions: 1
+ - Incorrect Answers: 0
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
 Rank 3: Eastern Medicine
- - Accuracy: 46.67% (35/75)
+ - Accuracy: 30.67% (23/75)
  - Total Questions: 75
- - Incorrect Answers: 40
- - Deviations: 16
- - Incorrect due to Deviation: 16 (40.00%)
+ - Incorrect Answers: 52
+ - Deviations: 10
+ - Incorrect due to Deviation: 10 (19.23%)
 
-Rank 4: Pulmonology
- - Accuracy: 0.00% (0/1)
- - Total Questions: 1
- - Incorrect Answers: 1
+Rank 4: Cardiology
+ - Accuracy: 0.00% (0/2)
+ - Total Questions: 2
+ - Incorrect Answers: 2
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
@@ -69,25 +69,25 @@ HARD DIFFICULTY - Topics Ranked by Accuracy:
 ------------------------------------------------------------
 
 Rank 1: Eastern Medicine
- - Accuracy: 18.18% (2/11)
+ - Accuracy: 36.36% (4/11)
  - Total Questions: 11
- - Incorrect Answers: 9
- - Deviations: 6
- - Incorrect due to Deviation: 6 (66.67%)
+ - Incorrect Answers: 7
+ - Deviations: 1
+ - Incorrect due to Deviation: 1 (14.29%)
 
 Rank 2: Neurology
  - Accuracy: 0.00% (0/1)
  - Total Questions: 1
  - Incorrect Answers: 1
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
+ - Deviations: 1
+ - Incorrect due to Deviation: 1 (100.00%)
 
 Rank 3: Pulmonology
  - Accuracy: 0.00% (0/2)
  - Total Questions: 2
  - Incorrect Answers: 2
- - Deviations: 2
- - Incorrect due to Deviation: 2 (100.00%)
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
 
 
 CHALLENGING DIFFICULTY - Topics Ranked by Accuracy:

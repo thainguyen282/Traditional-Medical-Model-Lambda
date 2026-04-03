@@ -123,6 +123,7 @@ class TrainCommand:
                 run_id=self.run_id,
                 tracker=self.tracker,
                 benchmark_evaluator=benchmark_evaluator,
+                ewc_config=self.config.get("ewc"),
             )
 
             # --------------------------------------------------
@@ -239,7 +240,40 @@ class TrainCommand:
                 **self.lora_config.get_config_dict(),
             )
 
+        # Freeze bottom layers to preserve general knowledge
+        layer_freeze_config = self.config.get("layer_freeze", {})
+        freeze_ratio = layer_freeze_config.get("freeze_ratio", 0.0)
+        if freeze_ratio > 0:
+            self._freeze_bottom_layers(model, freeze_ratio)
+
         return model, tokenizer
+
+    def _freeze_bottom_layers(self, model, freeze_ratio: float):
+        """Freeze bottom N% of transformer layers to preserve pretrained knowledge."""
+        base_model = model.model if hasattr(model, "model") else model
+        if hasattr(base_model, "model"):
+            base_model = base_model.model
+
+        layers = None
+        if hasattr(base_model, "layers"):
+            layers = base_model.layers
+        elif hasattr(base_model, "decoder") and hasattr(base_model.decoder, "layers"):
+            layers = base_model.decoder.layers
+
+        if layers is None:
+            self.logger.warning("Could not find transformer layers for freezing")
+            return
+
+        total_layers = len(layers)
+        num_freeze = int(total_layers * freeze_ratio)
+
+        for i in range(num_freeze):
+            for param in layers[i].parameters():
+                param.requires_grad = False
+
+        self.logger.info(
+            f"Froze {num_freeze}/{total_layers} bottom layers (ratio={freeze_ratio})"
+        )
 
     # ==========================================================
     # LOAD BASELINE MODEL (NO LORA)
