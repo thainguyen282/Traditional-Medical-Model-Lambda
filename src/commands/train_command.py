@@ -4,6 +4,9 @@ import torch
 import os
 import copy
 import gc
+import json
+import subprocess
+import sys
 
 from src.core.loggers.interfaces.Ilogger import ILogger
 from src.core.trackers.interfaces.Itracker import ITracker
@@ -136,6 +139,19 @@ class TrainCommand:
             # --------------------------------------------------
             trainer.save_model(model_output_dir)
             tokenizer.save_pretrained(model_output_dir)
+
+            # Fix adapter_config.json: convert relative base_model path to absolute
+            adapter_config_path = os.path.join(model_output_dir, "adapter_config.json")
+            if os.path.exists(adapter_config_path):
+                with open(adapter_config_path, "r") as f:
+                    adapter_cfg = json.load(f)
+                base_path = adapter_cfg.get("base_model_name_or_path", "")
+                if base_path and not os.path.isabs(base_path) and os.path.isdir(base_path):
+                    adapter_cfg["base_model_name_or_path"] = os.path.abspath(base_path)
+                    with open(adapter_config_path, "w") as f:
+                        json.dump(adapter_cfg, f, indent=2)
+                    self.logger.info(f"Fixed adapter base_model path to {adapter_cfg['base_model_name_or_path']}")
+
             self.logger.info(f"Trained model saved to {model_output_dir}")
 
             # --------------------------------------------------
@@ -204,6 +220,57 @@ class TrainCommand:
             gc.collect()
             torch.cuda.empty_cache()
             torch.cuda.ipc_collect()
+
+            # --------------------------------------------------
+            # AUTO-RUN EVAL NOTEBOOKS
+            # --------------------------------------------------
+            model_name = self.config["model"]["name"].lower()
+            is_from_cpt = "cpt" in model_name
+
+            if is_from_cpt:
+                eval_notebooks = [
+                    "Unsloth_QA_CPT_SFT_new.ipynb",
+                    "Unsloth_QA_CPT_SFT_VM14K.ipynb",
+                ]
+            else:
+                eval_notebooks = [
+                    "Unsloth_QA_SFT_new.ipynb",
+                    "Unsloth_QA_SFT_VM14K.ipynb",
+                ]
+
+            eval_dir = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "..", "..", "EVAL"
+            )
+
+            eval_env = os.environ.copy()
+            eval_env["SFT_MODEL_PATH"] = os.path.abspath(model_output_dir)
+
+            total_notebooks = len(eval_notebooks)
+            source_label = "CPT → SFT" if is_from_cpt else "Base → SFT"
+            self.logger.info(f"Starting eval for {source_label} ({total_notebooks} notebooks)")
+            self.logger.info(f"SFT_MODEL_PATH={eval_env['SFT_MODEL_PATH']}")
+
+            for i, nb in enumerate(eval_notebooks, 1):
+                nb_path = os.path.join(eval_dir, nb)
+                self.logger.info(f"[{i}/{total_notebooks}] Running: {nb}")
+                result = subprocess.run(
+                    [
+                        sys.executable, "-m", "jupyter", "nbconvert",
+                        "--to", "notebook",
+                        "--execute",
+                        "--ExecutePreprocessor.timeout=-1",
+                        "--output", nb,
+                        nb_path,
+                    ],
+                    cwd=eval_dir,
+                    env=eval_env,
+                )
+                if result.returncode == 0:
+                    self.logger.info(f"[{i}/{total_notebooks}] Done: {nb}")
+                else:
+                    self.logger.error(f"[{i}/{total_notebooks}] FAILED: {nb} (exit code {result.returncode})")
+
+            self.logger.info(f"All eval notebooks finished ({total_notebooks}/{total_notebooks})")
 
         except Exception as e:
             self.logger.error(str(e))

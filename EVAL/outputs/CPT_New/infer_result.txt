@@ -10,8 +10,8 @@ Language: Vietnamese
 OVERALL STATISTICS
 ----------------------------------------
 Total Questions Processed: 105
-Total Correct: 65
-Overall Accuracy: 61.90%
+Total Correct: 59
+Overall Accuracy: 56.19%
 
 RESPONSE FORMAT ANALYSIS
 ----------------------------------------
@@ -25,15 +25,15 @@ Performance by Difficulty Level
 
 Easy Level:
  - Number of Questions: 19
- - Accuracy: 68.42% (13/19)
- - Incorrect Answers: 6
+ - Accuracy: 52.63% (10/19)
+ - Incorrect Answers: 9
  - Deviations: 0/19 questions
  - Incorrect due to Deviation: 0 (0.00% of this level's incorrect answers)
 
 Moderate Level:
  - Number of Questions: 75
- - Accuracy: 57.33% (43/75)
- - Incorrect Answers: 32
+ - Accuracy: 53.33% (40/75)
+ - Incorrect Answers: 35
  - Deviations: 0/75 questions
  - Incorrect due to Deviation: 0 (0.00% of this level's incorrect answers)
 
@@ -49,21 +49,21 @@ Hard Level:
 Performance by Medical Topic (Ranked by Accuracy)
 ================================================================================
 
-Rank 1: Eastern Medicine
- - Number of Questions: 105
- - Accuracy: 61.90% (65/105)
- - Incorrect Answers: 40
- - Deviations: 0/105 questions
- - Incorrect due to Deviation: 0 (0.00% of this topic's incorrect answers)
-
-Rank 2: Neurology
+Rank 1: Cardiology
  - Number of Questions: 2
- - Accuracy: 50.00% (1/2)
- - Incorrect Answers: 1
+ - Accuracy: 100.00% (2/2)
+ - Incorrect Answers: 0
  - Deviations: 0/2 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic's incorrect answers)
 
-Rank 3: Cardiology
+Rank 2: Eastern Medicine
+ - Number of Questions: 105
+ - Accuracy: 56.19% (59/105)
+ - Incorrect Answers: 46
+ - Deviations: 0/105 questions
+ - Incorrect due to Deviation: 0 (0.00% of this topic's incorrect answers)
+
+Rank 3: Neurology
  - Number of Questions: 2
  - Accuracy: 50.00% (1/2)
  - Incorrect Answers: 1
@@ -94,8 +94,8 @@ TOPIC: Cardiology
 
   Moderate Difficulty:
     - Questions: 2
-    - Accuracy: 50.00% (1/2)
-    - Incorrect: 1
+    - Accuracy: 100.00% (2/2)
+    - Incorrect: 0
     - Deviations: 0
     - Incorrect due to Deviation: 0 (0.00%)
 
@@ -104,15 +104,15 @@ TOPIC: Eastern Medicine
 
   Easy Difficulty:
     - Questions: 19
-    - Accuracy: 68.42% (13/19)
-    - Incorrect: 6
+    - Accuracy: 52.63% (10/19)
+    - Incorrect: 9
     - Deviations: 0
     - Incorrect due to Deviation: 0 (0.00%)
 
   Moderate Difficulty:
     - Questions: 75
-    - Accuracy: 57.33% (43/75)
-    - Incorrect: 32
+    - Accuracy: 53.33% (40/75)
+    - Incorrect: 35
     - Deviations: 0
     - Incorrect due to Deviation: 0 (0.00%)
 
@@ -184,8 +184,8 @@ EASY DIFFICULTY:
 
 Rank 1: Eastern Medicine
  - Number of Questions: 19
- - Accuracy: 68.42% (13/19)
- - Incorrect Answers: 6
+ - Accuracy: 52.63% (10/19)
+ - Incorrect Answers: 9
  - Deviations: 0/19 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
 
@@ -199,18 +199,18 @@ Rank 2: Pulmonology
 MODERATE DIFFICULTY:
 ------------------------------
 
-Rank 1: Eastern Medicine
- - Number of Questions: 75
- - Accuracy: 57.33% (43/75)
- - Incorrect Answers: 32
- - Deviations: 0/75 questions
+Rank 1: Cardiology
+ - Number of Questions: 2
+ - Accuracy: 100.00% (2/2)
+ - Incorrect Answers: 0
+ - Deviations: 0/2 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
 
-Rank 2: Cardiology
- - Number of Questions: 2
- - Accuracy: 50.00% (1/2)
- - Incorrect Answers: 1
- - Deviations: 0/2 questions
+Rank 2: Eastern Medicine
+ - Number of Questions: 75
+ - Accuracy: 53.33% (40/75)
+ - Incorrect Answers: 35
+ - Deviations: 0/75 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
 
 Rank 3: Neurology

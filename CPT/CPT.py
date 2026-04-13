@@ -143,3 +143,48 @@ tokenizer.save_pretrained(MERGED_DIR)
 print(f"Merged model saved to {MERGED_DIR}")
 
 print("Training complete.")
+
+# =========================
+# FREE GPU MEMORY BEFORE EVAL
+# =========================
+del model, merged_model, trainer, tokenizer, dataset
+torch.cuda.empty_cache()
+import gc
+gc.collect()
+
+# =========================
+# AUTO-RUN EVAL NOTEBOOKS
+# =========================
+import subprocess, sys
+
+EVAL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "EVAL")
+notebooks = [
+    "Unsloth_QA_CPT_new.ipynb",
+    "Unsloth_QA_CPT_VM14K.ipynb",
+]
+
+total_notebooks = len(notebooks)
+print(f"\nStarting eval for CPT ({total_notebooks} notebooks)")
+
+for i, nb in enumerate(notebooks, 1):
+    nb_path = os.path.join(EVAL_DIR, nb)
+    print(f"\n{'='*60}")
+    print(f"[{i}/{total_notebooks}] Running: {nb}")
+    print(f"{'='*60}")
+    result = subprocess.run(
+        [
+            sys.executable, "-m", "jupyter", "nbconvert",
+            "--to", "notebook",
+            "--execute",
+            "--ExecutePreprocessor.timeout=-1",
+            "--output", nb,
+            nb_path,
+        ],
+        cwd=EVAL_DIR,
+    )
+    if result.returncode == 0:
+        print(f"[{i}/{total_notebooks}] Done: {nb}")
+    else:
+        print(f"[{i}/{total_notebooks}] FAILED: {nb} (exit code {result.returncode})")
+
+print(f"\nAll eval notebooks finished ({total_notebooks}/{total_notebooks})")

@@ -51,3 +51,21 @@
 - **Tốt nhất tổng thể:** Qwen3-4B-Gốc  
 - **Tốt nhất domain YHCT:** Qwen3-4B-CPT (nhưng thiếu ổn định)  
 - **Kém nhất:** Qwen3-4B-CPT-SFT  
+
+---
+
+## Cập nhật 13/04/2026
+
+### Thay đổi dữ liệu
+
+- **SFT data:** Chuyển sang dataset `TradMedInstruct-2topics-3546` (từ `TMdata/proccessed/dong_y_conversation.jsonl`)
+- **CPT data:** Giữ nguyên `train-00000-of-00001.parquet`, tăng training từ 200 → 2000 max_steps, warmup 20 → 200
+
+### Thay đổi pipeline
+
+- **Auto-eval sau SFT:** Sau khi SFT train xong, tự động chạy eval notebooks:
+  - Nếu train từ CPT → chạy `Unsloth_QA_CPT_SFT_new` + `Unsloth_QA_CPT_SFT_VM14K`
+  - Nếu train từ base model → chạy `Unsloth_QA_SFT_new` + `Unsloth_QA_SFT_VM14K`
+- **Auto-eval sau CPT:** Giữ nguyên auto-eval `Unsloth_QA_CPT_new` + `Unsloth_QA_CPT_VM14K`, thêm progress log
+- **Dynamic model path:** Eval notebooks nhận model path từ env var `SFT_MODEL_PATH` thay vì hardcode run_id, đảm bảo eval đúng model vừa train
+- **Fix adapter path:** Tự động chuyển `base_model_name_or_path` trong adapter_config.json sang absolute path để eval từ bất kỳ directory nào cũng tìm được base model
