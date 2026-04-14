@@ -50,10 +50,11 @@ class LoRAConfig(BaseModel):
 
     @validator('lora_alpha')
     def validate_alpha_ratio(cls, v, values):
-        if 'r' in values and v < values['r']:
+        if 'r' in values and v < values['r'] and not values.get('use_rslora', False):
             warnings.warn(
                 f"lora_alpha ({v}) is smaller than r ({values['r']}). "
-                "This may lead to unstable training.",
+                "This may lead to unstable training. "
+                "Consider enabling use_rslora=True for high ranks.",
                 UserWarning
             )
         return v

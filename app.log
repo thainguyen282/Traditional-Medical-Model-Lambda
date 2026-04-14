@@ -561,3 +561,197 @@ If you're using a HuggingFace online model, check if it exists.
 [2026-04-02 16:12:31] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
 [2026-04-02 16:12:44] [INFO] Successfully saved results to group_outputs/baseline/a453e086-bb53-440f-83b2-46773bb36226/mmlu.json
 [2026-04-02 16:12:44] [INFO] Ran benchmark group id be4fa8ec5c314bfc92b64cd887e4d3ce with tags ['Baseline'], on group_outputs/baseline/a453e086-bb53-440f-83b2-46773bb36226. Start: 7954.328414469, End: 7967.150962638, Duration: 0h 0m 12.82s
+[2026-04-13 10:09:23] [INFO] Froze 18/36 bottom layers (ratio=0.5)
+[2026-04-13 10:15:16] [INFO] Trained model saved to group_outputs/outputs/svghhuox/model
+[2026-04-13 10:15:16] [INFO] Running multiple benchmarks
+[2026-04-13 10:15:16] [INFO] Running benchmark with tags ['Trained']
+[2026-04-13 10:15:16] [INFO] Run benchmark on trained model → group_outputs/outputs/svghhuox/benchmark_evaluations
+[2026-04-13 10:15:16] [INFO] Creating evaluator...
+[2026-04-13 10:15:16] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/svghhuox/benchmark_evaluations/mmlu.json
+[2026-04-13 10:15:16] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-13 10:15:30] [INFO] Successfully saved results to group_outputs/outputs/svghhuox/benchmark_evaluations/mmlu.json
+[2026-04-13 10:15:30] [INFO] Ran benchmark group id d2f3dcea03714f9ebfdff4abcafb9f32 with tags ['Trained'], on group_outputs/outputs/svghhuox/benchmark_evaluations. Start: 4020.055595768, End: 4033.613930779, Duration: 0h 0m 13.56s
+[2026-04-13 10:15:52] [INFO] Running multiple benchmarks
+[2026-04-13 10:15:52] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-13 10:15:52] [INFO] Run baseline benchmark on group_outputs/baseline/ad15f936-1a6a-49e1-9039-72f382454eb2
+[2026-04-13 10:15:52] [INFO] Creating evaluator...
+[2026-04-13 10:15:52] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/ad15f936-1a6a-49e1-9039-72f382454eb2/mmlu.json
+[2026-04-13 10:15:52] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-13 10:16:01] [INFO] Successfully saved results to group_outputs/baseline/ad15f936-1a6a-49e1-9039-72f382454eb2/mmlu.json
+[2026-04-13 10:16:01] [INFO] Ran benchmark group id f7958d699f0b442b9d964fced457a727 with tags ['Baseline'], on group_outputs/baseline/ad15f936-1a6a-49e1-9039-72f382454eb2. Start: 4055.209107664, End: 4064.713463134, Duration: 0h 0m 9.50s
+[2026-04-13 10:16:01] [INFO] Starting eval for CPT → SFT (2 notebooks)
+[2026-04-13 10:16:01] [INFO] [1/2] Running: Unsloth_QA_CPT_SFT_new.ipynb
+[2026-04-13 10:16:22] [ERROR] [1/2] FAILED: Unsloth_QA_CPT_SFT_new.ipynb (exit code 1)
+[2026-04-13 10:16:22] [INFO] [2/2] Running: Unsloth_QA_CPT_SFT_VM14K.ipynb
+[2026-04-13 10:16:42] [ERROR] [2/2] FAILED: Unsloth_QA_CPT_SFT_VM14K.ipynb (exit code 1)
+[2026-04-13 10:16:42] [INFO] All eval notebooks finished (2/2)
+[2026-04-13 10:22:22] [INFO] Froze 18/36 bottom layers (ratio=0.5)
+[2026-04-13 10:25:59] [INFO] Trained model saved to group_outputs/outputs/lnfyi4mx/model
+[2026-04-13 10:25:59] [INFO] Running multiple benchmarks
+[2026-04-13 10:25:59] [INFO] Running benchmark with tags ['Trained']
+[2026-04-13 10:25:59] [INFO] Run benchmark on trained model → group_outputs/outputs/lnfyi4mx/benchmark_evaluations
+[2026-04-13 10:25:59] [INFO] Creating evaluator...
+[2026-04-13 10:25:59] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/lnfyi4mx/benchmark_evaluations/mmlu.json
+[2026-04-13 10:25:59] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-13 10:26:09] [INFO] Successfully saved results to group_outputs/outputs/lnfyi4mx/benchmark_evaluations/mmlu.json
+[2026-04-13 10:26:09] [INFO] Ran benchmark group id ec1ce9f226524eebb068243d1ab8389d with tags ['Trained'], on group_outputs/outputs/lnfyi4mx/benchmark_evaluations. Start: 4662.421220028, End: 4672.466182595, Duration: 0h 0m 10.04s
+[2026-04-13 10:26:31] [INFO] Running multiple benchmarks
+[2026-04-13 10:26:31] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-13 10:26:31] [INFO] Run baseline benchmark on group_outputs/baseline/d6c0aff7-a06a-4ff4-add6-b09d06f596c8
+[2026-04-13 10:26:31] [INFO] Creating evaluator...
+[2026-04-13 10:26:31] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/d6c0aff7-a06a-4ff4-add6-b09d06f596c8/mmlu.json
+[2026-04-13 10:26:31] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-13 10:26:40] [INFO] Successfully saved results to group_outputs/baseline/d6c0aff7-a06a-4ff4-add6-b09d06f596c8/mmlu.json
+[2026-04-13 10:26:40] [INFO] Ran benchmark group id 9de597f42e634a379859882794cf7a7e with tags ['Baseline'], on group_outputs/baseline/d6c0aff7-a06a-4ff4-add6-b09d06f596c8. Start: 4694.397139416, End: 4703.360770477, Duration: 0h 0m 8.96s
+[2026-04-13 10:26:40] [INFO] Starting eval for CPT → SFT (2 notebooks)
+[2026-04-13 10:26:40] [INFO] SFT_MODEL_PATH=/home/huyen/Traditional-Medical-Model/group_outputs/outputs/lnfyi4mx/model
+[2026-04-13 10:26:40] [INFO] [1/2] Running: Unsloth_QA_CPT_SFT_new.ipynb
+[2026-04-13 10:27:01] [ERROR] [1/2] FAILED: Unsloth_QA_CPT_SFT_new.ipynb (exit code 1)
+[2026-04-13 10:27:01] [INFO] [2/2] Running: Unsloth_QA_CPT_SFT_VM14K.ipynb
+[2026-04-13 10:27:23] [ERROR] [2/2] FAILED: Unsloth_QA_CPT_SFT_VM14K.ipynb (exit code 1)
+[2026-04-13 10:27:23] [INFO] All eval notebooks finished (2/2)
+[2026-04-13 10:29:32] [INFO] Froze 18/36 bottom layers (ratio=0.5)
+[2026-04-13 10:33:07] [INFO] Fixed adapter base_model path to /home/huyen/Traditional-Medical-Model/CPT/cpt_qwen3_medical_merged
+[2026-04-13 10:33:07] [INFO] Trained model saved to group_outputs/outputs/mdaftt7r/model
+[2026-04-13 10:33:07] [INFO] Running multiple benchmarks
+[2026-04-13 10:33:07] [INFO] Running benchmark with tags ['Trained']
+[2026-04-13 10:33:07] [INFO] Run benchmark on trained model → group_outputs/outputs/mdaftt7r/benchmark_evaluations
+[2026-04-13 10:33:07] [INFO] Creating evaluator...
+[2026-04-13 10:33:07] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/mdaftt7r/benchmark_evaluations/mmlu.json
+[2026-04-13 10:33:07] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-13 10:33:17] [INFO] Successfully saved results to group_outputs/outputs/mdaftt7r/benchmark_evaluations/mmlu.json
+[2026-04-13 10:33:17] [INFO] Ran benchmark group id e7dcb6725aaf491ab61081ef14d51b69 with tags ['Trained'], on group_outputs/outputs/mdaftt7r/benchmark_evaluations. Start: 5090.247468293, End: 5100.238589483, Duration: 0h 0m 9.99s
+[2026-04-13 10:33:38] [INFO] Running multiple benchmarks
+[2026-04-13 10:33:38] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-13 10:33:38] [INFO] Run baseline benchmark on group_outputs/baseline/6c35e46f-e96f-4420-b2ff-bc522852cf16
+[2026-04-13 10:33:38] [INFO] Creating evaluator...
+[2026-04-13 10:33:38] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/6c35e46f-e96f-4420-b2ff-bc522852cf16/mmlu.json
+[2026-04-13 10:33:38] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-13 10:33:47] [INFO] Successfully saved results to group_outputs/baseline/6c35e46f-e96f-4420-b2ff-bc522852cf16/mmlu.json
+[2026-04-13 10:33:47] [INFO] Ran benchmark group id 510a78cc1f29435f92ccae2b6cd8c685 with tags ['Baseline'], on group_outputs/baseline/6c35e46f-e96f-4420-b2ff-bc522852cf16. Start: 5121.972932142, End: 5130.867283944, Duration: 0h 0m 8.89s
+[2026-04-13 10:33:48] [INFO] Starting eval for CPT → SFT (2 notebooks)
+[2026-04-13 10:33:48] [INFO] SFT_MODEL_PATH=/home/huyen/Traditional-Medical-Model/group_outputs/outputs/mdaftt7r/model
+[2026-04-13 10:33:48] [INFO] [1/2] Running: Unsloth_QA_CPT_SFT_new.ipynb
+[2026-04-13 10:35:38] [INFO] [1/2] Done: Unsloth_QA_CPT_SFT_new.ipynb
+[2026-04-13 10:35:38] [INFO] [2/2] Running: Unsloth_QA_CPT_SFT_VM14K.ipynb
+[2026-04-13 10:40:02] [INFO] [2/2] Done: Unsloth_QA_CPT_SFT_VM14K.ipynb
+[2026-04-13 10:40:02] [INFO] All eval notebooks finished (2/2)
+[2026-04-13 10:41:09] [INFO] Froze 18/36 bottom layers (ratio=0.5)
+[2026-04-13 10:44:38] [INFO] Trained model saved to group_outputs/outputs/7il67f7f/model
+[2026-04-13 10:44:38] [INFO] Running multiple benchmarks
+[2026-04-13 10:44:38] [INFO] Running benchmark with tags ['Trained']
+[2026-04-13 10:44:38] [INFO] Run benchmark on trained model → group_outputs/outputs/7il67f7f/benchmark_evaluations
+[2026-04-13 10:44:38] [INFO] Creating evaluator...
+[2026-04-13 10:44:38] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/7il67f7f/benchmark_evaluations/mmlu.json
+[2026-04-13 10:44:38] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-13 10:44:48] [INFO] Successfully saved results to group_outputs/outputs/7il67f7f/benchmark_evaluations/mmlu.json
+[2026-04-13 10:44:48] [INFO] Ran benchmark group id 36fef6f2bdc04c0ab80fa2bb763eea60 with tags ['Trained'], on group_outputs/outputs/7il67f7f/benchmark_evaluations. Start: 5781.567558823, End: 5791.483134867, Duration: 0h 0m 9.92s
+[2026-04-13 10:45:08] [INFO] Running multiple benchmarks
+[2026-04-13 10:45:08] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-13 10:45:08] [INFO] Run baseline benchmark on group_outputs/baseline/96e23b6e-7013-42d4-8e49-329ad95671f0
+[2026-04-13 10:45:08] [INFO] Creating evaluator...
+[2026-04-13 10:45:09] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/96e23b6e-7013-42d4-8e49-329ad95671f0/mmlu.json
+[2026-04-13 10:45:09] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-13 10:45:17] [INFO] Successfully saved results to group_outputs/baseline/96e23b6e-7013-42d4-8e49-329ad95671f0/mmlu.json
+[2026-04-13 10:45:17] [INFO] Ran benchmark group id 2193616ea620476e8bc8b566c7436518 with tags ['Baseline'], on group_outputs/baseline/96e23b6e-7013-42d4-8e49-329ad95671f0. Start: 5812.144940125, End: 5820.972558171, Duration: 0h 0m 8.83s
+[2026-04-13 10:45:18] [INFO] Starting eval for Base → SFT (2 notebooks)
+[2026-04-13 10:45:18] [INFO] SFT_MODEL_PATH=/home/huyen/Traditional-Medical-Model/group_outputs/outputs/7il67f7f/model
+[2026-04-13 10:45:18] [INFO] [1/2] Running: Unsloth_QA_SFT_new.ipynb
+[2026-04-14 04:31:08] [INFO] Trained model saved to group_outputs/outputs/gok69t8i/model
+[2026-04-14 04:31:08] [INFO] Running multiple benchmarks
+[2026-04-14 04:31:08] [INFO] Running benchmark with tags ['Trained']
+[2026-04-14 04:31:08] [INFO] Run benchmark on trained model → group_outputs/outputs/gok69t8i/benchmark_evaluations
+[2026-04-14 04:31:08] [INFO] Creating evaluator...
+[2026-04-14 04:31:08] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/gok69t8i/benchmark_evaluations/mmlu.json
+[2026-04-14 04:31:08] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-14 04:31:22] [INFO] Successfully saved results to group_outputs/outputs/gok69t8i/benchmark_evaluations/mmlu.json
+[2026-04-14 04:31:22] [INFO] Ran benchmark group id 33d4ec0811044561a3f0727aa011e998 with tags ['Trained'], on group_outputs/outputs/gok69t8i/benchmark_evaluations. Start: 1585.354642279, End: 1600.143167392, Duration: 0h 0m 14.79s
+[2026-04-14 04:31:44] [INFO] Running multiple benchmarks
+[2026-04-14 04:31:44] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-14 04:31:44] [INFO] Run baseline benchmark on group_outputs/baseline/ed5583a8-0254-4c43-8e59-1118340f7f3d
+[2026-04-14 04:31:44] [INFO] Creating evaluator...
+[2026-04-14 04:31:44] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/ed5583a8-0254-4c43-8e59-1118340f7f3d/mmlu.json
+[2026-04-14 04:31:44] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-14 04:31:53] [INFO] Successfully saved results to group_outputs/baseline/ed5583a8-0254-4c43-8e59-1118340f7f3d/mmlu.json
+[2026-04-14 04:31:53] [INFO] Ran benchmark group id 43974a70222f4ba18298b37065ddd671 with tags ['Baseline'], on group_outputs/baseline/ed5583a8-0254-4c43-8e59-1118340f7f3d. Start: 1621.942119332, End: 1630.427602348, Duration: 0h 0m 8.49s
+[2026-04-14 04:31:53] [INFO] Starting eval for Base → SFT (2 notebooks)
+[2026-04-14 04:31:53] [INFO] SFT_MODEL_PATH=/home/huyen/Traditional-Medical-Model/group_outputs/outputs/gok69t8i/model
+[2026-04-14 04:31:53] [INFO] [1/2] Running: Unsloth_QA_SFT_new.ipynb
+[2026-04-14 04:34:00] [INFO] [1/2] Done: Unsloth_QA_SFT_new.ipynb
+[2026-04-14 04:34:00] [INFO] [2/2] Running: Unsloth_QA_SFT_VM14K.ipynb
+[2026-04-14 04:40:10] [INFO] [2/2] Done: Unsloth_QA_SFT_VM14K.ipynb
+[2026-04-14 04:40:10] [INFO] All eval notebooks finished (2/2)
+[2026-04-14 05:20:49] [INFO] Trained model saved to group_outputs/outputs/39ebo095/model
+[2026-04-14 05:20:49] [INFO] Running multiple benchmarks
+[2026-04-14 05:20:49] [INFO] Running benchmark with tags ['Trained']
+[2026-04-14 05:20:49] [INFO] Run benchmark on trained model → group_outputs/outputs/39ebo095/benchmark_evaluations
+[2026-04-14 05:20:49] [INFO] Creating evaluator...
+[2026-04-14 05:20:49] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/39ebo095/benchmark_evaluations/mmlu.json
+[2026-04-14 05:20:49] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-14 05:20:58] [INFO] Successfully saved results to group_outputs/outputs/39ebo095/benchmark_evaluations/mmlu.json
+[2026-04-14 05:20:58] [INFO] Ran benchmark group id f76e5d5c61e943e8aba2ea0213955cc8 with tags ['Trained'], on group_outputs/outputs/39ebo095/benchmark_evaluations. Start: 4566.54326628, End: 4575.927519069, Duration: 0h 0m 9.38s
+[2026-04-14 05:21:19] [INFO] Running multiple benchmarks
+[2026-04-14 05:21:19] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-14 05:21:19] [INFO] Run baseline benchmark on group_outputs/baseline/893f51f4-cd1d-4d76-80a4-6104443974ef
+[2026-04-14 05:21:19] [INFO] Creating evaluator...
+[2026-04-14 05:21:19] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/893f51f4-cd1d-4d76-80a4-6104443974ef/mmlu.json
+[2026-04-14 05:21:19] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-14 05:21:27] [INFO] Successfully saved results to group_outputs/baseline/893f51f4-cd1d-4d76-80a4-6104443974ef/mmlu.json
+[2026-04-14 05:21:27] [INFO] Ran benchmark group id fe6680ca958d4d689723f39defb343eb with tags ['Baseline'], on group_outputs/baseline/893f51f4-cd1d-4d76-80a4-6104443974ef. Start: 4596.70896233, End: 4604.837592641, Duration: 0h 0m 8.13s
+[2026-04-14 05:21:27] [INFO] Starting eval for Base → SFT (2 notebooks)
+[2026-04-14 05:21:27] [INFO] SFT_MODEL_PATH=/home/huyen/Traditional-Medical-Model/group_outputs/outputs/39ebo095/model
+[2026-04-14 05:21:27] [INFO] [1/2] Running: Unsloth_QA_SFT_new.ipynb
+[2026-04-14 05:23:27] [INFO] [1/2] Done: Unsloth_QA_SFT_new.ipynb
+[2026-04-14 05:23:27] [INFO] [2/2] Running: Unsloth_QA_SFT_VM14K.ipynb
+[2026-04-14 05:29:35] [INFO] [2/2] Done: Unsloth_QA_SFT_VM14K.ipynb
+[2026-04-14 05:29:35] [INFO] All eval notebooks finished (2/2)
+[2026-04-14 06:04:49] [INFO] Fixed adapter base_model path to /home/huyen/Traditional-Medical-Model/CPT/cpt_qwen3_medical_merged
+[2026-04-14 06:04:49] [INFO] Trained model saved to group_outputs/outputs/CPT_SFT/model
+[2026-04-14 06:04:49] [INFO] Running multiple benchmarks
+[2026-04-14 06:04:49] [INFO] Running benchmark with tags ['Trained']
+[2026-04-14 06:04:49] [INFO] Run benchmark on trained model → group_outputs/outputs/CPT_SFT/benchmark_evaluations
+[2026-04-14 06:04:49] [INFO] Creating evaluator...
+[2026-04-14 06:04:49] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/CPT_SFT/benchmark_evaluations/mmlu.json
+[2026-04-14 06:04:49] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-14 06:04:58] [INFO] Successfully saved results to group_outputs/outputs/CPT_SFT/benchmark_evaluations/mmlu.json
+[2026-04-14 06:04:58] [INFO] Ran benchmark group id 9117ef53553b4d1ebc4f35b6e7f3fbce with tags ['Trained'], on group_outputs/outputs/CPT_SFT/benchmark_evaluations. Start: 7206.735189519, End: 7216.183683909, Duration: 0h 0m 9.45s
+[2026-04-14 06:05:20] [INFO] Running multiple benchmarks
+[2026-04-14 06:05:20] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-14 06:05:20] [INFO] Run baseline benchmark on group_outputs/baseline/bbb7aa3e-8fa9-4c17-bffd-ae3dfe46597d
+[2026-04-14 06:05:20] [INFO] Creating evaluator...
+[2026-04-14 06:05:20] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/bbb7aa3e-8fa9-4c17-bffd-ae3dfe46597d/mmlu.json
+[2026-04-14 06:05:20] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-14 06:05:28] [INFO] Successfully saved results to group_outputs/baseline/bbb7aa3e-8fa9-4c17-bffd-ae3dfe46597d/mmlu.json
+[2026-04-14 06:05:28] [INFO] Ran benchmark group id 4ef0c18d3b7143819161d2f313f0a3be with tags ['Baseline'], on group_outputs/baseline/bbb7aa3e-8fa9-4c17-bffd-ae3dfe46597d. Start: 7237.267955142, End: 7245.557126088, Duration: 0h 0m 8.29s
+[2026-04-14 06:05:28] [INFO] Starting eval for CPT → SFT (2 notebooks)
+[2026-04-14 06:05:28] [INFO] SFT_MODEL_PATH=/home/huyen/Traditional-Medical-Model/group_outputs/outputs/CPT_SFT/model
+[2026-04-14 06:05:28] [INFO] [1/2] Running: Unsloth_QA_CPT_SFT_new.ipynb
+[2026-04-14 06:07:32] [INFO] [1/2] Done: Unsloth_QA_CPT_SFT_new.ipynb
+[2026-04-14 06:07:32] [INFO] [2/2] Running: Unsloth_QA_CPT_SFT_VM14K.ipynb
+[2026-04-14 06:13:20] [INFO] [2/2] Done: Unsloth_QA_CPT_SFT_VM14K.ipynb
+[2026-04-14 06:13:20] [INFO] All eval notebooks finished (2/2)
+[2026-04-14 06:47:19] [INFO] Fixed adapter base_model path to /home/huyen/Traditional-Medical-Model/CPT/cpt_qwen3_medical_merged
+[2026-04-14 06:47:19] [INFO] Trained model saved to group_outputs/outputs/CPT_SFT/model
+[2026-04-14 06:47:19] [INFO] Running multiple benchmarks
+[2026-04-14 06:47:19] [INFO] Running benchmark with tags ['Trained']
+[2026-04-14 06:47:19] [INFO] Run benchmark on trained model → group_outputs/outputs/CPT_SFT/benchmark_evaluations
+[2026-04-14 06:47:19] [INFO] Creating evaluator...
+[2026-04-14 06:47:19] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/CPT_SFT/benchmark_evaluations/mmlu.json
+[2026-04-14 06:47:19] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-14 06:47:28] [INFO] Successfully saved results to group_outputs/outputs/CPT_SFT/benchmark_evaluations/mmlu.json
+[2026-04-14 06:47:28] [INFO] Ran benchmark group id c39ec4b50b7f4013a2550402298b12c5 with tags ['Trained'], on group_outputs/outputs/CPT_SFT/benchmark_evaluations. Start: 9756.494791711, End: 9765.855411851, Duration: 0h 0m 9.36s
+[2026-04-14 06:47:48] [INFO] Running multiple benchmarks
+[2026-04-14 06:47:48] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-14 06:47:48] [INFO] Run baseline benchmark on group_outputs/baseline/b7e37fa1-ccb5-4c74-b8cf-3b70fc34831e
+[2026-04-14 06:47:48] [INFO] Creating evaluator...
+[2026-04-14 06:47:48] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/b7e37fa1-ccb5-4c74-b8cf-3b70fc34831e/mmlu.json
+[2026-04-14 06:47:48] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-14 06:47:56] [INFO] Successfully saved results to group_outputs/baseline/b7e37fa1-ccb5-4c74-b8cf-3b70fc34831e/mmlu.json
+[2026-04-14 06:47:56] [INFO] Ran benchmark group id ca78f27850a74902864a6298e3fde1c0 with tags ['Baseline'], on group_outputs/baseline/b7e37fa1-ccb5-4c74-b8cf-3b70fc34831e. Start: 9785.625220781, End: 9793.732117798, Duration: 0h 0m 8.11s
+[2026-04-14 06:47:56] [INFO] Starting eval for CPT → SFT (2 notebooks)
+[2026-04-14 06:47:56] [INFO] SFT_MODEL_PATH=/home/huyen/Traditional-Medical-Model/group_outputs/outputs/CPT_SFT/model
+[2026-04-14 06:47:56] [INFO] [1/2] Running: Unsloth_QA_CPT_SFT_new.ipynb
+[2026-04-14 06:49:57] [INFO] [1/2] Done: Unsloth_QA_CPT_SFT_new.ipynb
+[2026-04-14 06:49:57] [INFO] [2/2] Running: Unsloth_QA_CPT_SFT_VM14K.ipynb
+[2026-04-14 06:55:51] [INFO] [2/2] Done: Unsloth_QA_CPT_SFT_VM14K.ipynb
+[2026-04-14 06:55:51] [INFO] All eval notebooks finished (2/2)

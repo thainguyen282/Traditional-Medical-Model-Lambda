@@ -1,5 +1,4 @@
 name: "venera_med_m1"
 data: https://huggingface.co/datasets/Maverfrick/TradMedInstruct-2topics-3546
-train_path: "TMdata/proccessed/dong_y_conversation.jsonl"
-metadata:  
-  source: "local"
+metadata:
+  source: "huggingface"

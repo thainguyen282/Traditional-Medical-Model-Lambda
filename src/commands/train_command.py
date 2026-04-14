@@ -94,9 +94,14 @@ class TrainCommand:
             # --------------------------------------------------
             train_config = self.config.get("training", {})
 
+            model_name_lower = self.config["model"]["name"].lower()
+            is_from_cpt = "cpt" in model_name_lower
+            pipeline_label = "CPT_SFT" if is_from_cpt else "SFT"
+
+            base_output = train_config.get("output_dir", "./outputs")
             output_dir = os.path.join(
-                train_config.get("output_dir", "./outputs"),
-                self.run_id,
+                base_output,
+                pipeline_label,
             )
 
             model_output_dir = os.path.join(output_dir, "model")
@@ -126,7 +131,6 @@ class TrainCommand:
                 run_id=self.run_id,
                 tracker=self.tracker,
                 benchmark_evaluator=benchmark_evaluator,
-                ewc_config=self.config.get("ewc"),
             )
 
             # --------------------------------------------------
@@ -224,9 +228,6 @@ class TrainCommand:
             # --------------------------------------------------
             # AUTO-RUN EVAL NOTEBOOKS
             # --------------------------------------------------
-            model_name = self.config["model"]["name"].lower()
-            is_from_cpt = "cpt" in model_name
-
             if is_from_cpt:
                 eval_notebooks = [
                     "Unsloth_QA_CPT_SFT_new.ipynb",

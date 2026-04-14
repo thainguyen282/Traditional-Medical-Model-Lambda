@@ -97,8 +97,8 @@ if __name__ == "__main__":
     models_config = {
         "Qwen3-4B-Goc": "unsloth/Qwen3-4B-Instruct-2507",
         "Qwen3-4B-CPT": "CPT/cpt_qwen3_medical_merged",
-        "Qwen3-4B-CPT-SFT": "group_outputs/outputs/31_3/model",
-            "Qwen3-4B-SFT": "group_outputs/outputs/2_4_SFT_only/model",
+        "Qwen3-4B-CPT-SFT": "group_outputs/outputs/CPT_SFT/model",
+        "Qwen3-4B-SFT": "group_outputs/outputs/SFT/model",
     }
 
     questions = [

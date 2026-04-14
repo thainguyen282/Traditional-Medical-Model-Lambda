@@ -107,7 +107,7 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
         print("⬇️ Loading dataset from Hugging Face Hub...")
 
         # Get the data source from config if available, otherwise use default
-        data_source = config.get("data", "Maverfrick/TradMedInstructData")
+        data_source = config.get("data", "Maverfrick/TradMedInstruct-2topics-3546")
         # Extract dataset ID if it's a full URL
         if "https://huggingface.co/datasets/" in data_source:
             data_source = data_source.replace("https://huggingface.co/datasets/", "")

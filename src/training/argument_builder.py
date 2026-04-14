@@ -1,18 +1,19 @@
 from typing import Dict, Any
-from trl import SFTConfig
+from unsloth import UnslothTrainingArguments
 
 
 class ArgumentBuilder:
     @staticmethod
-    def build(train_config: Dict[str, Any]) -> SFTConfig:
+    def build(train_config: Dict[str, Any]) -> UnslothTrainingArguments:
         output_dir = train_config.get("output_dir", "./outputs")
 
-        return SFTConfig(
+        return UnslothTrainingArguments(
             output_dir=output_dir,
             per_device_train_batch_size=train_config.get("per_device_train_batch_size", 2),
             gradient_accumulation_steps=train_config.get("gradient_accumulation_steps", 4),
             num_train_epochs=train_config.get("num_train_epochs", 3),
             learning_rate=float(train_config.get("learning_rate", 2e-4)),
+            embedding_learning_rate=float(train_config.get("embedding_learning_rate", 2e-5)),
             weight_decay=float(train_config.get("weight_decay", 0.01)),
             warmup_steps=train_config.get("warmup_steps", 100),
             lr_scheduler_type=train_config.get("lr_scheduler_type", "cosine"),

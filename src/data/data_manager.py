@@ -25,7 +25,8 @@ class DatasetManager:
                 raise ValueError(
                     f"Dataset with tag {tag} already exists in the library"
                 )
-            train_set, val_set = DatasetFactory.create_datasets(tag, dataset_config)
+            merged_config = {**base_config, **dataset_config}
+            train_set, val_set = DatasetFactory.create_datasets(tag, merged_config)
             print("---------------processed dataset-----------------",tag)
             self.library[tag] = {"train": train_set, "val": val_set, "tag": tag}
 
