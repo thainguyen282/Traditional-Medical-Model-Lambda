@@ -1,9 +1,10 @@
 name: "unsloth/Qwen3-4B-Instruct-2507-0001"
 
 model:
-  # Dùng model đã merge CPT LoRA (output của CPT/CPT.py)
-  # Đổi về "unsloth/Qwen3-4B-Instruct-2507" nếu muốn SFT từ model gốc
-  name: "CPT/cpt_qwen3_medical_merged"
+  # Trỏ thẳng tới LoRA adapter của CPT (KHÔNG merge).
+  # Unsloth sẽ tự load base model + adapter, SFT sẽ continue-train adapter đó.
+  # Đổi về "unsloth/Qwen3-4B-Instruct-2507" nếu muốn SFT từ base model.
+  name: "CPT/cpt_qwen3_medical"
   # name: "unsloth/Qwen3-4B-Instruct-2507"
   max_seq_length: 2048
 
@@ -16,17 +17,21 @@ benchmark:
   path: "configs/evals/minimal_mmlu.yaml"
 
 unsloth:
-  load_in_4bit: true
+  # Giữ nhất quán với CPT (CPT train ở full precision).
+  # Nếu GPU không đủ RAM, đổi lại true — nhưng kết quả sẽ kém hơn.
+  load_in_4bit: false
   attn_implementation: "sdpa"
 
 training:
   output_dir: "group_outputs/outputs"
   per_device_train_batch_size: 4
   per_device_eval_batch_size: 4
-  num_train_epochs: 3
-  learning_rate: 1e-4
+  num_train_epochs: 2
+  # Giảm 5x so với SFT-from-base: adapter đã pre-adapted từ CPT,
+  # lr cao sẽ xoá kiến thức CPT đã học.
+  learning_rate: 2e-5
   weight_decay: 0.01
-  warmup_steps: 50
+  warmup_steps: 100
   lr_scheduler_type: "cosine"
   optim: "adamw_8bit"
   eval_strategy: "steps"

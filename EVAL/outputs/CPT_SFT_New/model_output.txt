@@ -22250,3 +22250,2824 @@ Current Overall Accuracy: 6.67%
 ================================================================================
 FINAL SUMMARY REPORT
 ================================================================================
+Model: qwen3-4b-cpt-sft-lora
+Dataset: VM14K_Vietnamese
+================================================================================
+Evaluation Results for qwen3-4b-cpt-sft-lora using VM14K_Vietnamese (Unsloth) 
+================================================================================
+
+
+Question #1
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong phương pháp châm cứu điều trị ung thư tuyến giáp trạng, thao tác nào sau đây phù hợp với cách châm cứu chính (không phải hỏa châm hay châm giảm đau) đã nêu?
+
+Options:
+ A) Mỗi huyệt được ấn nén 5-8 lần, mỗi ngày 4 lần.
+ B) Không lưu kim sau khi vê xe để cục bộ trướng tức khó chịu.
+ C) Đốt đỏ kim trên rượu cồn, châm sâu vào giữa khối u, mỗi lần châm 10-15 cái.
+ D) Lưu kim trong 10 phút sau khi đạt cảm giác mỏi, tê, trướng tức.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong phương pháp châm cứu điều trị ung thư tuyến giáp trạng, việc châm tại các
+huyệt như liêm tuyển, thuỷ đột, thiên đột, phế du, và phong long là cần thiết để
+kích thích tuần hoàn khí huyết và giảm triệu chứng. Thao tác châm cần đảm bảo độ
+sâu và chính xác để đạt hiệu quả điều trị, đồng thời tránh các kỹ thuật không
+phù hợp như hỏa châm hay châm giảm đau. Cảm giác mỏi, tê, hoặc trướng tức tại
+các huyệt châm là dấu hiệu hiệu quả của việc kích thích khí huyết. Do đó, việc
+lưu kim trong 10 phút để cảm nhận các triệu chứng này là phù hợp nhất với cách
+châm cứu chính. Châm sâu vào khối u, tuy nhiên, không được khuyến khích vì có
+thể gây tổn thương cục bộ, trong khi việc đốt kim trên rượu cồn hoặc châm giảm
+đau không phù hợp với mục tiêu điều trị ung thư tuyến giáp trạng. Vì vậy, đáp án
+đúng là D.
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: B
+Result: Incorrect
+Current Overall Accuracy: 0.00%
+----------------------------------------
+
+Question #2
+Topic(s): Eastern Medicine, Neurology
+Difficulty Level: Moderate
+Question: Trong một nghiên cứu về điện châm, cặp huyệt nào sau đây đã được chứng minh làm tăng ngưỡng đau kết hợp với tăng hoạt động thần kinh giao cảm?
+
+Options:
+ A) Khúc Trì L.I.-11 và Hợp Cốc L.I.-4
+ B) Dương Khê L.I.-5 và Giản Sử P-5
+ C) Túc Tam Lý ST-36 và Ngoại Quan T-B.-5
+ D) Thủ Tam Lý L.I.-10 và Thận Du DU-12
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong một nghiên cứu về điện châm, cặp huyệt Khúc Trì L.I.-11 và Hợp Cốc L.I.-4
+đã được chứng minh làm tăng ngưỡng đau và tăng hoạt động thần kinh giao cảm. Đây
+là kết quả quan trọng trong việc xác định vai trò của các huyệt này trong điều
+trị đau và kiểm soát cơn đau. Vì vậy, đáp án đúng là A.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 50.00%
+----------------------------------------
+
+Question #3
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong y học cổ truyền, khái niệm về một huyệt châm cứu riêng lẻ được hiểu là gì?
+
+Options:
+ A) Là nơi tập trung khí huyết, nhưng không có mối liên hệ với các đường kinh lạc.
+ B) Chỉ là một điểm giải phẫu đơn thuần trên bề mặt cơ thể, không có chức năng cụ thể.
+ C) Chủ yếu là điểm tác động điều trị mà không liên quan đến giải phẫu chi tiết hay sự liên kết với hệ thống kinh lạc.
+ D) Bao gồm cả giải phẫu, công năng, là một phần nội tại của mạng kinh và mạng lạc, có vai trò thông lạc giữa Bên ngoài (Biểu) và Bên trong (Lý) cơ thể.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt châm cứu trong y học cổ truyền được hiểu là một điểm có vai trò quan trọng
+trong mạng kinh và mạng lạc, nơi khí huyết lưu thông và kết nối giữa bên ngoài
+(Biểu) và bên trong (Lý) cơ thể. Đây không chỉ là một điểm giải phẫu đơn thuần,
+mà còn là một phần nội tại của hệ thống kinh lạc, đóng vai trò điều hòa và cân
+bằng khí huyết. Vì vậy, huyệt châm cứu không chỉ liên quan đến cấu trúc giải
+phẫu, mà còn có công năng điều trị, góp phần vào việc duy trì sự hài hòa giữa
+các yếu tố bên ngoài và bên trong cơ thể. Điều này giải thích tại sao huyệt châm
+cứu được xem là một phần thiết yếu trong y học cổ truyền. Final Answer: D
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: D
+Result: Correct
+Current Overall Accuracy: 66.67%
+----------------------------------------
+
+Question #4
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Theo quan điểm của Y học cổ truyền về Ngũ Du huyệt, tại sao việc loại bỏ ngoại tà khỏi cơ thể được xem là cần thiết càng sớm càng tốt?
+
+Options:
+ A) Khí huyết lưu thông chậm dần từ Tỉnh huyệt đến Hợp huyệt, cần loại bỏ tà khí trước khi ứ trệ sâu.
+ B) Tính động lớn của dòng Khí ở các huyệt ngoại biên giúp trục tà hiệu quả hơn khi tà khí còn nông.
+ C) Ngoại tà dễ dàng xâm nhập vào các huyệt nông ở tứ chi.
+ D) Khi ngoại tà tiến đến Hợp huyệt, chúng có nguy cơ gây tổn thương đến Tạng Phủ bên trong.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Theo quan điểm của Y học cổ truyền, Ngũ Du huyệt được xem là nơi khí huyết lưu
+thông từ nông ra sâu, với mỗi huyệt có tính động và vai trò đặc thù. Tỉnh huyệt,
+với tính động lớn nhất, đóng vai trò quan trọng trong việc loại bỏ ngoại tà khỏi
+cơ thể, vì đây là nơi tà khí dễ dàng xâm nhập và gây ứ trệ. Nếu tà khí không
+được loại bỏ sớm, nó sẽ lan rộng và ảnh hưởng đến các huyệt sâu hơn, gây rối
+loạn khí huyết và có thể tiến tới tổn thương đến Tạng Phủ bên trong. Việc loại
+bỏ ngoại tà càng sớm càng tốt là cần thiết để đảm bảo dòng khí huyết không bị ứ
+trệ và để duy trì sự cân bằng trong cơ thể. Điều này cũng giải thích tại sao các
+phương pháp điều trị cần tập trung vào các huyệt nông trước khi tiến hành đến
+các huyệt sâu hơn. Vì vậy, đáp án đúng là A, vì đây là lựa chọn phù hợp nhất với
+cơ chế và vai trò của Ngũ Du huyệt trong việc loại bỏ ngoại tà.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 50.00%
+----------------------------------------
+
+Question #5
+Topic(s): Eastern Medicine
+Difficulty Level: Hard
+Question: Trong Y học cổ truyền, một bệnh nhân có biểu hiện các khớp bị sưng đỏ, đau nhức dữ dội đến mức không thể chạm vào, và kèm theo triệu chứng khát nước, thì đây là đặc điểm điển hình của loại chứng tý nào?
+
+Options:
+ A) Nhiệt tý
+ B) Hành tý
+ C) Trước tý
+ D) Thống tý
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong Y học cổ truyền, các triệu chứng như sưng đỏ, đau dữ dội ở khớp, kèm theo
+khát nước, là đặc trưng của chứng nhiệt tý. Đây là loại bệnh lý phát sinh do
+nhiệt tà xâm nhập vào kinh lạc, gây tổn thương và kích thích tại các khớp. Nhiệt
+tà làm cho kinh lạc bị tổn thương, dẫn đến các triệu chứng đau nhức và sưng đỏ,
+đồng thời khát nước là biểu hiện của tình trạng nhiệt tích tụ trong cơ thể. Vì
+vậy, bệnh nhân này phù hợp với đặc điểm của chứng nhiệt tý. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 60.00%
+----------------------------------------
+
+Question #6
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Để giảm đau cột sống cổ, phương pháp trị liệu nào sau đây được khuyến nghị?
+
+Options:
+ A) Lăn bờ môi trên một lúc.
+ B) Hơ rốn và lăn quanh miệng.
+ C) Hơ cùi chỏ.
+ D) Hơ và lăn mặt ngoài đốt giữa ngón tay giữa (bàn tay trái).
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Để giảm đau cột sống cổ, phương pháp trị liệu được khuyến nghị là hơ cùi chỏ.
+Cùi chỏ là một vùng phản chiếu của cột sống cổ, và việc hơ nóng tại đây có thể
+kích thích các dây thần kinh liên quan, giúp giảm đau và cải thiện triệu chứng.
+Phương pháp này không chỉ tập trung vào việc giảm đau mà còn giúp cân bằng khí
+huyết, hỗ trợ điều hòa chức năng cơ thể. Vì vậy, lựa chọn C là phù hợp nhất
+trong các phương pháp được nêu.
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 50.00%
+----------------------------------------
+
+Question #7
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong y học cổ truyền, việc kiêng cữ đóng vai trò như thế nào đối với hiệu quả của quá trình điều trị bệnh?
+
+Options:
+ A) Là yếu tố then chốt, quyết định sự thành công hay thất bại của điều trị bệnh.
+ B) Không ảnh hưởng đáng kể đến kết quả cuối cùng của việc chữa trị.
+ C) Chủ yếu nhằm giúp bệnh nhân tuân thủ chế độ sinh hoạt đều đặn hơn.
+ D) Chỉ hỗ trợ giảm bớt một số triệu chứng nhất định nhưng không quyết định kết quả điều trị.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong y học cổ truyền, việc kiêng cữ đóng vai trò quan trọng trong việc đảm bảo
+hiệu quả điều trị bệnh. Khi bệnh nhân tuân thủ các chỉ định kiêng cữ, quá trình
+điều trị sẽ đạt được hiệu quả tối ưu nhờ việc giảm thiểu các yếu tố gây cản trở,
+từ đó tăng khả năng phục hồi sức khỏe. Điều này không chỉ giúp cải thiện triệu
+chứng mà còn hỗ trợ điều hòa khí huyết và cân bằng âm dương, hai yếu tố cốt lõi
+trong lý luận bệnh lý của y học cổ truyền. Vì vậy, kiêng cữ không chỉ là một
+bước đi đơn giản mà còn là một phần thiết yếu để đạt được kết quả điều trị tốt
+nhất. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 57.14%
+----------------------------------------
+
+Question #8
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong y học cổ truyền, để giảm chứng nhức đỉnh đầu, một trong những biện pháp thường được áp dụng là gì?
+
+Options:
+ A) Hơ đầu ngón tay giữa của bàn tay trái.
+ B) Hơ vùng Án đường và Sơn căn.
+ C) Hơ nửa mu bàn tay bên phải.
+ D) Hơ thái dương đối xứng.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong y học cổ truyền, chứng nhức đỉnh đầu thường liên quan đến sự tắc nghẽn khí
+huyết tại vùng đầu, dẫn đến đau nhức ở đỉnh đầu. Để điều trị, phương pháp hơ đầu
+ngón tay giữa của bàn tay trái được áp dụng, vì đây là vùng phản chiếu của đỉnh
+đầu, giúp kích thích khí huyết lưu thông và giảm đau. Phương pháp này dựa trên
+nguyên lý của Diện Chẩn, trong đó các vùng trên bàn tay được xem là điểm phản
+chiếu của các cơ quan hoặc khu vực cơ thể. Việc hơ nóng tại các điểm phản chiếu
+này không chỉ giúp giảm đau mà còn hỗ trợ cân bằng khí huyết, cải thiện tình
+trạng bệnh lý. Vì vậy, lựa chọn A là phương pháp điều trị phù hợp nhất. Final
+Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 62.50%
+----------------------------------------
+
+Question #9
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, huyệt Thương Khâu (SP-5) thuộc hệ thống Kinh Tỳ-Thủ Thái Âm, có những đặc tính đặc biệt nào?
+
+Options:
+ A) Là Lạc huyệt, Hỏa huyệt, huyệt bổ, và chủ trị các chứng liên quan đến Tâm.
+ B) Là Kinh huyệt, Kim huyệt, huyệt tả, và là huyệt quan trọng trong điều trị Thấp tý.
+ C) Là Khích huyệt, Mộc huyệt, huyệt tả, và chuyên về thanh nhiệt giải độc.
+ D) Là Nguyên huyệt, Thổ huyệt, huyệt bổ, có tác dụng sơ can giải uất.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Thương Khâu (SP-5) thuộc hệ thống Kinh Tỳ-Thủ Thái Âm có đặc tính là Lạc
+huyệt, Hỏa huyệt, huyệt bổ, và chuyên về thanh nhiệt giải độc. Đây là các đặc
+điểm quan trọng trong Y học cổ truyền, giúp định vị và ứng dụng huyệt trong điều
+trị các bệnh lý liên quan đến kinh Tỳ và các triệu chứng nhiệt độc.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: B
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 55.56%
+----------------------------------------
+
+Question #10
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong phương pháp Diện Chẩn - Điều khiển liệu pháp, cơ sở chính để định bệnh và điều trị là gì?
+
+Options:
+ A) Dựa trên việc xác định các đường kinh lạc và huyệt đạo truyền thống trên cơ thể.
+ B) Xác định điểm chẩn đoán và điều trị dựa vào các kết quả xét nghiệm cận lâm sàng.
+ C) Chỉ dựa vào cảm giác ấm tại các huyệt khi hơ ngải.
+ D) Căn cứ vào các đồ hình và sinh huyệt trên vùng mặt, đầu, cổ, gáy hoặc các đồ hình phản chiếu khắp cơ thể.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong phương pháp Diện Chẩn - Điều khiển liệu pháp, cơ sở chính để định bệnh và
+điều trị là các đồ hình và sinh huyệt trên vùng mặt, đầu, cổ, gáy hoặc các đồ
+hình phản chiếu khắp cơ thể. Đây là cơ sở để xác định các điểm phản chiếu liên
+quan đến các cơ quan hoặc bệnh lý cụ thể, từ đó thực hiện các thao tác điều trị
+như day ấn hoặc hơ ngải tại các sinh huyệt. Việc này không chỉ giúp định vị
+chính xác các điểm điều trị mà còn hỗ trợ điều chỉnh khí huyết, cân bằng âm
+dương và cải thiện chức năng của cơ quan bị ảnh hưởng. Do đó, phương pháp này
+kết hợp cả lý thuyết và thực hành để đạt hiệu quả điều trị cao. Final Answer: D
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: D
+Result: Correct
+Current Overall Accuracy: 60.00%
+----------------------------------------
+
+Question #11
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong việc áp dụng bộ huyệt Tiêu Viêm Giải Độc để xử lý nhiễm độc thực phẩm, khi nào không nên thêm phản chiếu ống tiêu hóa?
+
+Options:
+ A) Khi bệnh nhân còn đau bụng nhưng đã hoàn toàn tỉnh táo.
+ B) Khi nguyên nhân nhiễm độc là do côn trùng cắn.
+ C) Khi bệnh nhân mới bị nhiễm độc.
+ D) Khi chất độc đã phát tán toàn thân và tình trạng nhiễm độc đã kéo dài vài ngày.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong trường hợp bệnh nhân đã hoàn toàn tỉnh táo nhưng vẫn còn đau bụng, việc
+thêm phản chiếu ống tiêu hóa có thể gây rối loạn bởi các triệu chứng đau bụng
+phản ánh tình trạng viêm hoặc tổn thương tại hệ tiêu hóa, vốn là một phần quan
+trọng trong cơ chế bệnh lý. Khi bệnh nhân đã tỉnh táo, các triệu chứng đau bụng
+không còn là dấu hiệu của sự tổn thương thực sự, mà chỉ là biểu hiện tạm thời
+của quá trình điều trị. Việc kích hoạt thêm phản chiếu ống tiêu hóa trong trường
+hợp này không chỉ không giải quyết được vấn đề mà còn làm tăng áp lực lên hệ
+tiêu hóa, làm trầm trọng thêm tình trạng bệnh lý. Do đó, cần tránh sử dụng phản
+chiếu ống tiêu hóa trong các trường hợp này để đảm bảo hiệu quả điều trị và giảm
+nguy cơ gây rối loạn thêm. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 54.55%
+----------------------------------------
+
+Question #12
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Khi đo huyết áp bằng huyết áp kế mà kim giật lui ngắn dưới 2 mmHg (một nấc nhỏ trên mặt đồng hồ), theo quan niệm của Y học cổ truyền dựa trên quan sát kim, đây là dấu hiệu của tình trạng nào?
+
+Options:
+ A) Hở van động mạch chủ.
+ B) Trương lực tim yếu.
+ C) Thiểu năng vành.
+ D) Hở van hai lá.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Theo Y học cổ truyền, khi kim giật lui ngắn dưới 2 mmHg trên huyết áp kế, đây là
+dấu hiệu của tình trạng thiếu năng lượng vành, cho thấy tim không được cung cấp
+đủ năng lượng để duy trì chức năng bình thường. Điều này phản ánh sự suy yếu của
+hệ tuần hoàn vành, dẫn đến giảm khả năng cung cấp máu và năng lượng cho tim. Do
+đó, tình trạng này không liên quan đến các vấn đề về van tim như hở van động
+mạch chủ hay van hai lá, mà chủ yếu liên quan đến sự thiếu hụt năng lượng vành.
+Vì vậy, đáp án đúng là C.
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: B
+Result: Incorrect
+Current Overall Accuracy: 50.00%
+----------------------------------------
+
+Question #13
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Kỹ thuật bấm huyệt tại Nội Quan P-6 được ghi nhận hiệu quả rõ rệt trong việc ngăn ngừa buồn nôn và nôn, cũng như giảm nhu cầu sử dụng thuốc chống nôn, sau loại phẫu thuật nào?
+
+Options:
+ A) Tiểu phẫu phụ khoa
+ B) Phẫu thuật tim mạch
+ C) Phẫu thuật cắt amidan ở trẻ em
+ D) Phẫu thuật lắc
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Tiểu phẫu phụ khoa là loại phẫu thuật được ghi nhận hiệu quả rõ rệt khi áp dụng
+kỹ thuật bấm huyệt tại Nội Quan P-6, giúp giảm đáng kể các triệu chứng buồn nôn
+và nôn cũng như giảm nhu cầu sử dụng thuốc chống nôn sau phẫu thuật. Điều này
+cho thấy tác dụng của kỹ thuật này trong việc cải thiện tình trạng bệnh lý liên
+quan đến tiêu hóa và tuần hoàn sau phẫu thuật.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: A
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 46.15%
+----------------------------------------
+
+Question #14
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong điều trị bệnh viêm loét đại tràng theo Y học cổ truyền, huyệt vị nào sau đây có vai trò điều bổ tràng vị?
+
+Options:
+ A) Phúc kết
+ B) Quan nguyên
+ C) Túc tam lý
+ D) Thiên khu
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Phúc kết là huyệt vị có vai trò điều bổ tràng vị trong điều trị bệnh viêm
+loét đại tràng theo Y học cổ truyền. Đây là huyệt thuộc kinh túc dương minh vị,
+có tác dụng điều hòa khí huyết và hỗ trợ chức năng của tràng vị, giúp cải thiện
+tình trạng viêm loét. Trong thực hành, việc châm cứu hoặc cứu ngải tại huyệt này
+có thể giúp giảm viêm và tăng cường chức năng tiêu hóa. Vì vậy, huyệt Phúc kết
+là lựa chọn phù hợp để điều trị các triệu chứng liên quan đến viêm loét đại
+tràng. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: C
+Result: Incorrect
+Current Overall Accuracy: 42.86%
+----------------------------------------
+
+Question #15
+Topic(s): Eastern Medicine
+Difficulty Level: Hard
+Question: Trong các nghiên cứu khoa học về hiệu quả của châm cứu, liệu pháp này đã được chứng minh mang lại kết quả tương tự như điều trị bằng thuốc thông thường trong sáu tháng, nhưng chỉ với sáu tuần áp dụng, đối với chứng bệnh nào sau đây?
+
+Options:
+ A) Đau đầu căng cơ
+ B) Thoái hóa khớp gối
+ C) Đau thắt lưng
+ D) Đau đầu migraine
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Châm cứu đã được chứng minh mang lại hiệu quả tương đương với điều trị bằng
+thuốc thông thường trong sáu tháng, nhưng chỉ với sáu tuần áp dụng, đối với
+chứng đau đầu căng cơ. Điều này cho thấy châm cứu có khả năng cải thiện triệu
+chứng đau đầu căng cơ một cách hiệu quả và nhanh chóng, đặc biệt khi được áp
+dụng đúng cách. Vì vậy, trong các nghiên cứu, liệu pháp này được xem là một
+phương pháp điều trị tiềm năng, đặc biệt trong các trường hợp bệnh lý liên quan
+đến đau đầu căng cơ.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: D
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 40.00%
+----------------------------------------
+
+Question #16
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong phẫu thuật có ứng dụng châm tê, vai trò quan trọng của thầy thuốc trong công tác bảo vệ người bệnh, nhằm tạo điều kiện tốt nhất cho sự phối hợp, được thể hiện chủ yếu qua hành động nào?
+
+Options:
+ A) Đảm bảo người bệnh không còn bất kỳ cảm giác đau hay khó chịu nào trong suốt cuộc mổ.
+ B) Chỉ tập trung theo dõi các chỉ số sinh lý và can thiệp khi có biến đổi nghiêm trọng.
+ C) Yêu cầu người bệnh chủ động kiểm soát trạng thái tinh thần để tránh các phản ứng sinh lý tiêu cực.
+ D) Giữ vững tinh thần, động viên người bệnh, sử dụng lập luận chuyên môn để giảm đau và điều hòa chức năng sinh lý kịp thời.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong phẫu thuật có ứng dụng châm tê, vai trò quan trọng của thầy thuốc trong
+công tác bảo vệ người bệnh nhằm tạo điều kiện tốt nhất cho sự phối hợp được thể
+hiện qua việc đảm bảo người bệnh không còn bất kỳ cảm giác đau hay khó chịu nào
+trong suốt cuộc mổ. Điều này đòi hỏi sự kết hợp giữa kỹ thuật châm tê và các
+biện pháp hỗ trợ để duy trì trạng thái ổn định, giúp người bệnh chịu đựng được
+áp lực của phẫu thuật một cách thoải mái.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: D
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 37.50%
+----------------------------------------
+
+Question #17
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Khi xác định vị trí huyệt Khúc Trì (L.I.-11) tại vùng khuỷu tay, huyệt này nằm trên cơ nào?
+
+Options:
+ A) Cơ tam đầu
+ B) Cơ gan bàn tay dài
+ C) Cơ nhị đầu
+ D) Cơ duỗi cổ tay quay dài
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Khúc Trì (L.I.-11) nằm trên cơ nhị đầu, một cơ quan trọng ở khuỷu tay,
+được xác định dựa trên vị trí giải phẫu cụ thể của cơ này. Cơ nhị đầu có vai trò
+quan trọng trong việc vận động khuỷu tay, và vị trí của huyệt Khúc Trì được xác
+định dựa trên cấu trúc giải phẫu của cơ. Vì vậy, đáp án đúng là C.
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 35.29%
+----------------------------------------
+
+Question #18
+Topic(s): Eastern Medicine
+Difficulty Level: Hard
+Question: Trong Y học cổ truyền, một bệnh nhân đột nhiên bất tỉnh nhân sự, mặt đỏ gay, tay quờ quạng, chân đạp, lăn lộn không yên, miệng cắn chặt không mở ra được, đại tiện và tiểu tiện không thông, mạch huyền hoạt. Tình trạng này có thể được chẩn đoán là chứng gì?
+
+Options:
+ A) Bế chứng
+ B) Huyết ứ
+ C) Thoát chứng
+ D) Khí hư
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong Y học cổ truyền, các triệu chứng như bất tỉnh nhân sự, mặt đỏ gay, tay quờ
+quạng, chân đạp, lăn lộn không yên, miệng cắn chặt không mở ra được, và mạch
+huyền hoạt là đặc trưng của chứng Bế chứng. Đây là tình trạng khí huyết bị tắc
+nghẽn, dẫn đến mất ý thức và các biểu hiện thần kinh bất thường. Chứng Bế chứng
+thường liên quan đến các yếu tố như phong nhiệt hoặc khí trệ, và cần được xử lý
+bằng phương pháp sơ thông khí huyết và khai khiếu. Vì vậy, tình trạng này phù
+hợp với chẩn đoán Bế chứng. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 38.89%
+----------------------------------------
+
+Question #19
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Trong y học cổ truyền, công năng chính của huyệt châm cứu là gì?
+
+Options:
+ A) Cung cấp sự thông lạc giữa Bên ngoài cơ thể (Biểu) và Bên trong cơ thể (Lý)
+ B) Điều hòa nhiệt độ cơ thể
+ C) Lọc bỏ độc tố khỏi máu
+ D) Kích thích sự phát triển của cơ bắp
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt châm cứu trong y học cổ truyền có công năng chính là cung cấp sự thông lạc
+giữa Bên ngoài cơ thể (Biểu) và Bên trong cơ thể (Lý). Cơ chế này giúp điều hòa
+sự lưu thông của khí và huyết, từ đó duy trì cân bằng Âm Dương và điều hòa các
+chức năng sinh lý. Đây là một yếu tố then chốt để hỗ trợ điều trị các rối loạn
+liên quan đến khí huyết và cân bằng cơ thể. Vì vậy, đáp án đúng là A.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 42.11%
+----------------------------------------
+
+Question #20
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong lịch sử y học cổ truyền, thủ pháp "thôi khí" trong châm cứu được sáng tạo bởi nhà y học nào?
+
+Options:
+ A) Từ Tịch
+ B) Thần tâm Cần Lưu
+ C) Tân Việt Nhân
+ D) Đậu Mặc
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong lịch sử y học cổ truyền, thủ pháp "thôi khí" trong châm cứu được sáng tạo
+bởi nhà y học Từ Tịch. Đây là một phương pháp quan trọng nhằm điều hòa khí huyết
+trong cơ thể, góp phần vào việc cải thiện hiệu quả của châm cứu. Vì vậy, đáp án
+đúng là A.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: B
+Result: Incorrect
+Current Overall Accuracy: 40.00%
+----------------------------------------
+
+Question #21
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Huyệt nào sau đây trong Y học cổ truyền được khuyến cáo cấm châm?
+
+Options:
+ A) Hạ quản
+ B) Thần khuyết
+ C) Thủy phân
+ D) Kiến lý
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Thần khuyết được khuyến cáo cấm châm trong Y học cổ truyền do vị trí đặc
+biệt và liên quan đến vùng bụng dưới, nơi có thể gây nguy cơ biến chứng nếu thực
+hiện châm cứu không đúng cách. Đây là một nguyên tắc quan trọng để đảm bảo an
+toàn cho bệnh nhân. Vì vậy, huyệt này không được khuyến khích sử dụng trong các
+phương pháp điều trị. Final Answer: B
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: B
+Result: Correct
+Current Overall Accuracy: 42.86%
+----------------------------------------
+
+Question #22
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, huyệt Hồn Môn (BL-47) được xác định ở vị trí nào trên cơ thể?
+
+Options:
+ A) Cách đường giữa lưng 3 thốn, ngang mức bờ dưới mỏm gai đốt sống ngực 10 (T10).
+ B) Cách đường giữa lưng 0.5 thốn, ngang mức bờ dưới mỏm gai đốt sống ngực 9 (T9).
+ C) Cách đường giữa lưng 1.5 thốn, ngang mức bờ dưới mỏm gai đốt sống ngực 9 (T9).
+ D) Cách đường giữa lưng 3 thốn, ngang mức bờ dưới mỏm gai đốt sống ngực 9 (T9).
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Hồn Môn (BL-47) được xác định ở vị trí cách đường giữa lưng 3 thốn, ngang
+mức bờ dưới mỏm gai đốt sống ngực 9 (T9). Đây là vị trí chính xác của huyệt này
+trong hệ thống kinh lạc của Y học cổ truyền.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: D
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 40.91%
+----------------------------------------
+
+Question #23
+Topic(s): Eastern Medicine, Cardiology
+Difficulty Level: Moderate
+Question: Huyệt Thiên Trì P-1, thuộc hệ thống Kinh Tâm Bào (Thủ Quyết Âm Kinh Lạc), có vị trí được xác định như thế nào trên cơ thể?
+
+Options:
+ A) Nằm ở khoang gian sườn 4, phía ngoài núm vú 1 thốn.
+ B) Nằm ở khoang gian sườn 3, phía ngoài núm vú 1 thốn.
+ C) Nằm ở khoang gian sườn 5, phía ngoài núm vú 1 thốn.
+ D) Nằm ở khoang gian sườn 4, phía trong núm vú 1 thốn.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Thiên Trì P-1 được xác định nằm ở khoang gian sườn 4, phía ngoài núm vú 1
+thốn. Đây là vị trí chính xác của huyệt này trong hệ thống Kinh Tâm Bào, với vai
+trò quan trọng trong điều hòa khí huyết và hỗ trợ chức năng của Tâm Bào.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: A
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 39.13%
+----------------------------------------
+
+Question #24
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, đối với bệnh viêm não do phong nhiệt cấp phát, nguyên tắc điều trị chủ yếu bao gồm những phương pháp nào?
+
+Options:
+ A) Bổ khí thăng dương, hoạt huyết hóa ứ, thanh phế nhiệt, bình can tức phong.
+ B) Thanh tâm can hỏa, tiêu tà phong nhiệt, tư âm bổ huyết, chấn tâm an thần.
+ C) Ôn kinh tán hàn, trừ thấp hóa đàm, lợi thủy thẩm thấp, an thần định chí.
+ D) Thanh nhiệt giải độc, sơ can giải uất, kiện tỳ vị, dưỡng tâm an thần.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong Y học cổ truyền, điều trị bệnh viêm não do phong nhiệt cần tập trung vào
+các nguyên tắc nhằm giải quyết các yếu tố bệnh lý chính. Bổ khí thăng dương giúp
+tăng cường khí lực, hoạt huyết hóa ứ để cải thiện tuần hoàn, thanh phế nhiệt
+nhằm giảm nhiệt độc, và bình can tức phong để ổn định thần kinh. Các phương pháp
+này không chỉ giải quyết các triệu chứng như sốt, đau đầu, và rối loạn thần kinh
+mà còn hướng đến cân bằng tổng thể cho cơ thể. Do đó, đáp án đúng là A, vì đây
+là lựa chọn bao quát các nguyên tắc điều trị phù hợp với bệnh lý viêm não do
+phong nhiệt.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: B
+Result: Incorrect
+Current Overall Accuracy: 37.50%
+----------------------------------------
+
+Question #25
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong hệ thống huyệt vị y học cổ truyền, huyệt Đại Trường Du (BL-25) có điểm đặc biệt nào sau đây?
+
+Options:
+ A) Là huyệt Bối du của Đại Trường.
+ B) Là huyệt Khích của Đại Trường.
+ C) Là huyệt Mộ của Đại Trường.
+ D) Là huyệt Nguyên của Đại Trường.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Đại Trường Du (BL-25) là huyệt Bối du của Đại Trường, một loại huyệt đặc
+biệt trong hệ thống huyệt vị y học cổ truyền. Huyệt này có vai trò quan trọng
+trong việc điều hòa khí huyết và hỗ trợ chức năng của Đại Trường. Vì vậy, trong
+các trường hợp bệnh lý liên quan đến Đại Trường, huyệt này thường được sử dụng
+để điều trị. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 40.00%
+----------------------------------------
+
+Question #26
+Topic(s): Pulmonology, Eastern Medicine
+Difficulty Level: Hard
+Question: Huyệt đạo nào sau đây được một nghiên cứu lâm sàng chứng minh có hiệu quả trị hen phế quản ở trẻ em cao hơn đáng kể so với nhóm điều trị bằng thuốc (89% so với 64%), đồng thời giúp tăng mức bạch cầu ái toan và giảm mức IgE so với nhóm chứng?
+
+Options:
+ A) Thái Khê KID-3
+ B) Đại Chung KID-4
+ C) Thiên Tuyền P-2
+ D) Dũng Tuyền KID-1
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Dũng Tuyền KID-1 là huyệt đạo được chứng minh có hiệu quả trị hen phế quản ở trẻ
+cao hơn đáng kể so với nhóm điều trị bằng thuốc, với tỷ lệ hiệu quả là 89% so
+với 64% ở nhóm chứng. Huyệt này còn giúp tăng mức bạch cầu ái toan và giảm mức
+IgE so với nhóm chứng. Điều này cho thấy huyệt có tác dụng điều hòa khí huyết và
+cải thiện chức năng phế quản, đặc biệt trong các trường hợp bệnh lý liên quan
+đến viêm và dị ứng. Vì vậy, huyệt này được xem là lựa chọn tối ưu trong điều trị
+các bệnh lý phế quản ở trẻ. Final Answer: D
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: D
+Result: Correct
+Current Overall Accuracy: 42.31%
+----------------------------------------
+
+Question #27
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Huyệt nào sau đây nằm ở chỗ lõm từ trung điểm của đuôi lông mày và khóe mắt ngoài đo ra khoảng 1 thốn?
+
+Options:
+ A) Thượng Quan
+ B) Đồng Tử Liêu
+ C) Ty Trúc Không
+ D) Thái Dương
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Thượng Quan nằm ở chỗ lõm từ trung điểm của đuôi lông mày và khóe mắt
+ngoài đo ra khoảng 1 thốn. Đây là một huyệt quan trọng thuộc kinh Đởm, có tác
+dụng điều hòa khí huyết và giảm đau vùng đầu, mặt.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: D
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 40.74%
+----------------------------------------
+
+Question #28
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Theo các nghiên cứu sử dụng chất có hoạt tính phóng xạ để xác định đường kinh, mối quan hệ giữa đường kinh và các cấu trúc giải phẫu đã biết được kết luận như thế nào?
+
+Options:
+ A) Đường kinh được xác định là trùng khớp với hệ thống mạch máu và mạch bạch huyết.
+ B) Đường kinh chỉ xuất hiện rõ nét và đều đặn trên cơ thể mắc bệnh.
+ C) Đường kinh không trùng với các hệ thống mạch máu, mạch bạch huyết hay hệ thần kinh, và không tương ứng với bất kỳ cấu trúc giải phẫu đã biết nào.
+ D) Đường kinh là một phần mở rộng của hệ thống thần kinh.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Theo các nghiên cứu sử dụng chất có hoạt tính phóng xạ, đường kinh được xác định
+là trùng khớp với hệ thống mạch máu và mạch bạch huyết. Điều này cho thấy mối
+quan hệ giữa đường kinh và các cấu trúc giải phẫu đã được xác minh rõ ràng, từ
+đó khẳng định vai trò của đường kinh trong việc điều hòa khí huyết và duy trì
+cân bằng sinh lý.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: C
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 39.29%
+----------------------------------------
+
+Question #29
+Topic(s): Pulmonology, Eastern Medicine
+Difficulty Level: Easy
+Question: Huyệt Phế Du (BL-13) có vị trí được xác định chính xác như thế nào?
+
+Options:
+ A) Từ đường giữa lưng đo ra ngoài 1,5 thốn, ngang mức bờ dưới mỏm gai đốt sống ngực 5 (T5).
+ B) Từ đường giữa lưng đo ra ngoài 3 thốn, ngang mức bờ dưới mỏm gai đốt sống cổ 7 (C7).
+ C) Từ đường giữa lưng đo ra ngoài 0,5 thốn, ngang mức bờ dưới mỏm gai đốt sống ngực 3 (T3).
+ D) Từ đường giữa lưng đo ra ngoài 1,5 thốn, ngang mức bờ dưới mỏm gai đốt sống ngực 3 (T3).
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Phế Du (BL-13) được xác định chính xác nằm cách đường giữa 1,5 thốn và
+ngang mức bờ dưới mỏm gai đốt sống ngực 3 (T3). Đây là vị trí đặc trưng của
+huyệt này, liên quan đến chức năng của Phế và có vai trò quan trọng trong điều
+hòa khí huyết. Vì vậy, đáp án đúng là D.
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: D
+Result: Correct
+Current Overall Accuracy: 41.38%
+----------------------------------------
+
+Question #30
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong y học cổ truyền, Học thuyết Kinh Lạc và Châm cứu được xây dựng dựa trên các nội dung cốt lõi nào?
+
+Options:
+ A) Đại cương, Mười hai chính kinh, và Bát mạch kỳ kinh.
+ B) Đại cương, Cơ chế tác dụng của châm cứu, và Kỹ thuật châm.
+ C) Mười hai chính kinh, Bát mạch kỳ kinh, và Các phương pháp tìm huyệt.
+ D) Châm cứu khoa học, Đại cương, và Các huyệt ngoài đường kinh.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Học thuyết Kinh Lạc và Châm cứu trong y học cổ truyền được xây dựng dựa trên các
+nội dung cốt lõi như Đại cương, Mười hai chính kinh, và Bát mạch kỳ kinh. Đây là
+các yếu tố nền tảng giúp định hình hệ thống lý luận và phương pháp châm cứu
+trong y học cổ truyền.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: A
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 40.00%
+----------------------------------------
+
+Question #31
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong điều trị chứng Lãnh háo theo y học cổ truyền, phương pháp châm cứu thường được áp dụng là gì?
+
+Options:
+ A) Chỉ châm bổ
+ B) Châm tả và cứu
+ C) Tất cả đều châm tả
+ D) Châm bổ và cứu
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong điều trị chứng Lãnh háo theo y học cổ truyền, phương pháp châm cứu được áp
+dụng là châm tả và cứu. Đây là cách tiếp cận nhằm điều chỉnh khí huyết, giúp cải
+thiện tình trạng suy yếu và mất cân bằng khí huyết gây ra bởi chứng Lãnh háo.
+Việc châm tả giúp loại bỏ khí trệ, trong khi cứu hỗ trợ tăng cường khí huyết, từ
+đó khôi phục trạng thái cân bằng và cải thiện triệu chứng. Vì vậy, lựa chọn B là
+phù hợp nhất với nguyên lý điều trị của chứng này. Final Answer: B
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 38.71%
+----------------------------------------
+
+Question #32
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong điều trị đau đầu theo Y học cổ truyền, khi bệnh nhân có biểu hiện đau đầu với tính chất thay đổi vị trí, huyệt vị nào cần được gia giảm thêm vào phác đồ điều trị?
+
+Options:
+ A) Hợp cốc
+ B) Phong trì
+ C) Thái dương
+ D) Bách hội
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong điều trị đau đầu theo Y học cổ truyền, khi bệnh nhân có biểu hiện đau đầu
+thay đổi vị trí, cần gia giảm thêm huyệt Thái dương vào phác đồ điều trị. Huyệt
+này có tác dụng điều hòa khí huyết và hỗ trợ giảm đau hiệu quả hơn, đặc biệt khi
+đau đầu có tính chất thay đổi vị trí.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: B
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 37.50%
+----------------------------------------
+
+Question #33
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Vị trí huyệt Kiên Trinh (S.I.-9) trong y học cổ truyền được xác định như thế nào?
+
+Options:
+ A) Ở tư thế cánh tay duỗi, trên nếp nách sau 1 thốn, tại bờ dưới cơ delta.
+ B) Ở tư thế cánh tay khép, trên nếp nách sau 2 thốn, tại bờ trên cơ delta.
+ C) Ở tư thế cánh tay khép, trên nếp nách trước 1 thốn, tại bờ dưới cơ delta.
+ D) Ở tư thế cánh tay khép, trên nếp nách sau 1 thốn, tại bờ dưới cơ delta.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Kiên Trinh (S.I.-9) được xác định nằm ở tư thế cánh tay khép, trên nếp
+nách sau 1 thốn, tại bờ dưới cơ delta. Đây là vị trí chính xác dựa trên mô tả
+trong y học cổ truyền, nơi huyệt này có vai trò quan trọng trong điều trị các
+vấn đề liên quan đến vai và cánh tay.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: D
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 36.36%
+----------------------------------------
+
+Question #34
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Một bệnh nhân biểu hiện miệng lệch không khép được, mắt không nhắm kín, kết mạc sung huyết, mạch phủ huyền. Theo Y học cổ truyền, nguyên tắc điều trị chính cho tình trạng này nên là gì?
+
+Options:
+ A) Thanh nhiệt giải độc, dưỡng âm bổ huyết
+ B) Kiện tỳ ích khí, hóa đàm trừ thấp
+ C) Sơ thông kinh lạc, đuổi phong, tiềm dương
+ D) Hoạt huyết hóa ứ, hành khí chỉ thống
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Theo Y học cổ truyền, nguyên tắc điều trị chính cho tình trạng này là sơ thông
+kinh lạc, đuổi phong và tiềm dương. Điều này được lý giải bởi tình trạng liệt
+mặt và rối loạn vận động liên quan đến sự tắc nghẽn kinh lạc và sự suy yếu của
+dương khí, dẫn đến phong tà xâm nhập và khí huyết không lưu thông. Việc sơ thông
+kinh lạc giúp khai thông các kinh lạc bị tắc, đuổi phong nhằm loại bỏ yếu tố tà
+khí gây rối loạn, và tiềm dương nhằm phục hồi và tăng cường dương khí để điều
+hòa khí huyết. Đây là phương pháp phù hợp nhất để giải quyết các triệu chứng
+liệt mặt, rối loạn vận động và các vấn đề liên quan đến khí huyết. Vì vậy, đáp
+án đúng là C.
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: C
+Result: Correct
+Current Overall Accuracy: 38.24%
+----------------------------------------
+
+Question #35
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Trong các thủ pháp châm cứu, Tuần được thực hiện theo cách nào?
+
+Options:
+ A) Dùng móng ngón tay bấm vào huyệt để định vị chính xác trước khi châm kim.
+ B) Vê kim sang trái nếu huyệt ở bên trên, vê kim sang phải nếu huyệt ở bên dưới.
+ C) Dùng ngón trỏ ấn vào thân kim để cố định và tăng cường kích thích tại huyệt.
+ D) Dùng ngón trỏ nhấc lên ấn xuống kim châm cứu đối với các huyệt theo đường kinh.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong các thủ pháp châm cứu, Tuần được thực hiện bằng cách sử dụng ngón trỏ để
+nhấc lên và ấn xuống kim châm cứu, đặc biệt đối với các huyệt nằm trên đường
+kinh. Phương pháp này giúp điều chỉnh và tăng cường kích thích tại huyệt, từ đó
+cải thiện hiệu quả điều trị. Do đó, lựa chọn đúng là D.
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: D
+Result: Correct
+Current Overall Accuracy: 40.00%
+----------------------------------------
+
+Question #36
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, huyệt nào được biết đến là Cao Vũ Tổng Huyệt, chuyên trị cho vùng lưng và thắt lưng?
+
+Options:
+ A) Phong Phủ Du-16
+ B) Đại Chùy Du-14
+ C) Bách Hội Du-20
+ D) Ủy Trung BL-40
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Bách Hội Du-20 được biết đến là Cao Vũ Tổng Huyệt, chuyên trị cho vùng
+lưng và thắt lưng. Đây là một huyệt quan trọng trong Y học cổ truyền, có tác
+dụng điều hòa khí huyết và cải thiện các triệu chứng liên quan đến vùng này.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: D
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 38.89%
+----------------------------------------
+
+Question #37
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Theo lý luận y học cổ truyền, Tỳ vị hư nhược có xu hướng ưa thích phương pháp điều trị mang đặc tính nào sau đây?
+
+Options:
+ A) Ưa tính hàn.
+ B) Ưa phép công.
+ C) Ưa thông khí.
+ D) Ưa khổ vị.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Theo lý luận y học cổ truyền, Tỳ vị hư nhược có xu hướng ưa thích phương pháp
+điều trị mang đặc tính thông khí. Điều này xuất phát từ việc khí huyết ở Tỳ và
+Vị bị suy yếu, dẫn đến tình trạng khí trệ và huyết ứ, gây ra các triệu chứng như
+đau bụng, đầy hơi, và khó tiêu. Phương pháp thông khí giúp kích thích lưu thông
+khí huyết, làm giảm tình trạng ứ trệ và cải thiện chức năng tiêu hóa. Do đó, lựa
+chọn C là phù hợp nhất với nguyên lý bệnh lý và cách điều trị trong y học cổ
+truyền. Final Answer: C
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: C
+Result: Correct
+Current Overall Accuracy: 40.54%
+----------------------------------------
+
+Question #38
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Theo Y học cổ truyền, bộ phận nào sau đây được xem là vùng phản chiếu của Mắt?
+
+Options:
+ A) Sơn Căn
+ B) Ngón chân cái
+ C) Cánh mũi
+ D) Khuỷu tay
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Theo Y học cổ truyền, vùng phản chiếu của Mắt được xác định là Ngón chân cái.
+Đây là một phần quan trọng trong hệ thống phản chiếu, nơi các cơ quan ngoại vi
+có liên hệ với các cơ quan nội tạng thông qua các điểm phản chiếu. Ngón chân cái
+được xem là điểm phản chiếu của Mắt, và việc kích thích hoặc điều hòa vùng này
+có thể giúp cải thiện chức năng của Mắt. Điều này minh họa cách Y học cổ truyền
+sử dụng các điểm phản chiếu để chẩn đoán và điều trị các bệnh lý liên quan. Vì
+vậy, đáp án đúng là B.
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: C
+Result: Incorrect
+Current Overall Accuracy: 39.47%
+----------------------------------------
+
+Question #39
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong y học cổ truyền, tình trạng 'viêm đa xoang' được chẩn đoán khi có tình trạng viêm ở bao nhiêu xoang trở lên?
+
+Options:
+ A) Hai xoang
+ B) Ba xoang
+ C) Một xoang
+ D) Bốn xoang
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Viêm đa xoang trong y học cổ truyền được chẩn đoán khi có tình trạng viêm ở ba
+xoang trở lên. Đây là một tiêu chuẩn quan trọng để phân loại tình trạng viêm đa
+xoang, giúp định hướng điều trị và chẩn đoán chính xác hơn. Vì vậy, đáp án đúng
+là B.
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: A
+Result: Incorrect
+Current Overall Accuracy: 38.46%
+----------------------------------------
+
+Question #40
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, theo một số y văn, huyệt Cưu Vĩ (Nhâm-15) có chống chỉ định với phương pháp trị liệu nào?
+
+Options:
+ A) Châm
+ B) Xoa bóp
+ C) Cứu
+ D) Bấm huyệt
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Cưu Vĩ (Nhâm-15) trong Y học cổ truyền có chống chỉ định với phương pháp
+cứu, vì đây là một huyệt thuộc Nhâm mạch, nơi khí huyết tập trung và có liên
+quan đến các cơ quan nội tạng quan trọng. Phương pháp cứu, khi sử dụng nhiệt và
+kích thích mạnh, có thể gây tổn thương hoặc làm rối loạn khí huyết tại vùng này,
+dẫn đến các tác dụng phụ không mong muốn. Do đó, việc tránh sử dụng phương pháp
+cứu tại huyệt Cưu Vĩ là cần thiết để đảm bảo an toàn và hiệu quả điều trị. Final
+Answer: C
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: C
+Result: Correct
+Current Overall Accuracy: 40.00%
+----------------------------------------
+
+Question #41
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong việc tìm sinh huyệt phản chiếu nơi có bệnh theo Y học cổ truyền, hệ phản chiếu nào được ưu tiên sử dụng thông thường đầu tiên?
+
+Options:
+ A) Hệ phản chiếu trên mặt
+ B) Hệ phản chiếu lưng, bụng
+ C) Hệ phản chiếu bàn tay
+ D) Hệ phản chiếu bàn chân
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Hệ phản chiếu trên mặt được ưu tiên sử dụng thông thường khi tìm sinh huyệt phản
+chiếu nơi có bệnh theo Y học cổ truyền. Điều này dựa trên mối liên hệ giữa các
+vùng phản chiếu trên mặt và các cơ quan nội tạng, giúp xác định sinh huyệt một
+cách chính xác và hiệu quả.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: A
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 39.02%
+----------------------------------------
+
+Question #42
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong phương pháp xác định huyệt đạo bằng cách dùng ngón tay ấn trên da, cảm giác đặc trưng thường xuất hiện tại vùng huyệt ở người bệnh là gì?
+
+Options:
+ A) Ngứa ran, buốt nhẹ hoặc cảm giác căng cứng cơ.
+ B) Tê, tức, nặng hoặc như có dòng điện chạy.
+ C) Ê ẩm, nhức nhối nhẹ hoặc nóng rát tại chỗ.
+ D) Đau nhói, lạnh hoặc cảm giác trống rỗng.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong phương pháp xác định huyệt đạo bằng cách dùng ngón tay ấn trên da, cảm
+giác đặc trưng thường xuất hiện tại vùng huyệt ở người bệnh là ngứa ran, buốt
+nhẹ hoặc cảm giác căng cứng cơ. Đây là các dấu hiệu quan trọng để xác định vị
+trí huyệt đạo, vì chúng phản ánh sự nhạy cảm của vùng da khi tác động lên các
+điểm huyệt.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: B
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 38.10%
+----------------------------------------
+
+Question #43
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Diện Chẩn được đặt trên nền tảng "cái kiềng ba chân" bao gồm những yếu tố nào?
+
+Options:
+ A) Các huyệt tương tự Đông y, huyệt giống thuốc Tây y và huyệt trên mặt.
+ B) Sinh huyệt, đồ hình phản chiếu và đồ hình đồng ứng.
+ C) Các huyệt phản ánh hệ thần kinh, hệ nội tiết và hệ sinh dục.
+ D) Đồ hình ngoại vi, đồ hình nội tạng và sinh huyệt.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Diện Chẩn được xây dựng trên nền tảng "cái kiềng ba chân" bao gồm sinh huyệt, đồ
+hình phản chiếu và đồ hình đồng ứng. Đây là các yếu tố cốt lõi giúp xác định và
+ứng dụng các huyệt trong phương pháp này. Sinh huyệt là các điểm tự nhiên trên
+cơ thể, đồ hình phản chiếu mô tả mối liên hệ giữa các vùng cơ thể và đồ hình
+đồng ứng, dựa trên sự tương đồng về hình thái hoặc chức năng. Sự kết hợp này
+không chỉ hỗ trợ trong việc xác định huyệt mà còn giúp định hướng điều trị. Vì
+vậy, đáp án đúng là B.
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: B
+Result: Correct
+Current Overall Accuracy: 39.53%
+----------------------------------------
+
+Question #44
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong hệ thống Kỳ kinh bát mạch, cặp huyệt nào sau đây lần lượt là huyệt khai của mạch Âm Duy và mạch Dương Duy?
+
+Options:
+ A) Công Tôn (SP-4) và Túc Lâm Khấp (GB-41)
+ B) Chiếu Hải (KID-6) và Thân Mạch (BL-62)
+ C) Thái Uyên (LU-9) và Liệt Khuyết (LU-7)
+ D) Nội Quan (P-6) và Ngoại Quan (TE-5)
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt khai của mạch Âm Duy là Công Tôn (SP-4), nằm ở kinh Tỳ, trong khi huyệt
+khai của mạch Dương Duy là Túc Lâm Khấp (GB-41), nằm ở kinh Đởm. Hai huyệt này
+có mối liên hệ chặt chẽ với chức năng điều hòa khí huyết và cân bằng âm dương
+trong cơ thể. Sự phối hợp này không chỉ giúp điều hòa khí huyết mà còn hỗ trợ
+điều trị các rối loạn liên quan đến kinh mạch. Vì vậy, cặp huyệt này là lựa chọn
+phù hợp nhất trong việc ứng dụng trị liệu. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 38.64%
+----------------------------------------
+
+Question #45
+Topic(s): Eastern Medicine, Nephrology
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, các phương pháp tác động liên quan đến chức năng của tạng Thận và tuyến thượng thận thường mang lại tác dụng nào sau đây?
+
+Options:
+ A) Gây nôn (làm ói)
+ B) Làm tăng huyết áp
+ C) Chống co giật
+ D) Chống dị ứng
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong Y học cổ truyền, các phương pháp tác động liên quan đến chức năng của tạng
+Thận và tuyến thượng thận thường mang lại tác dụng làm tăng huyết áp. Điều này
+xuất phát từ việc tạng Thận và tuyến thượng thận có vai trò quan trọng trong
+việc điều hòa khí huyết và duy trì cân bằng nội môi, đặc biệt là huyết áp. Khi
+các phương pháp này được áp dụng, chúng không chỉ hỗ trợ chức năng của tạng Thận
+mà còn tác động đến tuyến thượng thận, từ đó tăng cường khả năng điều hòa huyết
+áp. Do đó, tác dụng này phù hợp với các tình trạng bệnh lý liên quan đến rối
+loạn huyết áp. Final Answer: B
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 37.78%
+----------------------------------------
+
+Question #46
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong hệ thống 16 lạc mạch lớn của Y học cổ truyền, lạc mạch nào có điểm khởi đầu khác biệt so với các lạc mạch còn lại?
+
+Options:
+ A) Đại lạc mạch của Vị (Hư lý)
+ B) Lạc mạch của mạch Nhâm
+ C) Lạc mạch của mạch Đốc
+ D) Đại lạc mạch của Tỳ
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong hệ thống 16 lạc mạch lớn của Y học cổ truyền, Đại lạc mạch của Tỳ (Hư lý)
+có điểm khởi đầu khác biệt so với các lạc mạch còn lại. Đây là đặc điểm nổi bật
+của nó, khác với các lạc mạch khác khởi đầu từ các kinh chính. Vì vậy, đáp án
+đúng là D.
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: A
+Result: Incorrect
+Current Overall Accuracy: 36.96%
+----------------------------------------
+
+Question #47
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Phương pháp Diện Chẩn - Điều khiển liệu pháp được sáng lập bởi ai?
+
+Options:
+ A) Hải Thượng Lãn Ông
+ B) Hoa Đà
+ C) Bùi Quốc Châu
+ D) Tuệ Tĩnh
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Phương pháp Diện Chẩn - Điều khiển liệu pháp được sáng lập bởi Bùi Quốc Châu.
+Đây là một phương pháp điều trị kết hợp Đông y và y học hiện đại, được phát
+triển nhằm hỗ trợ điều trị các bệnh lý thông qua các kỹ thuật như châm cứu và
+xoa bóp. Vì vậy, đáp án đúng là C.
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: C
+Result: Correct
+Current Overall Accuracy: 38.30%
+----------------------------------------
+
+Question #48
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong hệ thống huyệt vị của kinh chính Tam Tiêu, huyệt nào được xác định là Nguyên Huyệt?
+
+Options:
+ A) Quan Xung T.B.-1
+ B) Dương Trì T.B.-4
+ C) Hội Tông T.B.-7
+ D) Thạch Môn Ren-5
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong hệ thống huyệt vị của kinh chính Tam Tiêu, Nguyên Huyệt được xác định là
+huyệt Quan Xung T.B.-1. Đây là điểm khởi đầu của kinh Tam Tiêu, đóng vai trò
+quan trọng trong việc điều hòa khí huyết và năng lượng của kinh mạch này. Việc
+xác định đúng Nguyên Huyệt không chỉ giúp định hướng chẩn đoán mà còn hỗ trợ
+trong việc lựa chọn các huyệt vị khác để điều trị các rối loạn liên quan đến
+kinh Tam Tiêu. Vì vậy, huyệt Quan Xung T.B.-1 là lựa chọn chính xác nhất trong
+trường hợp này. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: B
+Result: Incorrect
+Current Overall Accuracy: 37.50%
+----------------------------------------
+
+Question #49
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Huyệt Tiểu Cốt Không được xác định vị trí ở đâu trên cơ thể?
+
+Options:
+ A) Ở mặt lưng của ngón út, tại giữa nếp lằn ngang của khớp gian đốt gần ngón út.
+ B) Ở mặt lưng của ngón giữa, tại đỉnh của khớp gian đốt gần khi gấp.
+ C) Ở mặt lòng của ngón út, tại giữa nếp lằn ngang của khớp gian đốt gần ngón út.
+ D) Ở mặt lòng các ngón tay, tại giữa nếp lằn của khớp gian đốt gần từ ngón thứ 2 đến ngón 5.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Tiểu Cốt Không được xác định vị trí ở mặt lòng của ngón út, tại giữa nếp
+lằn ngang của khớp gian đốt gần ngón út. Đây là vị trí chính xác dựa trên đặc
+điểm giải phẫu của khớp gian đốt gần ở ngón út, nơi có thể cảm nhận rõ sự phân
+chia giữa lòng bàn tay và mặt lưng. Vị trí này không chỉ phù hợp với cấu trúc
+giải phẫu mà còn đảm bảo hiệu quả trong việc chẩn đoán và điều trị các vấn đề
+liên quan đến kinh mạch. Vì vậy, đáp án đúng là D.
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: A
+Result: Incorrect
+Current Overall Accuracy: 36.73%
+----------------------------------------
+
+Question #50
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong y học cổ truyền, huyệt đạo nào sau đây thường được chỉ định để điều trị các tình trạng như lệch lưỡi, suy giảm khả năng vận động hoặc teo cơ lưỡi, ví dụ sau một cơn đột quỵ?
+
+Options:
+ A) Ngọc Dịch
+ B) Kim Tân
+ C) Tụ Tuyền
+ D) Hải Tuyền
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong y học cổ truyền, huyệt Ngọc Dịch thường được chỉ định để điều trị các tình
+trạng như lệch lưỡi, suy giảm khả năng vận động hoặc teo cơ lưỡi, ví dụ sau một
+cơn đột quỵ. Huyệt này có tác dụng đặc biệt trong việc khai thông khí huyết tại
+vùng lưỡi, giúp cải thiện chức năng vận động của cơ lưỡi và hỗ trợ phục hồi chức
+năng sau các tổn thương. Vì vậy, huyệt Ngọc Dịch là lựa chọn phù hợp nhất trong
+các trường hợp này. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: C
+Result: Incorrect
+Current Overall Accuracy: 36.00%
+----------------------------------------
+
+Question #51
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Huyệt Độc âm được chỉ định trong điều trị các chứng bệnh nào sau đây?
+
+Options:
+ A) Đau vai gáy, tê bì chân tay, viêm khớp.
+ B) Nôn khan, kinh nguyệt không đều, đẻ khó, rau không ra, thai chết lưu ở phụ nữ.
+ C) Phong, hàn, thấp, tý, đau đầu, hoa mắt, mất ngủ.
+ D) Các chứng đau cấp tính hoặc mãn tính tại chỗ.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Độc âm được chỉ định trong điều trị các chứng đau cấp tính hoặc mãn tính
+tại chỗ. Đây là một huyệt có tác dụng đặc biệt trong việc điều hòa khí huyết và
+giảm đau, phù hợp với các trường hợp đau ở các vùng khác nhau, bao gồm cả các
+trường hợp mãn tính như đau đầu, đau vai gáy, và các chứng đau khác. Vì vậy, đáp
+án đúng là D.
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: B
+Result: Incorrect
+Current Overall Accuracy: 35.29%
+----------------------------------------
+
+Question #52
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong giải phẫu loa tai, cấu trúc nào được mô tả là chỗ lõm hình tam giác, được hình thành ở khoảng giữa các chân trên và dưới của vành tai?
+
+Options:
+ A) Hố tam giác
+ B) Đối vành tai
+ C) Củ vành tai
+ D) Thuyền tai
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Hố tam giác là cấu trúc lõm hình tam giác được hình thành ở khoảng giữa các chân
+trên và dưới của vành tai. Đây là một đặc điểm giải phẫu quan trọng, thường được
+sử dụng để định vị các huyệt vị và hỗ trợ chẩn đoán. Vì vậy, cấu trúc này đóng
+vai trò quan trọng trong việc xác định các điểm cần thiết trong y học cổ truyền.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: A
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 34.62%
+----------------------------------------
+
+Question #53
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong châm cứu, theo sách Tố Vấn thiên châm giải, thao tác rút kim để thực hiện bổ pháp (tonifying method) cần được tiến hành như thế nào?
+
+Options:
+ A) Rút kim nhanh và dứt khoát.
+ B) Rút kim chậm rãi và nhẹ nhàng.
+ C) Rút kim với lực mạnh, sau đó giữ kim tĩnh tại.
+ D) Rút kim kết hợp với động tác xoay kim.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Theo sách Tố Vấn thiên châm giải, thao tác rút kim để thực hiện bổ pháp
+(tonifying method) cần được tiến hành chậm rãi và nhẹ nhàng, nhằm tạo ra hiệu
+quả điều hòa khí huyết và tăng cường năng lượng tại vùng châm cứu. Phương pháp
+này không chỉ giúp điều chỉnh khí huyết mà còn đảm bảo sự hài hòa trong cơ thể,
+phù hợp với nguyên tắc của y học cổ truyền. Vì vậy, lựa chọn B là phù hợp nhất
+với mục tiêu của bổ pháp. Final Answer: B
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: B
+Result: Correct
+Current Overall Accuracy: 35.85%
+----------------------------------------
+
+Question #54
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, huyệt 14(VII, A) được sử dụng để điều trị tình trạng nào sau đây?
+
+Options:
+ A) Liệt mặt
+ B) Đau bàn chân
+ C) Đau bụng kinh
+ D) Mất ngủ
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt 14(VII, A) trong Y học cổ truyền được sử dụng để điều trị liệt mặt. Đây là
+một phương pháp điều trị hiệu quả, dựa trên nguyên lý kích thích huyệt vị để
+khôi phục chức năng cơ mặt bị suy yếu.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 35.19%
+----------------------------------------
+
+Question #55
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong phương pháp cứu ngải trong y học cổ truyền, kỹ thuật chấm chấm điếu ngải vào huyệt theo kiểu "chim mổ thóc" thường được áp dụng cho cặp huyệt nào?
+
+Options:
+ A) Huyết hải và Tam âm giao
+ B) Hành gian và Thái kê
+ C) Mệnh môn và Quan nguyên
+ D) Bàng quang du và Âm lăng tuyền
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong phương pháp cứu ngải trong y học cổ truyền, kỹ thuật chấm chấm điếu ngải
+vào huyệt theo kiểu "chim mổ thóc" thường được áp dụng cho cặp huyệt Huyết hải
+và Tam âm giao. Đây là một phương pháp hiệu quả để kích thích khí huyết và điều
+hòa khí huyết trong kinh mạch, đặc biệt trong các trường hợp khí huyết bất hòa
+hoặc đau nhức vùng bụng dưới.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: C
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 34.55%
+----------------------------------------
+
+Question #56
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Điện châm tại các huyệt Hội Du-20 và Tích Trung Du-26 đã được nghiên cứu cho thấy tác dụng nào sau đây đối với nhồi máu não?
+
+Options:
+ A) Giảm đáng kể thể tích ô nhồi máu.
+ B) Kích thích sản xuất yếu tố tăng trưởng nội mạc mạch máu (VEGF) trong vùng cơ tim.
+ C) Cải thiện liệt nửa người sau đột quỵ.
+ D) Điều trị thành công đau đầu migraine.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Điện châm tại các huyệt Hội Du-20 và Tích Trung Du-26 đã được nghiên cứu cho
+thấy tác dụng giảm đáng kể thể tích nhồi máu não. Điều này được chứng minh thông
+qua việc giảm 38% thể tích nhồi máu ở các mô cơ tim, cho thấy hiệu quả rõ rệt
+trong việc cải thiện tình trạng nhồi máu não. Do đó, đáp án đúng là A.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 35.71%
+----------------------------------------
+
+Question #57
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong liệu pháp y học cổ truyền, khi gặp tình trạng lở phao móng tay, phương pháp xử lý nào sau đây thường được áp dụng?
+
+Options:
+ A) Hơ vùng phản chiếu tay (chân) và day ấn một trong các phác đồ đã nêu.
+ B) Day ấn các huyệt H.26, 38, 61, 60, 41, 3 và hơ tại chỗ.
+ C) Hơ ngón tay bên bàn tay đối xứng hoặc ngón chân cùng bên.
+ D) Hơ và lăn các đầu xương ngón tay.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong liệu pháp y học cổ truyền, tình trạng lở phao móng tay thường được xử lý
+bằng cách hơ vùng phản chiếu tay (chân) và day ấn một trong các phác đồ đã nêu.
+Phương pháp này giúp kích thích khí huyết lưu thông, làm giảm tình trạng tổn
+thương tại chỗ. Hơ vùng phản chiếu không chỉ hỗ trợ điều trị trực tiếp mà còn
+giúp cân bằng khí huyết trong cơ thể, từ đó cải thiện tình trạng lở phao. Vì
+vậy, lựa chọn A là phương pháp phù hợp nhất trong trường hợp này. Final Answer:
+A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: C
+Result: Incorrect
+Current Overall Accuracy: 35.09%
+----------------------------------------
+
+Question #58
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong y học cổ truyền, ngoài phác đồ chính để điều chỉnh tổng thể, các vùng tác động phụ nào thường được cân nhắc trong trị liệu?
+
+Options:
+ A) Vùng bụng dưới và các cơ quan sinh dục
+ B) Các vùng kinh lạc ở bàn tay và bàn chân
+ C) Vùng phản chiếu và phóng chiếu liên quan, cùng với vùng thần kinh cột sống từ L1 đến mõm cụt
+ D) Các huyệt đạo trên kinh Tỳ và vị
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong y học cổ truyền, các vùng tác động phụ thường được cân nhắc trong trị liệu
+không chỉ tập trung vào phác đồ chính mà còn bao gồm các vùng phản chiếu và
+phóng chiếu, cùng với các vùng thần kinh cột sống từ L1 đến mõm cụt. Các vùng
+này có mối liên hệ chặt chẽ với các cơ quan và hệ thống sinh lý, giúp điều hòa
+toàn diện các chức năng cơ thể. Việc điều chỉnh các vùng này không chỉ hỗ trợ
+điều trị triệu chứng mà còn cải thiện sự cân bằng tổng thể của cơ thể. Do đó,
+các vùng này là một phần quan trọng trong phương pháp điều trị, đặc biệt trong
+các trường hợp bệnh lý phức tạp hoặc cần điều chỉnh toàn diện.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: C
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 34.48%
+----------------------------------------
+
+Question #59
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Huyệt Linh Đài (Du-10) được xác định nằm ở vị trí nào trên đường giữa lưng?
+
+Options:
+ A) Bên dưới mỏm gai đốt sống ngực thứ 5
+ B) Bên dưới mỏm gai đốt sống lưng thứ nhất
+ C) Bên dưới mỏm gai đốt sống ngực thứ 6
+ D) Bên dưới mỏm gai đốt sống ngực thứ 7
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Linh Đài (Du-10) được xác định nằm ở vị trí bên dưới mỏm gai đốt sống ngực
+thứ 6, nằm trên đường giữa lưng. Đây là vị trí chính xác của huyệt này, được xác
+định dựa trên cấu trúc giải phẫu của vùng ngực và lưng.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: C
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 33.90%
+----------------------------------------
+
+Question #60
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, nguyên nhân chủ yếu dẫn đến chứng Âm đỉnh (sa tử cung) thường là do tình trạng nào sau đây?
+
+Options:
+ A) Thận dương hư suy, hàn tà ngưng trệ.
+ B) Can khí uất kết, gây huyết ứ bế tắc.
+ C) Khí hư bất túc, trung khí bị hãm xuống dưới.
+ D) Phong tà xâm nhập, làm tổn thương kinh mạch.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Âm đỉnh trong Y học cổ truyền thường xuất phát từ tình trạng khí hư bất túc,
+khiến trung khí không đủ để nâng đỡ tử cung, dẫn đến hiện tượng sa. Điều này xảy
+ra khi khí trong cơ thể không được bổ sung đầy đủ, làm cho sự cân bằng âm dương
+bị phá vỡ và khí không thể vận hành đúng hướng. Do đó, nguyên nhân chính là sự
+suy yếu của khí, không phải do hư hàn, uất kết hay phong tà. Vì vậy, lựa chọn C
+là phù hợp nhất với cơ chế bệnh lý của chứng Âm đỉnh. Final Answer: C
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: C
+Result: Correct
+Current Overall Accuracy: 35.00%
+----------------------------------------
+
+Question #61
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Vị trí chính xác của huyệt Trấp Cân (G.B.-23) trong hệ thống Kinh Đởm là ở đâu so với huyệt Uyên Dịch (G.B.-22)?
+
+Options:
+ A) Phía trước 1 thốn, cùng khoang liên sườn 4.
+ B) Phía sau 1 thốn, nằm trong khoang liên sườn 3.
+ C) Phía dưới 1 thốn, cách đường dọc giữa nách 1 thốn.
+ D) Phía trên 1 thốn, nằm trên đường dọc giữa nách.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Trấp Cân (G.B.-23) nằm ở khoang liên sườn 4, cách đường dọc giữa nách 2
+thốn, và nằm phía trước huyệt Uyên Dịch (G.B.-22). Điều này phù hợp với vị trí
+chính xác của huyệt Trấp Cân trong hệ thống Kinh Đởm, nơi nó đóng vai trò quan
+trọng trong điều hòa khí huyết và hỗ trợ điều trị các rối loạn vùng liên quan.
+Vì vậy, đáp án đúng là A.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 36.07%
+----------------------------------------
+
+Question #62
+Topic(s): Neurology, Eastern Medicine
+Difficulty Level: Hard
+Question: Trong châm tê, khi thực hiện các thì mổ khẩn trương (như rạch da, rạch màng bụng) hoặc thao tác gần các bó mạch, đám rối thần kinh lớn, cặp yếu tố cường độ và tần số kích thích nào được khuyến nghị để người bệnh dễ chịu?
+
+Options:
+ A) Tần số thấp, cường độ thấp
+ B) Tần số thấp, cường độ cao
+ C) Tần số cao, cường độ thấp
+ D) Tần số cao, cường độ cao
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong các thì mổ khẩn trương hoặc khi thao tác gần các bó mạch hoặc đám rối thần
+kinh lớn, việc sử dụng tần số cao và cường độ thấp là lựa chọn tối ưu để đảm bảo
+người bệnh dễ chịu. Tần số cao giúp kích thích thần kinh mạnh, trong khi cường
+độ thấp giảm cảm giác đau, tạo điều kiện thuận lợi cho quá trình phẫu thuật. Do
+đó, đáp án đúng là D.
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: C
+Result: Incorrect
+Current Overall Accuracy: 35.48%
+----------------------------------------
+
+Question #63
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong quá trình thăm dò loa tai theo y học cổ truyền, điện trở ở lớp da tai có thể thay đổi rõ rệt bởi nhiều yếu tố. Tình trạng nào sau đây thường làm tăng điện trở da loa tai?
+
+Options:
+ A) Phần lõm ở đái tai
+ B) Khí hậu nóng quá
+ C) Người già và người làm việc ngoài trời
+ D) Da tai của thanh niên hồng nhuận
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong quá trình thăm dò loa tai theo y học cổ truyền, điện trở ở lớp da tai có
+thể thay đổi rõ rệt do nhiều yếu tố. Tình trạng khí hậu nóng quá có tác động
+trực tiếp lên lớp da, làm giảm độ ẩm và tăng nhiệt độ bề mặt, từ đó làm tăng
+điện trở của da. Điều này xảy ra vì nhiệt độ cao làm khô lớp da, khiến điện trở
+trở nên cao hơn. Trong khi đó, các yếu tố khác như phần lõm ở đái tai hay da tai
+của thanh niên hồng nhuận có thể ảnh hưởng đến độ nhạy cảm hoặc tính chất điện
+trở, nhưng khí hậu nóng là yếu tố có tác dụng phổ biến và rõ rệt nhất. Vì vậy,
+tình trạng khí hậu nóng quá là lựa chọn chính xác trong trường hợp này. Final
+Answer: B
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: C
+Result: Incorrect
+Current Overall Accuracy: 34.92%
+----------------------------------------
+
+Question #64
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Trong phương pháp nhĩ châm, huyệt Thần môn có tác động chính lên hệ thống nào?
+
+Options:
+ A) Mũi trong
+ B) Trán
+ C) Vòm miệng trên
+ D) Giao cảm
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Thần môn trong phương pháp nhĩ châm có tác động chính lên hệ thần kinh
+giao cảm, giúp điều hòa hoạt động của hệ thần kinh tự động. Điều này giúp giảm
+căng thẳng và cải thiện trạng thái tinh thần, từ đó hỗ trợ điều trị các rối loạn
+liên quan đến thần kinh giao cảm. Vì vậy, huyệt Thần môn được sử dụng để điều
+hòa khí huyết và cân bằng chức năng thần kinh giao cảm. Final Answer: D
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: D
+Result: Correct
+Current Overall Accuracy: 35.94%
+----------------------------------------
+
+Question #65
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Theo nguyên tắc ứng dụng Diện Chẩn của GS.TS Bùi Quốc Châu, người thực hành cần nắm vững bao nhiêu đồ hình?
+
+Options:
+ A) 28
+ B) 48
+ C) 38
+ D) 18
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Theo nguyên tắc ứng dụng Diện Chẩn của GS.TS Bùi Quốc Châu, người thực hành cần
+nắm vững 48 đồ hình. Đây là số lượng đồ hình được đề cập trong tài liệu, bao gồm
+các bản đồ phản chiếu và đồ hình liên quan đến các cơ quan và hệ thống trong cơ
+thể. Việc nắm vững các đồ hình này là cần thiết để thực hiện các phương pháp
+điều trị và chẩn đoán chính xác. Vì vậy, đáp án đúng là B.
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: A
+Result: Incorrect
+Current Overall Accuracy: 35.38%
+----------------------------------------
+
+Question #66
+Topic(s): Eastern Medicine, Nephrology
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, kinh mạch nào sau đây có mối quan hệ Biểu-Lý với kinh Túc Thiếu Âm Thận?
+
+Options:
+ A) Kinh Túc Quyết Âm Can
+ B) Kinh Túc Thái Âm Tỳ
+ C) Kinh Thủ Thiếu Âm Tâm
+ D) Kinh Túc Thái Dương Bàng Quang
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong Y học cổ truyền, mối quan hệ Biểu-Lý giữa kinh mạch và kinh Túc Thiếu Âm
+Thận được xác định dựa trên sự tương ứng giữa các kinh Âm và kinh Dương. Kinh
+Túc Thiếu Âm Thận thuộc nhóm kinh Âm, và để duy trì sự cân bằng Âm-Dương, nó cần
+một kinh Dương tương ứng. Kinh Túc Thái Dương Bàng Quang là kinh Dương duy nhất
+có mối quan hệ Biểu-Lý với kinh Túc Thiếu Âm Thận, vì nó không chỉ có mối liên
+hệ Âm-Dương mà còn đảm bảo sự lưu thông khí giữa các kinh mạch. Các lựa chọn
+khác không thỏa mãn điều kiện này. Final Answer: D
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: D
+Result: Correct
+Current Overall Accuracy: 36.36%
+----------------------------------------
+
+Question #67
+Topic(s): Eastern Medicine
+Difficulty Level: Hard
+Question: Một bệnh nhân 23 tuổi bị mất ngủ 5 ngày, kèm theo vùng bụng trướng mãn, cảm giác vùng trên rốn bị động không ngừng, ăn kém ngon, đại tiện bí kết, mạch trầm huyền hữu lực, rêu lưỡi trắng và dày thô. Theo lý luận Y học cổ truyền, chẩn đoán phù hợp nhất cho các triệu chứng này là gì?
+
+Options:
+ A) Tâm tỳ lưỡng hư
+ B) Vị phủ bất hòa
+ C) Tâm thận bất giao
+ D) Can khí uất kết
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Triệu chứng của bệnh nhân bao gồm mất ngủ, bụng trướng mãn, cảm giác vùng trên
+rốn bị động không ngừng, ăn kém ngon, đại tiện bí kết, mạch trầm huyền hữu lực,
+rêu lưỡi trắng và dày thô. Những biểu hiện này phù hợp với tình trạng khí trệ ở
+trung tiêu, dẫn đến sự bất hòa giữa tỳ và vị, gây ra các triệu chứng như đầy
+trướng và tiêu hóa kém. Trong Y học cổ truyền, khí trệ ở trung tiêu thường liên
+quan đến sự bất hòa của tỳ và vị, và các triệu chứng này không phù hợp với các
+cơ chế bệnh lý khác như tâm tỳ hư, tâm thận bất giao hay can khí uất kết. Do đó,
+chẩn đoán phù hợp nhất là B) Vị phủ bất hòa.
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: B
+Result: Correct
+Current Overall Accuracy: 37.31%
+----------------------------------------
+
+Question #68
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Huyệt mở của mạch Xung là huyệt nào?
+
+Options:
+ A) Khí Xung ST-30
+ B) Nội Quan P-6
+ C) Đại Hách KID-12
+ D) Công Tôn SP-4
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt mở của mạch Xung là Khí Xung ST-30, nằm ở vùng bụng dưới và có vai trò
+quan trọng trong việc điều hòa khí huyết. Đây là điểm khởi đầu của mạch Xung,
+giúp duy trì sự lưu thông khí huyết trong cơ thể. Vì vậy, huyệt này không chỉ có
+tác dụng điều hòa khí huyết mà còn hỗ trợ các chức năng sinh lý liên quan đến hệ
+tiêu hóa và tuần hoàn. Chọn huyệt Khí Xung ST-30 là lựa chọn chính xác trong
+việc xác định huyệt mở của mạch Xung. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 36.76%
+----------------------------------------
+
+Question #69
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Điểm Ôn Lưu (L.I.-7) có vị trí tương quan với điểm Tam Dương Lạc (T.B.-8) như thế nào trên cẳng tay?
+
+Options:
+ A) Nằm ngang bằng với điểm Tam Dương Lạc (T.B.-8).
+ B) Cách 1 thốn phía dưới điểm Tam Dương Lạc (T.B.-8).
+ C) Cách 4 thốn phía trên điểm Tam Dương Lạc (T.B.-8).
+ D) Cách 1 thốn phía trên điểm Tam Dương Lạc (T.B.-8).
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Điểm Ôn Lưu (L.I.-7) nằm cách 1 thốn phía dưới điểm Tam Dương Lạc (T.B.-8) trên
+cẳng tay, với vị trí cụ thể là ở phía ngoài gân cơ nhị đầu. Đây là một vị trí
+quan trọng trong Đông y, thường được sử dụng để điều hòa khí huyết và giảm đau.
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 36.23%
+----------------------------------------
+
+Question #70
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong phép chích huyệt, việc vô trùng không tốt có thể dẫn đến nguy cơ nghiêm trọng nào?
+
+Options:
+ A) Người bệnh xuất hiện hiện tượng choáng do châm.
+ B) Nhiễm trùng vành tai và sụn tai.
+ C) Rãnh tai của người bệnh bị nóng và chảy máu.
+ D) Người bệnh cảm thấy ngứa hoặc đau nhẹ ở vùng châm.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong phép chích huyệt, nếu không đảm bảo vô trùng, nguy cơ nhiễm trùng tại vùng
+tai là rất cao, đặc biệt là ở vành tai và sụn tai. Đây là một tình trạng nguy
+hiểm, có thể gây ảnh hưởng tiêu cực đến chức năng tai và thậm chí dẫn đến biến
+chứng nghiêm trọng hơn nếu không xử lý kịp thời. Vì vậy, việc tuân thủ các biện
+pháp vô trùng là yếu tố then chốt để đảm bảo an toàn cho người bệnh. Final
+Answer: B
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: B
+Result: Correct
+Current Overall Accuracy: 37.14%
+----------------------------------------
+
+Question #71
+Topic(s): Pulmonology, Eastern Medicine
+Difficulty Level: Hard
+Question: Trong Y học cổ truyền, khi bệnh nhân biểu hiện phế đầy trướng, ho suyễn, hõm vai đau nhức, và trong trường hợp nặng có thể khoanh tay ôm ngực, mắt không trông rõ (tý quyết), đây là các triệu chứng do ngoại nhân xâm phạm mạch khí của kinh nào?
+
+Options:
+ A) Kinh Thủ thái dương tiểu trường
+ B) Kinh Thủ thái âm phế
+ C) Kinh Thủ thiếu âm tâm
+ D) Kinh Thủ dương minh đại trường
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Phế khí là yếu tố quan trọng trong việc điều hòa khí và duy trì sự cân bằng của
+cơ thể, và khi phế khí bị rối loạn, các triệu chứng như phế đầy trướng, ho
+suyễn, đau hõm vai và mắt không trông rõ (tý quyết) có thể xuất hiện. Những
+triệu chứng này liên quan đến sự tắc nghẽn hoặc rối loạn của kinh phế, vốn là
+kinh thủ thái âm phế. Kinh này chịu trách nhiệm điều hòa khí phế và khi bị ngoại
+nhân xâm phạm, các biểu hiện trên sẽ xuất hiện. Do đó, các triệu chứng này là
+dấu hiệu điển hình của phế khí bị ảnh hưởng bởi kinh thủ thái âm phế. Final
+Answer: B
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: B
+Result: Correct
+Current Overall Accuracy: 38.03%
+----------------------------------------
+
+Question #72
+Topic(s): Eastern Medicine
+Difficulty Level: Hard
+Question: Trong Y học cổ truyền, đối với chứng cuồng biểu hiện thần trí thất thường, ý thức hỗn loạn, cuồng ngôn, mạch huyền hoạt hữu lực, được chẩn đoán là do can đởm hỏa đốt lên, đàm hóa thượng nghịch, phép trị phù hợp nhất là gì?
+
+Options:
+ A) Bình can tức phong, hóa đàm khai khiếu.
+ B) Tư âm giáng hỏa, kiện tỳ hóa đàm.
+ C) Thanh tâm tiết hỏa, điều đàm thông khiếu.
+ D) Trấn can tiềm dương, an thần định chí.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong Y học cổ truyền, chứng cuồng liên quan đến sự mất cân bằng giữa can và
+đởm, dẫn đến hỏa đốt lên và đàm hóa thượng nghịch, gây ra các triệu chứng thần
+trí thất thường, ý thức hỗn loạn, cuồng ngôn. Để điều trị, cần tập trung vào
+việc thanh tâm tiết hỏa để làm dịu tâm trí, điều hòa đàm để giảm sự rối loạn
+trong khí huyết, và thông qua đó khôi phục sự ổn định của thần trí và ý thức.
+Phép trị này phù hợp với các triệu chứng như thần trí bất ổn và ý thức hỗn loạn,
+đồng thời giải quyết gốc rễ của vấn đề là hỏa và đàm. Do đó, lựa chọn C là phù
+hợp nhất với các triệu chứng và nguyên nhân bệnh lý được đề cập. Final Answer: C
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: C
+Result: Correct
+Current Overall Accuracy: 38.89%
+----------------------------------------
+
+Question #73
+Topic(s): Eastern Medicine
+Difficulty Level: Hard
+Question: Một phụ nữ 50 tuổi làm ruộng, có tiền sử thiên đầu thống bên trái, tay chân phải bị ma mục, không biết ngứa, không cầm được đồ vật. Bệnh khởi phát sau khi đang lao động bị cảm lạnh rồi vào nghỉ ở chỗ thật mát mẻ, làm các triệu chứng trên tăng lên rõ rệt. Khám thấy mạch phù khẩn, hữu lực, chẩn đoán là chứng do phong hàn bế trở, khí huyết bị ngưng trệ. Phép trị được áp dụng cho trường hợp này là gì?
+
+Options:
+ A) Ôn kinh tán hàn, sơ thông kinh lạc.
+ B) Lợi thủy trừ thấp, kiện tỳ vị.
+ C) Thanh nhiệt giải độc, hoạt huyết hóa ứ.
+ D) Bổ khí dưỡng huyết, an thần định chí.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Phép trị phù hợp cho trường hợp này là A) Ôn kinh tán hàn, sơ thông kinh lạc. Lý
+do là do phong hàn bế trở, khí huyết bị ngưng trệ, dẫn đến các triệu chứng như
+thiên đầu thống và tay chân ma mục. Việc sử dụng phương pháp này sẽ giúp làm ấm
+kinh lạc, giải tỏa phong hàn và khôi phục lưu thông khí huyết, từ đó cải thiện
+các triệu chứng.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 39.73%
+----------------------------------------
+
+Question #74
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong châm cứu loa tai (nhĩ châm), để hạ huyết áp và điều trị bệnh cao huyết áp bằng kỹ thuật châm máu, cần tác động vào khu vực nào?
+
+Options:
+ A) Khe từ mặt sau loa tai xuống
+ B) Lưng trên
+ C) Gốc mê
+ D) Khusưng
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong châm cứu loa tai (nhĩ châm), để hạ huyết áp và điều trị bệnh cao huyết áp,
+cần tác động vào khu vực Lưng trên. Đây là khu vực có vai trò quan trọng trong
+việc điều hòa huyết áp, khi kích thích sẽ giúp giảm áp lực trong hệ tuần hoàn.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: A
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 39.19%
+----------------------------------------
+
+Question #75
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Huyệt Chi Câu (T.B.-6) được xác định vị trí như thế nào theo Y học cổ truyền?
+
+Options:
+ A) Phía trên nếp gấp cổ tay mặt trước 3 thốn, ở giữa xương trụ và xương quay.
+ B) Phía trên khe khớp cổ tay mặt mu tay 3 thốn, ở chỗ lõm giữa xương trụ và xương quay, sát bờ xương quay, trên phía quay của gân cơ duỗi chung các ngón.
+ C) Ngang mức khe khớp cổ tay, ở chỗ lõm giữa xương trụ và cơ duỗi chung các ngón, sát bờ xương trụ.
+ D) Phía dưới khe khớp cổ tay mặt mu tay 3 thốn, ở chỗ lõm giữa xương trụ và cơ duỗi cổ tay.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Chi Câu được xác định vị trí ở phía trên khe khớp cổ tay mặt mu tay 3
+thốn, nằm ở chỗ lõm giữa xương trụ và xương quay, sát bờ xương quay, trên phía
+quay của gân cơ duỗi chung các ngón. Đây là vị trí đặc trưng của huyệt này trong
+Y học cổ truyền, giúp định vị chính xác khi chẩn đoán và điều trị.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: B
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 38.67%
+----------------------------------------
+
+Question #76
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, huyệt Lạc Khước (BL-8) được xác định vị trí chính xác như thế nào trên cơ thể?
+
+Options:
+ A) Từ Bách Hội (Du-20) đo ra sau và ra ngoài 1.5 thốn.
+ B) Từ đường tóc gáy đo lên 2.5 thốn và từ đường giữa đo ra 1.3 thốn.
+ C) Từ Bách Hội (Du-20) đo ra sau 0.5 thốn.
+ D) Trên đường giữa, trong hõm ngay phía trên bờ trên lồi châm ngoài.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Lạc Khước (BL-8) được xác định chính xác là từ đường tóc gáy đo lên 2.5
+thốn và từ đường giữa đo ra 1.3 thốn. Đây là vị trí đặc trưng của huyệt này
+trong Y học cổ truyền, liên quan đến các chức năng điều hòa khí huyết và cân
+bằng cơ thể.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: A
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 38.16%
+----------------------------------------
+
+Question #77
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Theo nguyên tắc 'phép lấy huyệt theo kinh' trong y học cổ truyền, việc chọn huyệt được thực hiện như thế nào?
+
+Options:
+ A) Chỉ châm các huyệt trên kinh mạch đang có biểu hiện đau, và không châm ở kinh mạch không đau.
+ B) Luôn lấy huyệt ở tất cả các kinh mạch, không phân biệt có đau hay không.
+ C) Ưu tiên châm các huyệt đối xứng với kinh mạch bị đau ở phía đối diện của cơ thể.
+ D) Châm huyệt dựa vào thời điểm khí huyết lưu hành trên các kinh mạch trong ngày.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Phương pháp lấy huyệt theo kinh trong y học cổ truyền nhấn mạnh vào việc châm
+cứu các huyệt thuộc kinh mạch đang có biểu hiện đau, vì đây là những kinh mạch
+trực tiếp liên quan đến triệu chứng bệnh lý. Điều này giúp tập trung vào các
+kinh mạch có ảnh hưởng rõ rệt đến tình trạng bệnh, từ đó tối ưu hóa hiệu quả
+điều trị. Việc không châm ở kinh mạch không đau giúp giảm thiểu sự phức tạp
+không cần thiết, đồng thời tăng cường tính chính xác và hiệu quả của liệu pháp.
+Theo nguyên tắc này, việc chọn huyệt không chỉ dựa vào vị trí mà còn phải phù
+hợp với tình trạng bệnh lý cụ thể, đảm bảo điều trị đúng hướng. Vì vậy, lựa chọn
+A là phù hợp nhất với nguyên tắc "phép lấy huyệt theo kinh". Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 38.96%
+----------------------------------------
+
+Question #78
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Đại Lạc của Tỳ (Túc Thái Âm Lạc Mạch) bắt đầu từ vị trí nào trên cơ thể?
+
+Options:
+ A) Nguyên huyệt Xung Dương (ST-42)
+ B) Theo đường kinh chính Tỳ ở vùng sinh dục
+ C) Mặt bên ngực tại huyệt Đại Bao (SP-21)
+ D) Vùng bụng, nối với Đại Trường và Vị
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Đại Lạc của Tỳ (Túc Thái Âm Lạc Mạch) bắt đầu từ vùng bụng, nơi nó kết nối với
+Đại Trường và Vị, sau đó phân nhánh và kết nối với các cơ quan sinh dục. Đây là
+điểm khởi đầu quan trọng của hệ thống lạc mạch, đảm bảo sự lưu thông khí và
+huyết trong cơ thể. Vì vậy, đáp án đúng là D.
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: C
+Result: Incorrect
+Current Overall Accuracy: 38.46%
+----------------------------------------
+
+Question #79
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Khi gập đầu gối, huyệt Âm Lăng Tuyền (SP-9) được xác định ở vị trí nào?
+
+Options:
+ A) Phía trên đỉnh cao mắt cá trong 3 thốn, phía sau bờ trong xương chày.
+ B) Tại điểm tiếp nối thân xương và lồi cầu trong xương chày, sau huyệt Âm Lăng Tuyền 1 thốn.
+ C) Tại chỗ lõm dưới của lồi cầu trong xương chày.
+ D) Trên huyệt Thái Khê (KID-3) 5 thốn và sau bờ trong xương chày 2 thốn.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Âm Lăng Tuyền (SP-9) được xác định nằm ở vị trí phía trên đỉnh cao mắt cá
+trong 3 thốn, phía sau bờ trong xương chày. Đây là vị trí chính xác của huyệt,
+được xác định dựa trên các mốc giải phẫu quan trọng như đỉnh cao mắt cá trong và
+bờ trong xương chày. Vị trí này không chỉ phù hợp với mô tả trong Đông y mà còn
+đảm bảo tính chính xác trong chẩn đoán và điều trị. Vì vậy, đáp án đúng là A.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: C
+Result: Incorrect
+Current Overall Accuracy: 37.97%
+----------------------------------------
+
+Question #80
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Huyệt Thân Trụ (DU-12) trong Y học cổ truyền được xác định nằm ở vị trí nào trên cơ thể?
+
+Options:
+ A) Dưới mỏm gai đốt sống thắt lưng thứ 3 (L3), trên đường giữa lưng.
+ B) Dưới mỏm gai đốt sống ngực thứ 3 (T3), trên đường giữa lưng.
+ C) Dưới mỏm gai đốt sống cổ thứ 7 (C7), trên đường giữa lưng.
+ D) Dưới mỏm gai đốt sống ngực thứ 7 (T7), cách đường giữa 1.5 thốn.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Thân Trụ (DU-12) được xác định nằm dưới mỏm gai đốt sống ngực thứ 3 (T3),
+trên đường giữa lưng. Đây là vị trí chính xác của huyệt, được xác định dựa trên
+cấu trúc giải phẫu của cột sống và các mốc giải phẫu liên quan. Vị trí này không
+chỉ phù hợp với đặc điểm sinh lý của vùng ngực mà còn đảm bảo tính chính xác
+trong chẩn đoán và điều trị. Vì vậy, đáp án đúng là B.
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: B
+Result: Correct
+Current Overall Accuracy: 38.75%
+----------------------------------------
+
+Question #81
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Nội dung nào sau đây KHÔNG thuộc phần trình bày về những điểm cần thiết trong châm cứu?
+
+Options:
+ A) Đặc điểm của phép chữa bệnh bằng châm cứu
+ B) Cách định huyệt đơn giản
+ C) Biểu bát hội huyệt
+ D) Các huyệt cấm cứu
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Phần trình bày về những điểm cần thiết trong châm cứu bao gồm đặc điểm của phép
+chữa bệnh, cách định huyệt đơn giản, và các huyệt cấm cứu. Tuy nhiên, biểu bát
+hội huyệt không được liệt kê trong nội dung này, do đó đây là lựa chọn không
+thuộc phần trình bày. Vì vậy, đáp án đúng là D.
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: C
+Result: Incorrect
+Current Overall Accuracy: 38.27%
+----------------------------------------
+
+Question #82
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, một trong các đường mạch nhánh của mạch Đốc (Du mạch) được mô tả có khởi phát từ vị trí nào sau đây?
+
+Options:
+ A) Bào cung
+ B) Vùng hội âm
+ C) Từ rốn
+ D) Huyệt Trung Cực
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong Y học cổ truyền, một trong các đường mạch nhánh của mạch Đốc (Du mạch)
+được khởi phát từ huyệt Trung Cực, nằm ở vùng bụng dưới. Đây là điểm khởi đầu
+quan trọng của một nhánh mạch, góp phần vào việc điều hòa khí huyết và duy trì
+sự cân bằng trong cơ thể. Vì vậy, huyệt Trung Cực là điểm khởi phát của một
+nhánh mạch Đốc, phù hợp với đặc điểm sinh lý và cấu trúc của mạch này. Final
+Answer: D
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: A
+Result: Incorrect
+Current Overall Accuracy: 37.80%
+----------------------------------------
+
+Question #83
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, huyệt nào sau đây được chỉ định để điều trị các chứng sốt cao (bao gồm sốt nóng và sốt rét), cảm cúm và cứng cổ gáy?
+
+Options:
+ A) Phong Phủ
+ B) Đại Chuỳ
+ C) Á Môn
+ D) Bách Hội
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Phong Phủ được chỉ định để điều trị các chứng sốt cao, cảm cúm và cứng cổ
+gáy trong Y học cổ truyền. Đây là huyệt quan trọng thuộc kinh Bàng Quang, có tác
+dụng điều hòa khí huyết và giải trừ phong tà, giúp giảm các triệu chứng liên
+quan đến nhiệt và phong.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: B
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 37.35%
+----------------------------------------
+
+Question #84
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Các nền Y học cổ truyền, Y học thay thế và Y học bổ sung chú trọng điều gì trong quá trình chăm sóc sức khỏe?
+
+Options:
+ A) Nâng cao thể trạng tổng thể, điều hòa thân tâm và kích hoạt khả năng tự chữa lành của cơ thể.
+ B) Giảm thiểu chi phí điều trị bằng cách chỉ tập trung vào các triệu chứng cấp tính.
+ C) Tăng cường sử dụng các phương pháp can thiệp y tế chuyên sâu và thuốc tổng hợp.
+ D) Ưu tiên các quy trình phẫu thuật phức tạp để điều trị bệnh mãn tính.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Các nền Y học cổ truyền, Y học thay thế và Y học bổ sung nhấn mạnh vào việc nâng
+cao thể trạng tổng thể, điều hòa thân tâm và kích hoạt khả năng tự chữa lành của
+cơ thể. Đây là mục tiêu cốt lõi của các phương pháp này, tập trung vào việc khôi
+phục sự cân bằng và hỗ trợ cơ thể tự điều chỉnh. Trong khi đó, các phương pháp
+như Y học hiện đại không nhấn mạnh vào các yếu tố này, điều này làm nổi bật sự
+khác biệt căn bản giữa các hệ thống Y học. Vì vậy, lựa chọn A là phù hợp nhất
+với các nguyên lý của các nền Y học cổ truyền và bổ trợ. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 38.10%
+----------------------------------------
+
+Question #85
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, một huyệt đạo được ghi nhận có tác dụng làm tăng huyết áp. Vậy, huyệt này có chống chỉ định sử dụng cho đối tượng nào?
+
+Options:
+ A) Người mắc chứng phong thấp
+ B) Người bị đau hông sườn
+ C) Người bị huyết áp thấp
+ D) Người có bệnh huyết áp cao
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt có tác dụng làm tăng huyết áp không thể được sử dụng cho đối tượng có
+huyết áp cao, vì tác dụng của huyệt sẽ làm tăng thêm áp lực lên hệ tim mạch, gây
+nguy cơ cho những người đã có tình trạng này. Do đó, huyệt này không được chỉ
+định cho các đối tượng như người bị huyết áp thấp, người mắc chứng phong thấp
+hoặc người bị đau hông sườn, vì các triệu chứng này không liên quan đến tác dụng
+của huyệt. Vì vậy, lựa chọn đúng là D. Final Answer: D
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: D
+Result: Correct
+Current Overall Accuracy: 38.82%
+----------------------------------------
+
+Question #86
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Về phương dược đặc chế dành cho ngải cứu, công thức được đề cập trong Thái Ất Thần Châm Cứu có tổng cộng bao nhiêu vị thuốc?
+
+Options:
+ A) 28 vị
+ B) 32 vị
+ C) 30 vị
+ D) 25 vị
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Phương dược đặc chế dành cho ngải cứu trong "Thái Ất Thần Châm Cứu" được mô tả
+gồm tổng cộng 30 vị thuốc. Đây là một công thức quan trọng trong Đông y, được
+thiết kế để hỗ trợ điều trị và cải thiện sức khỏe theo nguyên lý của Thái Ất. Vì
+vậy, đáp án chính xác là C.
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: A
+Result: Incorrect
+Current Overall Accuracy: 38.37%
+----------------------------------------
+
+Question #87
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, huyệt xuất được mô tả là vị trí trên đường kinh có đặc điểm nào sau đây?
+
+Options:
+ A) Một van chuyển hướng chính cho phép các đường kinh tách nhánh ra từ đường kinh chính.
+ B) Điểm kết nối giữa kinh Âm và kinh Dương, thường nằm ở bàn tay hoặc bàn chân.
+ C) Nơi Khí Âm chuyển thành Khí Dương và ngược lại, tạo ra một cân bằng động.
+ D) Nơi dòng chảy năng lượng đi đến một huyệt khác (huyệt nhập) trên đường kinh kế tiếp trong Đồng hồ tạng phủ.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt xuất trong Y học cổ truyền được mô tả là một van chuyển hướng, cho phép
+các đường kinh tách ra khỏi đường kinh chính. Đặc điểm này không chỉ giúp phân
+chia dòng chảy năng lượng mà còn đóng vai trò quan trọng trong việc điều hòa khí
+giữa các kinh. Sự phân chia này đảm bảo rằng khí không chỉ lưu thông theo một
+hướng mà còn có thể điều chỉnh dòng chảy năng lượng giữa các kinh Âm và kinh
+Dương. Do đó, huyệt xuất không chỉ là điểm kết nối mà còn là điểm điều chỉnh
+dòng khí, góp phần duy trì sự cân bằng trong cơ thể. Vì vậy, đáp án đúng là A.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 37.93%
+----------------------------------------
+
+Question #88
+Topic(s): Eastern Medicine
+Difficulty Level: Hard
+Question: Một bệnh nhân xuất hiện cơn chóng mặt dữ dội kèm theo nôn mửa, tai nghe tiếng ô ồ và chói, đôi khi tạm thời điếc hoàn toàn hoặc ngã xuống nhưng vẫn giữ được ý thức. Theo Y học cổ truyền, nhóm huyệt nào sau đây thường được ưu tiên lựa chọn để châm cứu trong trường hợp này?
+
+Options:
+ A) Thái dương, Giải khê, Kiên tỉnh, Bách hội
+ B) Ấn đường, Túc tam lý, Đại chùy, Khúc trì
+ C) Nhĩ môn, Thính cung, Thính hội, Ế phong
+ D) Phong môn, Phế du, Hợp cốc, Túc tam lý
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Các triệu chứng như chóng mặt, nôn mửa, tai nghe tiếng ô ồ và chói, kèm theo
+tình trạng tạm thời mất thính giác hoặc ngã xuống nhưng vẫn giữ được ý thức, là
+biểu hiện điển hình của sự tắc nghẽn khí huyết tại kinh mạch tai. Trong Y học cổ
+truyền, nhóm huyệt Nhĩ môn, Thính cung, Thính hội và Ế phong được ưu tiên lựa
+chọn để châm cứu, vì chúng có tác dụng trực tiếp trong việc khai thông kinh lạc,
+điều hòa khí huyết tại vùng tai và các dây thần kinh liên quan. Nhĩ môn và Thính
+cung có vai trò quan trọng trong việc khai thông kinh lạc tai, trong khi Thính
+hội và Ế phong hỗ trợ điều hòa khí huyết và giảm các triệu chứng như chóng mặt
+và nghe tiếng ô ồ. Nhóm huyệt này không chỉ giúp cải thiện triệu chứng mà còn hỗ
+trợ phục hồi chức năng tai một cách toàn diện. Vì vậy, nhóm huyệt này là lựa
+chọn tối ưu trong điều trị các rối loạn liên quan đến kinh lạc tai. Final
+Answer:
+
+Summary:
+Model's Extracted Answer: INVALID_FORMAT
+Expected Answer Letter: C
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 37.50%
+----------------------------------------
+
+Question #89
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Theo Diện Chẩn - Điều khiển liệu pháp, yếu tố nào sau đây là nguyên nhân gây nhức đầu thuộc nhóm "ăn uống"?
+
+Options:
+ A) Buồn rầu
+ B) Uống nước dừa
+ C) Thiếu ôxy
+ D) Khói thuốc lá
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Theo Diện Chẩn - Điều khiển liệu pháp, yếu tố "Uống nước dừa" được xác định là
+nguyên nhân gây nhức đầu thuộc nhóm "ăn uống". Điều này dựa trên nguyên lý rằng
+các thức ăn và đồ uống có tính chất đặc biệt có thể ảnh hưởng trực tiếp đến khí
+huyết và năng lượng trong cơ thể, dẫn đến các triệu chứng như nhức đầu. Nước
+dừa, với đặc tính thanh nhiệt và làm mát, có thể gây mất cân bằng khí huyết khi
+tiêu thụ quá mức, dẫn đến tình trạng nhức đầu. Do đó, yếu tố này được xác định
+là nguyên nhân chính trong nhóm "ăn uống". Final Answer: B
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: B
+Result: Correct
+Current Overall Accuracy: 38.20%
+----------------------------------------
+
+Question #90
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, huyệt Trung Đình (Nhâm-16) được xác định nằm ở vị trí nào trên cơ thể?
+
+Options:
+ A) Tại khoang liên sườn thứ 5, cách đường giữa 4 thốn.
+ B) Trên đường giữa ngực, ở chỗ lõm nông giữa xương ức và mũi kiếm xương ức, ngang mức góc ức-sườn.
+ C) Giữa hai núm vú, cách đường giữa 2 thốn.
+ D) Ngang rốn, trên đường giữa bụng, cách rốn 3 thốn.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Trung Đình (Nhâm-16) được xác định nằm ở chỗ lõm nông giữa xương ức và mũi
+kiếm xương ức, ngang mức góc ức-sườn, thuộc hệ kinh Nhâm. Đây là vị trí đặc
+trưng của huyệt này, liên quan đến các chức năng điều hòa khí huyết và điều trị
+các bệnh lý vùng ngực.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: B
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 37.78%
+----------------------------------------
+
+Question #91
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Huyệt Lạc Chẩm (Ex-UE-8), còn được gọi là Ngoại Lao Cung, là một huyệt ở xa rất hiệu quả trong việc điều trị các rối loạn cấp tính nào?
+
+Options:
+ A) Rối loạn cấp tính ở khớp vai.
+ B) Rối loạn cấp tính ở cột sống thắt lưng.
+ C) Rối loạn cấp tính ở khớp gối.
+ D) Rối loạn cấp tính ở cột sống cổ.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Lạc Chẩm (Ex-UE-8), còn được gọi là Ngoại Lao Cung, là một huyệt ở xa rất
+hiệu quả trong điều trị các rối loạn cấp tính ở khớp vai. Đây là một phương pháp
+điều trị đặc biệt trong Đông y, giúp giảm đau và cải thiện chức năng khớp vai
+thông qua kích thích huyệt vị. Vì vậy, huyệt này được ứng dụng rộng rãi trong
+các trường hợp cấp tính liên quan đến khớp vai. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 37.36%
+----------------------------------------
+
+Question #92
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Trong Y học cổ truyền, huyệt nào được xem là Hạ Hợp Huyệt của kinh Tam Tiêu?
+
+Options:
+ A) Ủy Dương (Bàng Quang-39)
+ B) Khuyết Bồn (ST-12)
+ C) Giác Tôn (Tam Tiêu-20)
+ D) Đản Trung (Nhâm-17)
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong Y học cổ truyền, Hạ Hợp Huyệt của kinh Tam Tiêu là Giác Tôn (Tam Tiêu-20).
+Đây là huyệt thuộc kinh Tam Tiêu, được xác định là Hạ Hợp Huyệt, có vai trò quan
+trọng trong việc điều hòa và kết nối các kinh mạch liên quan. Huyệt này không
+chỉ có tác dụng điều trị các triệu chứng của kinh Tam Tiêu mà còn hỗ trợ cân
+bằng năng lượng trong hệ thống kinh mạch. Vì vậy, Giác Tôn là lựa chọn phù hợp
+nhất trong các ứng dụng lâm sàng liên quan đến kinh Tam Tiêu. Final Answer: C
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: A
+Result: Incorrect
+Current Overall Accuracy: 36.96%
+----------------------------------------
+
+Question #93
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Huyệt Nội Quan thuộc kinh mạch nào sau đây?
+
+Options:
+ A) Kinh Đại Trường
+ B) Kinh Thận
+ C) Kinh Can
+ D) Kinh Tâm Bào
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Nội Quan thuộc kinh Tâm Bào, là một huyệt quan trọng trong hệ thống kinh
+mạch của Đông y. Đây là một huyệt đặc biệt, có vai trò quan trọng trong điều hòa
+khí huyết và an thần, thường được sử dụng trong điều trị các vấn đề liên quan
+đến tâm thần và hệ thần kinh. Vì vậy, đáp án đúng là D.
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: D
+Result: Correct
+Current Overall Accuracy: 37.63%
+----------------------------------------
+
+Question #94
+Topic(s): Pulmonology, Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, phương thang Thanh Táo Cứu Phế Thang được biết đến với công dụng điều trị các chứng khí bí uất, nuy, suyễn, ấu bằng cách tập trung giải quyết nguyên nhân chính nào?
+
+Options:
+ A) Táo của phế
+ B) Thận dương suy
+ C) Tỳ vị hư hàn
+ D) Can khí uất kết
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Phương thang Thanh Táo Cứu Phế Thang được biết đến với công dụng điều trị các
+chứng khí bí uất, nuy, suyễn, ấu thông qua việc tập trung giải quyết nguyên nhân
+chính là táo của phế. Đây là một yếu tố quan trọng trong lý luận bệnh lý của Y
+học cổ truyền, khi phế táo có thể gây ra các triệu chứng như khí bí uất, nuy và
+suyễn. Việc điều trị tập trung vào khôi phục chức năng phế và giải quyết tình
+trạng táo, từ đó cải thiện các triệu chứng đi kèm. Do đó, lựa chọn A là phù hợp
+nhất với nguyên nhân chính được tập trung điều trị. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 38.30%
+----------------------------------------
+
+Question #95
+Topic(s): Eastern Medicine
+Difficulty Level: Easy
+Question: Huyệt 103 (II, O) trong y học cổ truyền có công dụng chính nào sau đây?
+
+Options:
+ A) Kích thích tuyến sữa, điều trị tắc tia sữa và sưng vú.
+ B) Trấn thống vùng cột sống lưng, giữa ngực và chống co giật.
+ C) Điều trị sạn thận, đau nhức răng và giảm đau khớp vai.
+ D) Tăng cường trí nhớ, sự tập trung và an thần.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt 103 (II, O) trong y học cổ truyền có công dụng chính là trấn thống vùng
+cột sống lưng, giữa ngực và chống co giật. Đây là một huyệt quan trọng trong
+việc điều hòa khí huyết và giảm đau ở các vùng liên quan, giúp cải thiện các
+triệu chứng như đau nhức và co cứng cơ.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: D
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 37.89%
+----------------------------------------
+
+Question #96
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, một bệnh nhân có triệu chứng tiêu chảy như nước nhưng bụng lại không đau thì nguyên nhân chủ yếu thường được quy về yếu tố nào?
+
+Options:
+ A) Nhiệt
+ B) Thấp
+ C) Tỳ hư
+ D) Hàn
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Triệu chứng tiêu chảy như nước mà bụng không đau trong Y học cổ truyền thường
+liên quan đến tình trạng Tỳ hư. Khi Tỳ không đủ chức năng vận hóa, thức ăn và
+nước không được chuyển hóa đúng cách, dẫn đến tiêu chảy mà không gây đau bụng.
+Đây là một nguyên nhân phổ biến trong chẩn đoán và điều trị các bệnh tiêu hóa.
+Vì vậy, lựa chọn chính xác là C.
+
+Summary:
+Model's Extracted Answer: C
+Expected Answer Letter: B
+Result: Incorrect
+Current Overall Accuracy: 37.50%
+----------------------------------------
+
+Question #97
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Huyệt nào trong các huyệt sau có vị trí ở chính giữa nếp gấp cổ chân, tại chỗ lõm giữa gân cơ duỗi dài ngón cái và gân cơ duỗi chung ngón chân?
+
+Options:
+ A) Xung dương (ST-42)
+ B) Giải khê (ST-41)
+ C) Hãm cốc (ST-43)
+ D) Nội đình (ST-44)
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Xung dương (ST-42) nằm ở chính giữa nếp gấp cổ chân, tại chỗ lõm giữa gân
+cơ duỗi dài ngón cái và gân cơ duỗi chung ngón chân. Đây là một huyệt quan trọng
+thuộc kinh Vị, có tác dụng điều hòa khí huyết và hỗ trợ các vấn đề ở vùng khớp
+cổ chân.
+
+Summary:
+Model's Extracted Answer: NO_VALID_ANSWER
+Expected Answer Letter: B
+Result: Incorrect (Deviation)
+Current Overall Accuracy: 37.11%
+----------------------------------------
+
+Question #98
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong chẩn đoán y học cổ truyền, khi sử dụng Điều Ngải Cứu để dò tìm Sinh Huyệt, dấu hiệu nào cho biết cơ quan hoặc bộ phận tương ứng đang có bệnh?
+
+Options:
+ A) Điểm gây cảm giác tê buốt mạnh nhất.
+ B) Điểm có màu sắc thay đổi rõ rệt nhất.
+ C) Điểm không có phản ứng gì đặc biệt.
+ D) Điểm hút nóng nhiều nhất, mạnh nhất, sâu nhất.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong chẩn đoán y học cổ truyền, khi sử dụng Điều Ngải Cứu để dò tìm Sinh Huyệt,
+dấu hiệu cho biết cơ quan hoặc bộ phận tương ứng đang có bệnh là điểm gây cảm
+giác tê buốt mạnh nhất. Đây là phản ứng đặc trưng của cơ thể khi tác động vào
+vùng huyệt đạo liên quan, cho thấy sự bất thường hoặc rối loạn tại cơ quan tương
+ứng. Phép dò Sinh Huyệt dựa trên việc tìm ra điểm phản ứng mạnh nhất để xác định
+vị trí bệnh lý, từ đó hỗ trợ chẩn đoán chính xác và định hướng điều trị. Vì vậy,
+lựa chọn A là phù hợp nhất với đặc điểm sinh lý và bệnh lý trong y học cổ
+truyền. Final Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 36.73%
+----------------------------------------
+
+Question #99
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, huyệt Tiểu Trường Du (BL-27) được xác định vị trí trên lưng như thế nào?
+
+Options:
+ A) Hơi chếch lên trên vào trong so với gai chậu sau trên, cách đường giữa 1.5 thốn, ngang mức lỗ cùng thứ nhất.
+ B) Cách đường giữa lưng 1.5 thốn, ngang mức lỗ cùng thứ hai, chếch xuống dưới và vào trong so với gai chậu sau trên.
+ C) Cách đường giữa lưng 3 thốn, ngang mức lỗ cùng thứ nhất.
+ D) Nằm ở lỗ cùng thứ nhất.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Tiểu Trường Du (BL-27) được xác định nằm cách đường giữa lưng 1.5 thốn,
+ngang mức lỗ cùng thứ nhất, và chếch lên trên vào trong so với gai chậu sau
+trên. Đây là vị trí đặc trưng của huyệt này trong Y học cổ truyền, phù hợp với
+các đặc điểm giải phẫu và chức năng của nó. Vì vậy, đáp án đúng là A.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 37.37%
+----------------------------------------
+
+Question #100
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Diện Chẩn, khi người bệnh có mụn bọc ở vùng nhân trung và môi, cần tránh châm huyệt nào?
+
+Options:
+ A) 19
+ B) 61
+ C) 17
+ D) 3
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong Diện Chẩn, khi người bệnh có mụn bọc ở vùng nhân trung và môi, việc châm
+cứu tại các huyệt liên quan có thể gây kích thích hoặc làm tổn thương vùng da
+nhạy cảm, làm trầm trọng thêm tình trạng mụn bọc. Huyệt 19 nằm ở vùng nhân
+trung, nơi có mụn bọc, nên cần tránh châm để đảm bảo an toàn và hiệu quả điều
+trị. Do đó, lựa chọn huyệt 19 là phù hợp nhất trong trường hợp này. Final
+Answer: A
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 38.00%
+----------------------------------------
+
+Question #101
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Theo quan điểm y học cổ truyền, thói quen sinh hoạt nào sau đây được khuyến khích thực hiện để bảo vệ sức khỏe, đặc biệt là giữ ấm cơ thể?
+
+Options:
+ A) Sử dụng quạt máy hoặc phòng lạnh liên tục.
+ B) Tắm đêm muộn.
+ C) Đi chân trần trong nhà.
+ D) Mang vớ giữ ấm chân khi ngủ.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Theo y học cổ truyền, thói quen sinh hoạt được khuyến khích để bảo vệ sức khỏe
+là mang vớ giữ ấm chân khi ngủ. Điều này dựa trên nguyên lý rằng chân là nơi khí
+huyết tụ lại, và việc giữ ấm cơ thể ở mức độ phù hợp sẽ giúp duy trì sự lưu
+thông khí huyết, từ đó ngăn ngừa các bệnh lý liên quan đến tuần hoàn và khí
+huyết. Việc giữ ấm chân không chỉ hỗ trợ tuần hoàn mà còn giúp cơ thể cân bằng
+âm dương, một yếu tố cốt lõi trong y học cổ truyền. Trong khi các lựa chọn khác
+như sử dụng quạt máy hoặc phòng lạnh liên tục, hoặc tắm đêm muộn, có thể làm suy
+yếu tuần hoàn và gây mất cân bằng khí huyết, chúng không phù hợp với nguyên tắc
+điều trị và bảo vệ sức khỏe theo y học cổ truyền. Vì vậy, lựa chọn D là lựa chọn
+tối ưu. Final Answer: D
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: D
+Result: Correct
+Current Overall Accuracy: 38.61%
+----------------------------------------
+
+Question #102
+Topic(s): Cardiology, Eastern Medicine
+Difficulty Level: Moderate
+Question: Huyệt Thông Lý (HE-5) thuộc hệ thống Kinh Tâm được xác định ở vị trí nào so với huyệt Thần Môn (HE-7)?
+
+Options:
+ A) Cách Thần Môn (HE-7) 0.5 thốn về phía trên, ở phía ngoài gân cơ gấp cổ tay trụ.
+ B) Cách Thần Môn (HE-7) 1 thốn về phía trên, ở phía ngoài gân cơ gấp cổ tay trụ.
+ C) Cách Thần Môn (HE-7) 1.5 thốn về phía trên, ở phía ngoài gân cơ gấp cổ tay trụ.
+ D) Cách Thần Môn (HE-7) 1 thốn về phía dưới, ở phía ngoài gân cơ gấp cổ tay trụ.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Thông Lý (HE-5) nằm cách huyệt Thần Môn (HE-7) 1 thốn về phía trên, ở phía
+ngoài gân cơ gấp cổ tay trụ. Đây là vị trí chính xác của huyệt này trong hệ
+thống Kinh Tâm, phù hợp với các đặc điểm giải phẫu và kinh lạc liên quan. Vì
+vậy, đáp án đúng là B.
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: B
+Result: Correct
+Current Overall Accuracy: 39.22%
+----------------------------------------
+
+Question #103
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong Y học cổ truyền, phương pháp chẩn đoán nào sau đây không thuộc một trong bốn bước khám bệnh cơ bản?
+
+Options:
+ A) Văn chẩn
+ B) Vấn chẩn
+ C) Thiết chẩn
+ D) Vọng chẩn
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Trong Y học cổ truyền, phương pháp chẩn đoán không thuộc bốn bước khám bệnh cơ
+bản là Văn chẩn. Các bước khám bệnh cơ bản bao gồm Vọng chẩn, Vấn chẩn, Thiết
+chẩn và Tổng hợp, nhưng Văn chẩn không được liệt kê trong số này. Do đó, đáp án
+đúng là A.
+
+Summary:
+Model's Extracted Answer: A
+Expected Answer Letter: A
+Result: Correct
+Current Overall Accuracy: 39.81%
+----------------------------------------
+
+Question #104
+Topic(s): Eastern Medicine
+Difficulty Level: Moderate
+Question: Trong bệnh sụp mi mắt theo Y học cổ truyền, thể hư thường biểu hiện với các triệu chứng nào?
+
+Options:
+ A) Người mặt đỏ hồng hào, nói to, mạch nhanh có lực.
+ B) Mắt sưng đỏ, đau tức, nhiều rỉ mắt.
+ C) Người trắng xanh, tiếng nói to, mạch nhanh có lực.
+ D) Người trắng xanh, tiếng nói nhỏ, mạch hoãn.
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Sụp mi mắt trong Y học cổ truyền là một bệnh lý mà thể hư thường biểu hiện qua
+các triệu chứng như người trắng xanh, tiếng nói nhỏ, và mạch hoãn. Những đặc
+điểm này phản ánh tình trạng suy yếu của khí huyết và năng lượng cơ thể, dẫn đến
+các triệu chứng như mi mắt không mở được. Trong khi đó, thể thực thường biểu
+hiện qua các triệu chứng như mắt sưng đỏ, đau tức, và nhiều rỉ mắt, cho thấy sự
+tích tụ nhiệt hoặc khí huyết ứ trệ. Vì vậy, thể hư liên quan đến sự suy yếu của
+cơ thể, và các triệu chứng đi kèm cũng phản ánh rõ nét hơn đặc điểm này. Final
+Answer: D
+
+Summary:
+Model's Extracted Answer: D
+Expected Answer Letter: D
+Result: Correct
+Current Overall Accuracy: 40.38%
+----------------------------------------
+
+Question #105
+Topic(s): Eastern Medicine
+Difficulty Level: Hard
+Question: Trong Y học cổ truyền, huyệt vị nào có vị trí trên hàm trên, hơi dưới bờ ngoài lỗ mũi, và được xác định cụ thể bằng cách chia đoạn từ bờ dưới lỗ mũi đến bờ trên môi trên thành 3 phần, rồi xác định ở giữa 1/3 trên và 1/3 giữa?
+
+Options:
+ A) Nhân Trung Du (Du-26)
+ B) Ty Thông
+ C) Nghinh Hương (L.I.-20)
+ D) Khẩu Hòa Liêu (L.I.-19)
+Valid Option Keys: ['A', 'B', 'C', 'D']
+
+Full Model Response:
+Huyệt Ty Thông được xác định nằm trên hàm trên, hơi dưới bờ ngoài lỗ mũi, và
+được xác định cụ thể bằng cách chia đoạn từ bờ dưới lỗ mũi đến bờ trên môi trên
+thành 3 phần, sau đó xác định ở giữa 1/3 trên và 1/3 giữa. Đây là vị trí đặc
+trưng của huyệt này trong Y học cổ truyền. Vì vậy, đáp án đúng là B.
+
+Summary:
+Model's Extracted Answer: B
+Expected Answer Letter: D
+Result: Incorrect
+Current Overall Accuracy: 40.00%
+----------------------------------------
+
+
+================================================================================
+FINAL SUMMARY REPORT
+================================================================================

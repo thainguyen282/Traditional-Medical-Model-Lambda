@@ -134,20 +134,14 @@ trainer.train()
 
 trainer.save_model(OUTPUT_DIR)
 tokenizer.save_pretrained(OUTPUT_DIR)
-
-# Merge LoRA vào base model để SFT có thể dùng làm base
-MERGED_DIR = "cpt_qwen3_medical_merged"
-merged_model = model.merge_and_unload()
-merged_model.save_pretrained(MERGED_DIR)
-tokenizer.save_pretrained(MERGED_DIR)
-print(f"Merged model saved to {MERGED_DIR}")
+print(f"LoRA adapter saved to {OUTPUT_DIR} (no merge — SFT sẽ continue-train adapter này)")
 
 print("Training complete.")
 
 # =========================
 # FREE GPU MEMORY BEFORE EVAL
 # =========================
-del model, merged_model, trainer, tokenizer, dataset
+del model, trainer, tokenizer, dataset
 torch.cuda.empty_cache()
 import gc
 gc.collect()

@@ -755,3 +755,28 @@ If you're using a HuggingFace online model, check if it exists.
 [2026-04-14 06:49:57] [INFO] [2/2] Running: Unsloth_QA_CPT_SFT_VM14K.ipynb
 [2026-04-14 06:55:51] [INFO] [2/2] Done: Unsloth_QA_CPT_SFT_VM14K.ipynb
 [2026-04-14 06:55:51] [INFO] All eval notebooks finished (2/2)
+[2026-04-14 15:53:53] [INFO] Continue-training existing LoRA adapter from CPT/cpt_qwen3_medical (bỏ qua lora config trong yaml — dùng adapter config của CPT)
+[2026-04-14 16:07:38] [INFO] Trained model saved to group_outputs/outputs/CPT_SFT/model
+[2026-04-14 16:07:38] [INFO] Running multiple benchmarks
+[2026-04-14 16:07:38] [INFO] Running benchmark with tags ['Trained']
+[2026-04-14 16:07:38] [INFO] Run benchmark on trained model → group_outputs/outputs/CPT_SFT/benchmark_evaluations
+[2026-04-14 16:07:38] [INFO] Creating evaluator...
+[2026-04-14 16:07:38] [INFO] Running benchmark on dataset mmlu → group_outputs/outputs/CPT_SFT/benchmark_evaluations/mmlu.json
+[2026-04-14 16:07:38] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-14 16:07:52] [INFO] Successfully saved results to group_outputs/outputs/CPT_SFT/benchmark_evaluations/mmlu.json
+[2026-04-14 16:07:52] [INFO] Ran benchmark group id 4a5f8f57e7c146aeb61349b3de9c121c with tags ['Trained'], on group_outputs/outputs/CPT_SFT/benchmark_evaluations. Start: 7482.167012646, End: 7496.129079446, Duration: 0h 0m 13.96s
+[2026-04-14 16:08:11] [INFO] Running multiple benchmarks
+[2026-04-14 16:08:11] [INFO] Running benchmark with tags ['Baseline']
+[2026-04-14 16:08:11] [INFO] Run baseline benchmark on group_outputs/baseline/d5da6659-7821-4883-92bc-1310b49f97cc
+[2026-04-14 16:08:11] [INFO] Creating evaluator...
+[2026-04-14 16:08:11] [INFO] Running benchmark on dataset mmlu → group_outputs/baseline/d5da6659-7821-4883-92bc-1310b49f97cc/mmlu.json
+[2026-04-14 16:08:11] [INFO] Running evaluation on tasks: ['mmlu_clinical_knowledge']
+[2026-04-14 16:08:20] [INFO] Successfully saved results to group_outputs/baseline/d5da6659-7821-4883-92bc-1310b49f97cc/mmlu.json
+[2026-04-14 16:08:20] [INFO] Ran benchmark group id 9a02d5bcf97540ba8731588198681563 with tags ['Baseline'], on group_outputs/baseline/d5da6659-7821-4883-92bc-1310b49f97cc. Start: 7515.172788974, End: 7523.551797121, Duration: 0h 0m 8.38s
+[2026-04-14 16:08:20] [INFO] Starting eval for CPT → SFT (2 notebooks)
+[2026-04-14 16:08:20] [INFO] SFT_MODEL_PATH=/home/huyen/Traditional-Medical-Model/group_outputs/outputs/CPT_SFT/model
+[2026-04-14 16:08:20] [INFO] [1/2] Running: Unsloth_QA_CPT_SFT_new.ipynb
+[2026-04-14 16:10:23] [INFO] [1/2] Done: Unsloth_QA_CPT_SFT_new.ipynb
+[2026-04-14 16:10:23] [INFO] [2/2] Running: Unsloth_QA_CPT_SFT_VM14K.ipynb
+[2026-04-14 16:16:26] [INFO] [2/2] Done: Unsloth_QA_CPT_SFT_VM14K.ipynb
+[2026-04-14 16:16:26] [INFO] All eval notebooks finished (2/2)

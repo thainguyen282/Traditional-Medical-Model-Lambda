@@ -302,7 +302,20 @@ class TrainCommand:
                 chat_template="qwen-3",
             )
 
-        if self.lora_config:
+        # Nếu model_name trỏ tới 1 LoRA adapter đã được load bởi from_pretrained,
+        # Unsloth trả về PeftModel sẵn — chỉ cần bật training mode.
+        # Nếu là base model và có lora_config → tạo adapter mới (SFT thường).
+        is_peft_model = hasattr(model, "peft_config")
+
+        if is_peft_model:
+            # Continue-training CPT adapter: KHÔNG gọi get_peft_model lần nữa
+            # (sẽ stack adapter lên adapter, gây bất ổn định).
+            FastLanguageModel.for_training(model)
+            self.logger.info(
+                f"Continue-training existing LoRA adapter from {model_name} "
+                f"(bỏ qua lora config trong yaml — dùng adapter config của CPT)"
+            )
+        elif self.lora_config:
             model = FastLanguageModel.get_peft_model(
                 model,
                 **self.lora_config.get_config_dict(),
