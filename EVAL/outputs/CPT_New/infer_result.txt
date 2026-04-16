@@ -10,13 +10,13 @@ Language: Vietnamese
 OVERALL STATISTICS
 ----------------------------------------
 Total Questions Processed: 105
-Total Correct: 56
-Overall Accuracy: 53.33%
+Total Correct: 58
+Overall Accuracy: 55.24%
 
 RESPONSE FORMAT ANALYSIS
 ----------------------------------------
-Total Deviations (Hallucinations): 0 (0.00% of all responses)
-Incorrect Answers Due to Deviation: 0 (0.00% of all incorrect answers)
+Total Deviations (Hallucinations): 1 (0.95% of all responses)
+Incorrect Answers Due to Deviation: 1 (2.13% of all incorrect answers)
 (A deviation is when the model provides an answer not in the valid options, e.g., 'E' when options are A-D)
 
 ================================================================================
@@ -32,56 +32,56 @@ Easy Level:
 
 Moderate Level:
  - Number of Questions: 75
- - Accuracy: 49.33% (37/75)
- - Incorrect Answers: 38
+ - Accuracy: 54.67% (41/75)
+ - Incorrect Answers: 34
  - Deviations: 0/75 questions
  - Incorrect due to Deviation: 0 (0.00% of this level's incorrect answers)
 
 Hard Level:
  - Number of Questions: 11
- - Accuracy: 63.64% (7/11)
- - Incorrect Answers: 4
- - Deviations: 0/11 questions
- - Incorrect due to Deviation: 0 (0.00% of this level's incorrect answers)
+ - Accuracy: 45.45% (5/11)
+ - Incorrect Answers: 6
+ - Deviations: 1/11 questions
+ - Incorrect due to Deviation: 1 (16.67% of this level's incorrect answers)
 
 
 ================================================================================
 Performance by Medical Topic (Ranked by Accuracy)
 ================================================================================
 
-Rank 1: Eastern Medicine
- - Number of Questions: 105
- - Accuracy: 53.33% (56/105)
- - Incorrect Answers: 49
- - Deviations: 0/105 questions
+Rank 1: Nephrology
+ - Number of Questions: 2
+ - Accuracy: 100.00% (2/2)
+ - Incorrect Answers: 0
+ - Deviations: 0/2 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic's incorrect answers)
 
-Rank 2: Cardiology
+Rank 2: Eastern Medicine
+ - Number of Questions: 105
+ - Accuracy: 55.24% (58/105)
+ - Incorrect Answers: 47
+ - Deviations: 1/105 questions
+ - Incorrect due to Deviation: 1 (2.13% of this topic's incorrect answers)
+
+Rank 3: Neurology
  - Number of Questions: 2
  - Accuracy: 50.00% (1/2)
  - Incorrect Answers: 1
  - Deviations: 0/2 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic's incorrect answers)
 
-Rank 3: Pulmonology
+Rank 4: Cardiology
+ - Number of Questions: 2
+ - Accuracy: 50.00% (1/2)
+ - Incorrect Answers: 1
+ - Deviations: 0/2 questions
+ - Incorrect due to Deviation: 0 (0.00% of this topic's incorrect answers)
+
+Rank 5: Pulmonology
  - Number of Questions: 4
- - Accuracy: 25.00% (1/4)
- - Incorrect Answers: 3
+ - Accuracy: 50.00% (2/4)
+ - Incorrect Answers: 2
  - Deviations: 0/4 questions
- - Incorrect due to Deviation: 0 (0.00% of this topic's incorrect answers)
-
-Rank 4: Neurology
- - Number of Questions: 2
- - Accuracy: 0.00% (0/2)
- - Incorrect Answers: 2
- - Deviations: 0/2 questions
- - Incorrect due to Deviation: 0 (0.00% of this topic's incorrect answers)
-
-Rank 5: Nephrology
- - Number of Questions: 2
- - Accuracy: 0.00% (0/2)
- - Incorrect Answers: 2
- - Deviations: 0/2 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic's incorrect answers)
 
 
@@ -111,25 +111,25 @@ TOPIC: Eastern Medicine
 
   Moderate Difficulty:
     - Questions: 75
-    - Accuracy: 49.33% (37/75)
-    - Incorrect: 38
+    - Accuracy: 54.67% (41/75)
+    - Incorrect: 34
     - Deviations: 0
     - Incorrect due to Deviation: 0 (0.00%)
 
   Hard Difficulty:
     - Questions: 11
-    - Accuracy: 63.64% (7/11)
-    - Incorrect: 4
-    - Deviations: 0
-    - Incorrect due to Deviation: 0 (0.00%)
+    - Accuracy: 45.45% (5/11)
+    - Incorrect: 6
+    - Deviations: 1
+    - Incorrect due to Deviation: 1 (16.67%)
 
 TOPIC: Nephrology
 ------------------
 
   Moderate Difficulty:
     - Questions: 2
-    - Accuracy: 0.00% (0/2)
-    - Incorrect: 2
+    - Accuracy: 100.00% (2/2)
+    - Incorrect: 0
     - Deviations: 0
     - Incorrect due to Deviation: 0 (0.00%)
 
@@ -145,8 +145,8 @@ TOPIC: Neurology
 
   Hard Difficulty:
     - Questions: 1
-    - Accuracy: 0.00% (0/1)
-    - Incorrect: 1
+    - Accuracy: 100.00% (1/1)
+    - Incorrect: 0
     - Deviations: 0
     - Incorrect due to Deviation: 0 (0.00%)
 
@@ -155,8 +155,8 @@ TOPIC: Pulmonology
 
   Easy Difficulty:
     - Questions: 1
-    - Accuracy: 0.00% (0/1)
-    - Incorrect: 1
+    - Accuracy: 100.00% (1/1)
+    - Incorrect: 0
     - Deviations: 0
     - Incorrect due to Deviation: 0 (0.00%)
 
@@ -182,66 +182,66 @@ Topic-Difficulty Matrix Performance
 EASY DIFFICULTY:
 ------------------------------
 
-Rank 1: Eastern Medicine
+Rank 1: Pulmonology
+ - Number of Questions: 1
+ - Accuracy: 100.00% (1/1)
+ - Incorrect Answers: 0
+ - Deviations: 0/1 questions
+ - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
+
+Rank 2: Eastern Medicine
  - Number of Questions: 19
  - Accuracy: 63.16% (12/19)
  - Incorrect Answers: 7
  - Deviations: 0/19 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
 
-Rank 2: Pulmonology
- - Number of Questions: 1
- - Accuracy: 0.00% (0/1)
- - Incorrect Answers: 1
- - Deviations: 0/1 questions
- - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
-
 MODERATE DIFFICULTY:
 ------------------------------
 
-Rank 1: Cardiology
+Rank 1: Nephrology
  - Number of Questions: 2
- - Accuracy: 50.00% (1/2)
- - Incorrect Answers: 1
+ - Accuracy: 100.00% (2/2)
+ - Incorrect Answers: 0
  - Deviations: 0/2 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
 
 Rank 2: Eastern Medicine
  - Number of Questions: 75
- - Accuracy: 49.33% (37/75)
- - Incorrect Answers: 38
+ - Accuracy: 54.67% (41/75)
+ - Incorrect Answers: 34
  - Deviations: 0/75 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
 
-Rank 3: Neurology
- - Number of Questions: 1
- - Accuracy: 0.00% (0/1)
- - Incorrect Answers: 1
- - Deviations: 0/1 questions
- - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
-
-Rank 4: Pulmonology
- - Number of Questions: 1
- - Accuracy: 0.00% (0/1)
- - Incorrect Answers: 1
- - Deviations: 0/1 questions
- - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
-
-Rank 5: Nephrology
+Rank 3: Cardiology
  - Number of Questions: 2
- - Accuracy: 0.00% (0/2)
- - Incorrect Answers: 2
+ - Accuracy: 50.00% (1/2)
+ - Incorrect Answers: 1
  - Deviations: 0/2 questions
+ - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
+
+Rank 4: Neurology
+ - Number of Questions: 1
+ - Accuracy: 0.00% (0/1)
+ - Incorrect Answers: 1
+ - Deviations: 0/1 questions
+ - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
+
+Rank 5: Pulmonology
+ - Number of Questions: 1
+ - Accuracy: 0.00% (0/1)
+ - Incorrect Answers: 1
+ - Deviations: 0/1 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
 
 HARD DIFFICULTY:
 ------------------------------
 
-Rank 1: Eastern Medicine
- - Number of Questions: 11
- - Accuracy: 63.64% (7/11)
- - Incorrect Answers: 4
- - Deviations: 0/11 questions
+Rank 1: Neurology
+ - Number of Questions: 1
+ - Accuracy: 100.00% (1/1)
+ - Incorrect Answers: 0
+ - Deviations: 0/1 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
 
 Rank 2: Pulmonology
@@ -251,9 +251,9 @@ Rank 2: Pulmonology
  - Deviations: 0/2 questions
  - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
 
-Rank 3: Neurology
- - Number of Questions: 1
- - Accuracy: 0.00% (0/1)
- - Incorrect Answers: 1
- - Deviations: 0/1 questions
- - Incorrect due to Deviation: 0 (0.00% of this topic-difficulty's incorrect answers)
+Rank 3: Eastern Medicine
+ - Number of Questions: 11
+ - Accuracy: 45.45% (5/11)
+ - Incorrect Answers: 6
+ - Deviations: 1/11 questions
+ - Incorrect due to Deviation: 1 (16.67% of this topic-difficulty's incorrect answers)

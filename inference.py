@@ -96,10 +96,19 @@ def compare_models(models_config, questions, output_dir="EVAL/outputs/comparison
 if __name__ == "__main__":
     models_config = {
         "Qwen3-4B-Goc": "unsloth/Qwen3-4B-Instruct-2507",
-        "Qwen3-4B-CPT": "CPT/cpt_qwen3_medical_merged",
+        # CPT mới (Tier 1, raw-text completion, alpha=32) — load adapter trực tiếp
+        "Qwen3-4B-CPT": "CPT/cpt_qwen3_medical",
         "Qwen3-4B-CPT-SFT": "group_outputs/outputs/CPT_SFT/model",
-        "Qwen3-4B-SFT": "group_outputs/outputs/SFT/model",
+        # SFT-only chưa có model local. Bỏ comment khi train xong:
+        # "Qwen3-4B-SFT": "group_outputs/outputs/SFT/model",
     }
+
+    # Bỏ qua các path không tồn tại (skip thay vì crash)
+    models_config = {
+        name: path for name, path in models_config.items()
+        if path.startswith("unsloth/") or os.path.exists(path)
+    }
+    print(f"Models to compare: {list(models_config.keys())}")
 
     questions = [
         # === Từ CPT data (sách Đông y cổ truyền) ===

@@ -11,17 +11,17 @@ Language: Vietnamese
 EASY DIFFICULTY - Topics Ranked by Accuracy:
 ------------------------------------------------------------
 
-Rank 1: Eastern Medicine
- - Accuracy: 63.16% (12/19)
- - Total Questions: 19
- - Incorrect Answers: 7
+Rank 1: Pulmonology
+ - Accuracy: 100.00% (1/1)
+ - Total Questions: 1
+ - Incorrect Answers: 0
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 2: Pulmonology
- - Accuracy: 0.00% (0/1)
- - Total Questions: 1
- - Incorrect Answers: 1
+Rank 2: Eastern Medicine
+ - Accuracy: 63.16% (12/19)
+ - Total Questions: 19
+ - Incorrect Answers: 7
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
@@ -29,38 +29,38 @@ Rank 2: Pulmonology
 MODERATE DIFFICULTY - Topics Ranked by Accuracy:
 ------------------------------------------------------------
 
-Rank 1: Cardiology
+Rank 1: Nephrology
+ - Accuracy: 100.00% (2/2)
+ - Total Questions: 2
+ - Incorrect Answers: 0
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 2: Eastern Medicine
+ - Accuracy: 54.67% (41/75)
+ - Total Questions: 75
+ - Incorrect Answers: 34
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 3: Cardiology
  - Accuracy: 50.00% (1/2)
  - Total Questions: 2
  - Incorrect Answers: 1
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 2: Eastern Medicine
- - Accuracy: 49.33% (37/75)
- - Total Questions: 75
- - Incorrect Answers: 38
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 3: Neurology
+Rank 4: Neurology
  - Accuracy: 0.00% (0/1)
  - Total Questions: 1
  - Incorrect Answers: 1
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 4: Pulmonology
+Rank 5: Pulmonology
  - Accuracy: 0.00% (0/1)
  - Total Questions: 1
  - Incorrect Answers: 1
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 5: Nephrology
- - Accuracy: 0.00% (0/2)
- - Total Questions: 2
- - Incorrect Answers: 2
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
@@ -68,10 +68,10 @@ Rank 5: Nephrology
 HARD DIFFICULTY - Topics Ranked by Accuracy:
 ------------------------------------------------------------
 
-Rank 1: Eastern Medicine
- - Accuracy: 63.64% (7/11)
- - Total Questions: 11
- - Incorrect Answers: 4
+Rank 1: Neurology
+ - Accuracy: 100.00% (1/1)
+ - Total Questions: 1
+ - Incorrect Answers: 0
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
@@ -82,12 +82,12 @@ Rank 2: Pulmonology
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 3: Neurology
- - Accuracy: 0.00% (0/1)
- - Total Questions: 1
- - Incorrect Answers: 1
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
+Rank 3: Eastern Medicine
+ - Accuracy: 45.45% (5/11)
+ - Total Questions: 11
+ - Incorrect Answers: 6
+ - Deviations: 1
+ - Incorrect due to Deviation: 1 (16.67%)
 
 
 CHALLENGING DIFFICULTY - Topics Ranked by Accuracy:

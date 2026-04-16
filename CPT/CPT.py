@@ -20,7 +20,8 @@ model, tokenizer = FastLanguageModel.from_pretrained(
 model = FastLanguageModel.get_peft_model(
     model,
     r=32,
-    lora_alpha=256,
+    # alpha=r với rsLoRA → scale nhất quán với SFT, tránh shock khi continue-train.
+    lora_alpha=32,
     lora_dropout=0,
     bias="none",
     use_rslora=True,
@@ -44,63 +45,28 @@ print("Columns:", dataset.column_names)
 print("Sample:", dataset[0])
 
 # =========================
-# HELPER: CLEAN + SIMPLIFY TEXT
+# HELPER: CLEAN TEXT
 # =========================
 def clean_text(text):
     text = text.strip()
-    text = text.replace("\n", " ")
-    text = " ".join(text.split())
-    return text
-
-def simple_explanation(text):
-    """
-    Fake 'explanation' bằng cách:
-    - rút gọn
-    - giữ ý chính
-    """
-    text = clean_text(text)
-
-    # cắt bớt để tránh quá dài + giống hệt input
-    if len(text) > 300:
-        text = text[:300] + "..."
-
-    return text
+    # Giữ xuống dòng để bảo toàn cấu trúc đoạn, chỉ chuẩn hoá khoảng trắng thừa.
+    lines = [" ".join(line.split()) for line in text.splitlines()]
+    return "\n".join(line for line in lines if line)
 
 # =========================
-# FORMAT → CHAT TEMPLATE
+# FORMAT → RAW-TEXT COMPLETION
 # =========================
+# CPT = continual pre-training: train next-token prediction trên text y học thuần.
+# KHÔNG bọc chat template, KHÔNG fake user/assistant turn — tránh dạy model hành vi
+# "trả lời bằng cách copy lại câu hỏi" gây format collapse ở bước SFT.
 def format_text(example):
-    raw_text = example.get("text", "").strip()
-
+    raw_text = example.get("text", "")
     if not raw_text:
         return {"text": ""}
-
-    explanation = simple_explanation(raw_text)
-
-    messages = [
-        {
-            "role": "system",
-            "content": "Bạn là bác sĩ AI, giải thích kiến thức y học cổ truyền một cách dễ hiểu."
-        },
-        {
-            "role": "user",
-            "content": raw_text
-        },
-        {
-            "role": "assistant",
-            "content": explanation
-        },
-    ]
-
-    text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=False
-    )
-
-    return {"text": text}
+    return {"text": clean_text(raw_text) + tokenizer.eos_token}
 
 dataset = dataset.map(format_text)
+dataset = dataset.filter(lambda x: len(x["text"]) > 0)
 
 # =========================
 # TRAIN

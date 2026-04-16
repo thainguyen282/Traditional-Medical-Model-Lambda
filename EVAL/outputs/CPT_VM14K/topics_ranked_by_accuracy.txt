@@ -11,128 +11,128 @@ Language: Vietnamese
 EASY DIFFICULTY - Topics Ranked by Accuracy:
 ------------------------------------------------------------
 
-Rank 1: Urology
+Rank 1: Gastroenterology
+ - Accuracy: 100.00% (2/2)
+ - Total Questions: 2
+ - Incorrect Answers: 0
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 2: Preventive Healthcare
  - Accuracy: 100.00% (3/3)
  - Total Questions: 3
  - Incorrect Answers: 0
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 2: Orthopedics
+Rank 3: Infectious Diseases
  - Accuracy: 100.00% (3/3)
  - Total Questions: 3
  - Incorrect Answers: 0
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 3: Preventive Healthcare
+Rank 4: Pediatrics
  - Accuracy: 100.00% (3/3)
  - Total Questions: 3
  - Incorrect Answers: 0
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 4: Infectious Diseases
- - Accuracy: 100.00% (3/3)
- - Total Questions: 3
- - Incorrect Answers: 0
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 5: Nephrology
- - Accuracy: 87.50% (14/16)
- - Total Questions: 16
- - Incorrect Answers: 2
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 6: Hematology
- - Accuracy: 75.00% (12/16)
- - Total Questions: 16
- - Incorrect Answers: 4
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 7: Pediatrics
+Rank 5: Urology
  - Accuracy: 66.67% (2/3)
  - Total Questions: 3
  - Incorrect Answers: 1
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 8: Neurology
- - Accuracy: 60.00% (6/10)
- - Total Questions: 10
- - Incorrect Answers: 4
+Rank 6: Nephrology
+ - Accuracy: 62.50% (10/16)
+ - Total Questions: 16
+ - Incorrect Answers: 6
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 9: General Medicine
- - Accuracy: 59.09% (13/22)
+Rank 7: Hematology
+ - Accuracy: 56.25% (9/16)
+ - Total Questions: 16
+ - Incorrect Answers: 7
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 8: General Medicine
+ - Accuracy: 50.00% (11/22)
  - Total Questions: 22
- - Incorrect Answers: 9
+ - Incorrect Answers: 11
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 10: Ophthalmology
- - Accuracy: 55.56% (10/18)
- - Total Questions: 18
- - Incorrect Answers: 8
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 11: Gastroenterology
+Rank 9: Obstetrics and Gynecology
  - Accuracy: 50.00% (1/2)
  - Total Questions: 2
  - Incorrect Answers: 1
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 12: Obstetrics and Gynecology
- - Accuracy: 50.00% (1/2)
- - Total Questions: 2
- - Incorrect Answers: 1
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 13: Eastern Medicine
- - Accuracy: 48.21% (54/112)
+Rank 10: Eastern Medicine
+ - Accuracy: 44.64% (50/112)
  - Total Questions: 112
- - Incorrect Answers: 58
+ - Incorrect Answers: 62
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 14: Cardiology
- - Accuracy: 42.86% (6/14)
- - Total Questions: 14
- - Incorrect Answers: 8
+Rank 11: Ophthalmology
+ - Accuracy: 44.44% (8/18)
+ - Total Questions: 18
+ - Incorrect Answers: 10
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 15: Dermatology
+Rank 12: Dermatology
  - Accuracy: 40.00% (2/5)
  - Total Questions: 5
  - Incorrect Answers: 3
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 16: Psychiatry
+Rank 13: Emergency Medicine
+ - Accuracy: 40.00% (2/5)
+ - Total Questions: 5
+ - Incorrect Answers: 3
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 14: Psychiatry
  - Accuracy: 35.71% (5/14)
  - Total Questions: 14
  - Incorrect Answers: 9
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 17: Pulmonology
- - Accuracy: 25.00% (1/4)
- - Total Questions: 4
- - Incorrect Answers: 3
+Rank 15: Orthopedics
+ - Accuracy: 33.33% (1/3)
+ - Total Questions: 3
+ - Incorrect Answers: 2
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 18: Emergency Medicine
- - Accuracy: 20.00% (1/5)
- - Total Questions: 5
+Rank 16: Neurology
+ - Accuracy: 30.00% (3/10)
+ - Total Questions: 10
+ - Incorrect Answers: 7
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 17: Cardiology
+ - Accuracy: 14.29% (2/14)
+ - Total Questions: 14
+ - Incorrect Answers: 12
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 18: Pulmonology
+ - Accuracy: 0.00% (0/4)
+ - Total Questions: 4
  - Incorrect Answers: 4
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
@@ -162,38 +162,38 @@ Rank 2: Pediatrics
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 3: Obstetrics and Gynecology
+Rank 3: Hematology
+ - Accuracy: 68.75% (11/16)
+ - Total Questions: 16
+ - Incorrect Answers: 5
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 4: Dermatology
  - Accuracy: 66.67% (6/9)
  - Total Questions: 9
  - Incorrect Answers: 3
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 4: Gastroenterology
- - Accuracy: 63.33% (19/30)
- - Total Questions: 30
- - Incorrect Answers: 11
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 5: Dermatology
- - Accuracy: 55.56% (5/9)
+Rank 5: Obstetrics and Gynecology
+ - Accuracy: 66.67% (6/9)
  - Total Questions: 9
- - Incorrect Answers: 4
+ - Incorrect Answers: 3
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 6: Pulmonology
- - Accuracy: 52.00% (13/25)
- - Total Questions: 25
- - Incorrect Answers: 12
+Rank 6: Gastroenterology
+ - Accuracy: 53.33% (16/30)
+ - Total Questions: 30
+ - Incorrect Answers: 14
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 7: Hematology
- - Accuracy: 50.00% (8/16)
- - Total Questions: 16
- - Incorrect Answers: 8
+Rank 7: Neurology
+ - Accuracy: 50.00% (22/44)
+ - Total Questions: 44
+ - Incorrect Answers: 22
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
@@ -211,94 +211,94 @@ Rank 9: Physical Medicine and Rehabilitation
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 10: Infectious Diseases
- - Accuracy: 50.00% (4/8)
- - Total Questions: 8
- - Incorrect Answers: 4
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 11: Eastern Medicine
- - Accuracy: 41.59% (141/339)
- - Total Questions: 339
- - Incorrect Answers: 198
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 12: Neurology
- - Accuracy: 40.91% (18/44)
- - Total Questions: 44
- - Incorrect Answers: 26
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 13: Urology
- - Accuracy: 36.36% (4/11)
- - Total Questions: 11
- - Incorrect Answers: 7
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 14: Sports Medicine
- - Accuracy: 33.33% (2/6)
- - Total Questions: 6
- - Incorrect Answers: 4
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 15: General Medicine
- - Accuracy: 30.88% (21/68)
- - Total Questions: 68
- - Incorrect Answers: 47
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 16: Rheumatology
- - Accuracy: 29.63% (16/54)
- - Total Questions: 54
- - Incorrect Answers: 38
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 17: Orthopedics
- - Accuracy: 28.57% (12/42)
- - Total Questions: 42
- - Incorrect Answers: 30
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 18: Psychiatry
- - Accuracy: 27.78% (5/18)
- - Total Questions: 18
- - Incorrect Answers: 13
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 19: Ophthalmology
- - Accuracy: 22.22% (2/9)
- - Total Questions: 9
- - Incorrect Answers: 7
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 20: Nephrology
- - Accuracy: 20.00% (5/25)
+Rank 10: Pulmonology
+ - Accuracy: 44.00% (11/25)
  - Total Questions: 25
- - Incorrect Answers: 20
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 21: Cardiology
- - Accuracy: 17.65% (3/17)
- - Total Questions: 17
  - Incorrect Answers: 14
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 22: Geriatrics
- - Accuracy: 0.00% (0/9)
+Rank 11: Orthopedics
+ - Accuracy: 42.86% (18/42)
+ - Total Questions: 42
+ - Incorrect Answers: 24
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 12: Eastern Medicine
+ - Accuracy: 41.30% (140/339)
+ - Total Questions: 339
+ - Incorrect Answers: 199
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 13: Infectious Diseases
+ - Accuracy: 37.50% (3/8)
+ - Total Questions: 8
+ - Incorrect Answers: 5
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 14: General Medicine
+ - Accuracy: 35.29% (24/68)
+ - Total Questions: 68
+ - Incorrect Answers: 44
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 15: Ophthalmology
+ - Accuracy: 33.33% (3/9)
  - Total Questions: 9
+ - Incorrect Answers: 6
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 16: Geriatrics
+ - Accuracy: 33.33% (3/9)
+ - Total Questions: 9
+ - Incorrect Answers: 6
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 17: Psychiatry
+ - Accuracy: 33.33% (6/18)
+ - Total Questions: 18
+ - Incorrect Answers: 12
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 18: Cardiology
+ - Accuracy: 29.41% (5/17)
+ - Total Questions: 17
+ - Incorrect Answers: 12
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 19: Rheumatology
+ - Accuracy: 22.22% (12/54)
+ - Total Questions: 54
+ - Incorrect Answers: 42
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 20: Urology
+ - Accuracy: 18.18% (2/11)
+ - Total Questions: 11
  - Incorrect Answers: 9
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 21: Nephrology
+ - Accuracy: 8.00% (2/25)
+ - Total Questions: 25
+ - Incorrect Answers: 23
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 22: Sports Medicine
+ - Accuracy: 0.00% (0/6)
+ - Total Questions: 6
+ - Incorrect Answers: 6
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
@@ -313,52 +313,52 @@ Rank 1: General Medicine
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 2: Urology
- - Accuracy: 100.00% (3/3)
- - Total Questions: 3
- - Incorrect Answers: 0
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 3: Infectious Diseases
+Rank 2: Infectious Diseases
  - Accuracy: 100.00% (2/2)
  - Total Questions: 2
  - Incorrect Answers: 0
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 4: Eastern Medicine
- - Accuracy: 41.03% (16/39)
- - Total Questions: 39
- - Incorrect Answers: 23
+Rank 3: Urology
+ - Accuracy: 66.67% (2/3)
+ - Total Questions: 3
+ - Incorrect Answers: 1
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 4: Gastroenterology
+ - Accuracy: 66.67% (2/3)
+ - Total Questions: 3
+ - Incorrect Answers: 1
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
 Rank 5: Pulmonology
- - Accuracy: 33.33% (4/12)
+ - Accuracy: 50.00% (6/12)
  - Total Questions: 12
- - Incorrect Answers: 8
+ - Incorrect Answers: 6
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 6: Geriatrics
+Rank 6: Eastern Medicine
+ - Accuracy: 38.46% (15/39)
+ - Total Questions: 39
+ - Incorrect Answers: 24
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 7: Neurology
+ - Accuracy: 33.33% (2/6)
+ - Total Questions: 6
+ - Incorrect Answers: 4
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 8: Geriatrics
  - Accuracy: 33.33% (8/24)
  - Total Questions: 24
  - Incorrect Answers: 16
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 7: Orthopedics
- - Accuracy: 33.33% (1/3)
- - Total Questions: 3
- - Incorrect Answers: 2
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 8: Neurology
- - Accuracy: 0.00% (0/6)
- - Total Questions: 6
- - Incorrect Answers: 6
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
@@ -369,17 +369,17 @@ Rank 9: Cardiology
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 10: Endocrinology
- - Accuracy: 0.00% (0/2)
- - Total Questions: 2
- - Incorrect Answers: 2
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 11: Gastroenterology
+Rank 10: Orthopedics
  - Accuracy: 0.00% (0/3)
  - Total Questions: 3
  - Incorrect Answers: 3
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 11: Endocrinology
+ - Accuracy: 0.00% (0/2)
+ - Total Questions: 2
+ - Incorrect Answers: 2
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
@@ -401,101 +401,101 @@ Rank 13: Pediatrics
 CHALLENGING DIFFICULTY - Topics Ranked by Accuracy:
 ------------------------------------------------------------
 
-Rank 1: Allergy and Immunology
+Rank 1: Urology
+ - Accuracy: 100.00% (3/3)
+ - Total Questions: 3
+ - Incorrect Answers: 0
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 2: Orthopedics
+ - Accuracy: 100.00% (6/6)
+ - Total Questions: 6
+ - Incorrect Answers: 0
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 3: Allergy and Immunology
  - Accuracy: 100.00% (2/2)
  - Total Questions: 2
  - Incorrect Answers: 0
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 2: Surgery
+Rank 4: Surgery
  - Accuracy: 100.00% (1/1)
  - Total Questions: 1
  - Incorrect Answers: 0
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 3: Pulmonology
- - Accuracy: 83.33% (5/6)
- - Total Questions: 6
- - Incorrect Answers: 1
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 4: Obstetrics and Gynecology
- - Accuracy: 83.33% (5/6)
- - Total Questions: 6
- - Incorrect Answers: 1
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 5: Nephrology
- - Accuracy: 66.67% (4/6)
- - Total Questions: 6
- - Incorrect Answers: 2
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 6: Orthopedics
- - Accuracy: 66.67% (4/6)
- - Total Questions: 6
- - Incorrect Answers: 2
- - Deviations: 0
- - Incorrect due to Deviation: 0 (0.00%)
-
-Rank 7: Rheumatology
- - Accuracy: 66.67% (12/18)
+Rank 5: Rheumatology
+ - Accuracy: 72.22% (13/18)
  - Total Questions: 18
- - Incorrect Answers: 6
+ - Incorrect Answers: 5
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 8: Cardiology
- - Accuracy: 60.00% (9/15)
- - Total Questions: 15
- - Incorrect Answers: 6
+Rank 6: Pulmonology
+ - Accuracy: 66.67% (4/6)
+ - Total Questions: 6
+ - Incorrect Answers: 2
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 9: Geriatrics
+Rank 7: Gastroenterology
+ - Accuracy: 60.00% (3/5)
+ - Total Questions: 5
+ - Incorrect Answers: 2
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 8: Geriatrics
  - Accuracy: 58.33% (7/12)
  - Total Questions: 12
  - Incorrect Answers: 5
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 10: Eastern Medicine
- - Accuracy: 58.11% (43/74)
+Rank 9: Eastern Medicine
+ - Accuracy: 54.05% (40/74)
  - Total Questions: 74
- - Incorrect Answers: 31
+ - Incorrect Answers: 34
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 11: General Medicine
- - Accuracy: 36.84% (7/19)
+Rank 10: General Medicine
+ - Accuracy: 52.63% (10/19)
  - Total Questions: 19
- - Incorrect Answers: 12
+ - Incorrect Answers: 9
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 12: Neurology
+Rank 11: Neurology
+ - Accuracy: 50.00% (3/6)
+ - Total Questions: 6
+ - Incorrect Answers: 3
+ - Deviations: 0
+ - Incorrect due to Deviation: 0 (0.00%)
+
+Rank 12: Nephrology
  - Accuracy: 33.33% (2/6)
  - Total Questions: 6
  - Incorrect Answers: 4
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 13: Urology
- - Accuracy: 33.33% (1/3)
- - Total Questions: 3
- - Incorrect Answers: 2
+Rank 13: Obstetrics and Gynecology
+ - Accuracy: 33.33% (2/6)
+ - Total Questions: 6
+ - Incorrect Answers: 4
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
-Rank 14: Gastroenterology
- - Accuracy: 20.00% (1/5)
- - Total Questions: 5
- - Incorrect Answers: 4
+Rank 14: Cardiology
+ - Accuracy: 26.67% (4/15)
+ - Total Questions: 15
+ - Incorrect Answers: 11
  - Deviations: 0
  - Incorrect due to Deviation: 0 (0.00%)
 
