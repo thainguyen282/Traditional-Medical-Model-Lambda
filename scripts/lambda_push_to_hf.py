@@ -107,6 +107,10 @@ def main() -> int:
                    help="Do not upload the main artifact folder. Useful for "
                         "secondary passes that only add eval outputs/logs to a "
                         "revision already pushed earlier.")
+    p.add_argument("--print-revision", action="store_true",
+                   help="Compute and print the full branch name to stdout, "
+                        "then exit without doing any HF API calls. "
+                        "Used by bootstrap.sh to populate SFT_HF_REVISION.")
     args = p.parse_args()
 
     token = os.environ.get("HF_TOKEN")
@@ -131,6 +135,10 @@ def main() -> int:
         cfg_slug = slugify(f"{cfg_path.parent.parent.name}-{cfg_path.parent.name}")
         revision = f"{prefix}-{cfg_slug}-{slugify(args.revision)}"
         auto_eval_srcs.append(benchmark_dir)
+
+    if args.print_revision:
+        print(revision)
+        return 0
 
     if not args.skip_model:
         if not artifact_dir.exists():

@@ -11,6 +11,9 @@ final_model
 outputs/**
 EVAL/outputs/
 EVAL/Unsloth_QA_*.py
+# HF repo clones used for local debug
+Venera-CPT-TMModel/
+Venera-Traditional-Model/
 logs
 sample
 **/wandb

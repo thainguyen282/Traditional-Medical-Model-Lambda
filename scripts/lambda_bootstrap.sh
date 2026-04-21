@@ -176,20 +176,73 @@ run_cpt() {
 
 run_sft() {
     local config="$1"
-    echo "[bootstrap] ===== SFT: $config ====="
+    # Step 1: train + Benchmarker (lm-eval runs in-process, not a subprocess
+    # — it does not trip the fork-after-CUDA issue that notebooks do).
+    echo "[bootstrap] ===== SFT train: $config ====="
     in_docker "cd /workspace && python main.py --config '$config'" || return $?
 
-    # main.py writes model to group_outputs/outputs/{SFT|CPT_SFT}/model and
-    # Benchmarker JSONs to group_outputs/outputs/{SFT|CPT_SFT}/benchmark_evaluations.
-    # Unsloth_QA_*.ipynb write to EVAL/outputs/{SFT_*|CPT_SFT_*}/.
-    # push_to_hf.py auto-uploads benchmark_evaluations; we add EVAL/outputs.
+    # Step 2: push adapter (+ auto benchmark_evaluations) to HF so the
+    # eval notebooks can load the exact pushed version from the Hub.
+    echo "[bootstrap] ===== SFT push adapter ====="
+    in_docker "python /workspace/scripts/lambda_push_to_hf.py \
+        --task sft \
+        --repo '$HF_SFT_REPO' \
+        --config '$config' \
+        --revision '$JOB_TAG'" \
+        || return $?
+
+    # Step 3: compute the full revision name + pick which notebooks to run.
+    local HF_REVISION
+    HF_REVISION=$(in_docker "python /workspace/scripts/lambda_push_to_hf.py \
+        --task sft --repo '$HF_SFT_REPO' --config '$config' \
+        --revision '$JOB_TAG' --print-revision" | tr -d '\r' | tail -n1)
+    if [ -z "$HF_REVISION" ]; then
+        echo "[bootstrap] WARN: could not derive HF revision; skipping eval."
+        return 0
+    fi
+    echo "[bootstrap] SFT HF revision: $HF_REVISION"
+
+    local is_cpt_sft
+    is_cpt_sft=$(in_docker "python -c \"
+import yaml
+cfg = yaml.safe_load(open('$config'))
+print('yes' if 'cpt' in cfg.get('model', {}).get('name', '').lower() else 'no')
+\"" | tr -d '\r' | tail -n1)
+
+    local notebooks
+    if [ "$is_cpt_sft" = "yes" ]; then
+        notebooks="Unsloth_QA_CPT_SFT_new.ipynb Unsloth_QA_CPT_SFT_VM14K.ipynb"
+    else
+        notebooks="Unsloth_QA_SFT_new.ipynb Unsloth_QA_SFT_VM14K.ipynb"
+    fi
+
+    # Step 4: run each notebook in its OWN docker run — fresh CUDA context,
+    # avoids the fork-after-training NVML breakage.
+    echo "[bootstrap] ===== SFT eval (fresh containers, model from HF) ====="
+    for nb in $notebooks; do
+        local stem="${nb%.ipynb}"
+        echo "[bootstrap] -- eval: $nb"
+        in_docker "cd /workspace/EVAL && \
+            jupyter nbconvert --to script --output '$stem' '$nb'" \
+            || { echo "[bootstrap] WARN: nbconvert failed for $nb"; continue; }
+        in_docker "cd /workspace/EVAL && \
+            export SFT_HF_REPO='$HF_SFT_REPO' && \
+            export SFT_HF_REVISION='$HF_REVISION' && \
+            python '$stem.py'" \
+            || echo "[bootstrap] WARN: eval $nb exited non-zero, continuing"
+    done
+
+    # Step 5: push eval outputs + train.log to the same revision.
+    echo "[bootstrap] ===== SFT push eval + log ====="
     in_docker "python /workspace/scripts/lambda_push_to_hf.py \
         --task sft \
         --repo '$HF_SFT_REPO' \
         --config '$config' \
         --revision '$JOB_TAG' \
+        --skip-model \
         --eval-src /workspace/EVAL/outputs \
-        --log-file /host/train.log" || return $?
+        --log-file /host/train.log" \
+        || echo "[bootstrap] WARN: eval push failed (adapter is already on HF)"
 }
 
 status=0

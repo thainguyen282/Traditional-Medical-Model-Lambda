@@ -5,8 +5,6 @@ import os
 import copy
 import gc
 import json
-import subprocess
-import sys
 
 from src.core.loggers.interfaces.Ilogger import ILogger
 from src.core.trackers.interfaces.Itracker import ITracker
@@ -226,52 +224,34 @@ class TrainCommand:
             torch.cuda.ipc_collect()
 
             # --------------------------------------------------
-            # AUTO-RUN EVAL NOTEBOOKS
+            # CLEAN EVAL OUTPUTS
+            # The Unsloth_QA_*.ipynb notebooks are no longer executed here.
+            # Running nbconvert / a python subprocess after this process has
+            # initialized CUDA corrupts NVML in the child, so the child loses
+            # GPU visibility entirely (see CPT.py for the same restructure).
+            # Instead, lambda_bootstrap.sh spawns a SEPARATE docker run per
+            # notebook after this process exits (fresh CUDA each time). The
+            # notebooks load the adapter from HF using SFT_HF_REPO /
+            # SFT_HF_REVISION env vars set by bootstrap.
             # --------------------------------------------------
-            if is_from_cpt:
-                eval_notebooks = [
-                    "Unsloth_QA_CPT_SFT_new.ipynb",
-                    "Unsloth_QA_CPT_SFT_VM14K.ipynb",
-                ]
-            else:
-                eval_notebooks = [
-                    "Unsloth_QA_SFT_new.ipynb",
-                    "Unsloth_QA_SFT_VM14K.ipynb",
-                ]
-
-            eval_dir = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "..", "..", "EVAL"
+            eval_outputs_dir = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "..", "..", "EVAL", "outputs",
             )
+            if os.path.isdir(eval_outputs_dir):
+                import shutil
+                for entry in os.listdir(eval_outputs_dir):
+                    p = os.path.join(eval_outputs_dir, entry)
+                    if os.path.isdir(p):
+                        shutil.rmtree(p)
+                    else:
+                        os.remove(p)
 
-            eval_env = os.environ.copy()
-            eval_env["SFT_MODEL_PATH"] = os.path.abspath(model_output_dir)
-
-            total_notebooks = len(eval_notebooks)
             source_label = "CPT → SFT" if is_from_cpt else "Base → SFT"
-            self.logger.info(f"Starting eval for {source_label} ({total_notebooks} notebooks)")
-            self.logger.info(f"SFT_MODEL_PATH={eval_env['SFT_MODEL_PATH']}")
-
-            for i, nb in enumerate(eval_notebooks, 1):
-                nb_path = os.path.join(eval_dir, nb)
-                self.logger.info(f"[{i}/{total_notebooks}] Running: {nb}")
-                result = subprocess.run(
-                    [
-                        sys.executable, "-m", "jupyter", "nbconvert",
-                        "--to", "notebook",
-                        "--execute",
-                        "--ExecutePreprocessor.timeout=-1",
-                        "--output", nb,
-                        nb_path,
-                    ],
-                    cwd=eval_dir,
-                    env=eval_env,
-                )
-                if result.returncode == 0:
-                    self.logger.info(f"[{i}/{total_notebooks}] Done: {nb}")
-                else:
-                    self.logger.error(f"[{i}/{total_notebooks}] FAILED: {nb} (exit code {result.returncode})")
-
-            self.logger.info(f"All eval notebooks finished ({total_notebooks}/{total_notebooks})")
+            self.logger.info(
+                f"Training+Benchmarker done for {source_label}. "
+                f"Adapter: {model_output_dir}. "
+                f"Eval notebooks will run separately (fresh docker)."
+            )
 
         except Exception as e:
             self.logger.error(str(e))
