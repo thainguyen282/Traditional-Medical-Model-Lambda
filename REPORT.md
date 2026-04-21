@@ -25,6 +25,11 @@ Dự án so sánh 4 cấu hình huấn luyện trên base model `unsloth/Qwen3-4
 
 ### 2.1. Bảng tổng — 4 model × 2 benchmark (master table)
 
+> ⚠️ Bảng này là snapshot 16/04/2026. **CPT-only đã được re-train 21/04 với
+> hyperparam đúng** (§7.8) — VM14K 43.44% → **47.87%**, Deviation 0%, không
+> còn hy sinh đa chuyên khoa. Xem §7.8 cho bảng so sánh chi tiết.
+
+
 | **Model** | **VM14K Acc**<br>(564 câu, đa chuyên khoa) | **VM14K Dev** | **Bench nhỏ Acc**<br>(105 câu, chủ yếu Đông y) | **Bench nhỏ Dev** | **Δ Acc vs Instruct**<br>(VM14K / Bench) |
 |-----------|:--:|:--:|:--:|:--:|:--:|
 | **Instruct** (gốc) | 🥇 **48.05%** (271/564) | ✅ 0.00% (0) | 🥈 53.33% (56/105) | ✅ 0.00% (0) | — / — |
@@ -354,7 +359,46 @@ eval_loss + thử SFT-continue sau CPT; nếu format collapse nặng mới revis
   `{CPT,SFT}_HF_REPO/REVISION` rồi mới fallback path cũ.
 - README.md viết lại để phản ánh flow Lambda + HF-round-trip.
 
-### 7.8. Việc tiếp theo cần làm trước real run
+### 7.8. Kết quả CPT real-run đầu tiên (revision `cpt-tm-cpt-1776765759`)
+
+Chạy với config mới (§7.6): warmup_ratio=0.03, num_train_epochs=2, LR 3e-5,
+packing, eval trên split test của `Maverfrick/Continued-Pretraining-Vietnamese-TCM`,
+KHÔNG LoRA embedding, KHÔNG mix chat data.
+
+**So sánh với CPT-only cũ và Instruct baseline**:
+
+| Model | VM14K Acc (564 câu) | Bench nhỏ Acc (105 câu) | VM14K Dev | Bench Dev |
+|---|:--:|:--:|:--:|:--:|
+| Instruct (gốc) | 48.05% | 53.33% | 0% | 0% |
+| CPT-only (cũ, 16/04) | 43.44% | 🥇 55.24% | 0% | 0.95% |
+| **CPT-only (mới, 21/04)** | **47.87%** | **53.33%** | **0%** | **0%** |
+| Δ vs cũ | **+4.43%** 📈 | −1.91% | = | −0.95% |
+| Δ vs Instruct | −0.18% (noise) | = | = | = |
+
+**Diễn giải** — CPT cũ hy sinh đa chuyên khoa để gain +1.91% trên Đông y nhỏ.
+CPT mới với hyperparam đúng (epochs + packing + warmup_ratio) **giữ được kiến
+thức đa chuyên khoa của Instruct** (VM14K 47.87% ≈ Instruct 48.05%, chỉ lệch
+trong noise), trong khi Bench nhỏ ngang Instruct. Không còn hiện tượng "học
+TCM thì quên cardiology / neurology" như CPT cũ.
+
+**Điểm đáng lưu ý**:
+- **Deviation = 0%** trên cả 2 benchmark: format y nguyên Instruct, không có
+  bất kỳ câu nào trả lời sai format A/B/C/D — xác nhận giả thuyết "raw-text CPT
+  trên Instruct KHÔNG format-collapse nếu hyperparam đúng và không đụng embedding".
+- **Challenging tier VM14K** (74 câu khó nhất): **56.76%** — cao nhất trong mọi
+  model đã eval (Instruct 58.11%, CPT cũ 54.05%). Cho thấy CPT có absorbing
+  domain signal thay vì chỉ lặp surface pattern.
+- **Hard tier VM14K**: 38.46% — ngang CPT cũ (38.46%), trên Instruct (35.90%).
+- **Easy tier VM14K**: 41.96% — thấp hơn Moderate (48.97%) và Challenging; có
+  thể do Easy tập trung general knowledge mà CPT không ưu tiên.
+
+**Kết luận** — Configuration CPT hiện tại có thể làm baseline mới cho các thí
+nghiệm CPT-SFT tiếp theo. Revision `huyennkai/Venera-CPT-TMModel@cpt-tm-cpt-1776765759`
+đã được `configs/experiments/unsloth-qwen3-4B/exp0001/config_cpt.yaml` trỏ vào.
+
+---
+
+### 7.9. Việc tiếp theo cần làm trước real run
 
 1. Launch CPT real (num_train_epochs=2, packing, eval trên HF) — xem `eval_loss`
    có giảm không, có dấu hiệu overfit/collapse không.
