@@ -48,7 +48,11 @@ echo "=========================================================="
 echo "[bootstrap] job=$JOB_TAG task=$TASK_TYPE  start=$(date -u +%FT%TZ)"
 echo "[bootstrap] host=$(hostname)"
 echo "[bootstrap] image=$IMAGE"
-nvidia-smi -L || true
+echo "----- nvidia-smi (host) -----"
+nvidia-smi || true
+echo "----- kernel/driver -----"
+uname -r || true
+modinfo nvidia 2>/dev/null | grep -E '^version:' || true
 echo "=========================================================="
 
 # ------------------------------------------------------------------
