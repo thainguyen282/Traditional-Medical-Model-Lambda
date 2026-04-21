@@ -172,18 +172,34 @@ print(f"\nStarting eval for CPT ({total_notebooks} notebooks, model={HF_CPT_REPO
 
 for i, nb in enumerate(notebooks, 1):
     nb_path = os.path.join(EVAL_DIR, nb)
+    stem = os.path.splitext(nb)[0]
+    script_path = os.path.join(EVAL_DIR, f"{stem}.py")
+
     print(f"\n{'='*60}")
     print(f"[{i}/{total_notebooks}] Running: {nb}")
     print(f"{'='*60}")
-    result = subprocess.run(
+
+    # Convert ipynb → .py first, then run as a plain python script.
+    # Running via `jupyter nbconvert --execute` spawns an ipykernel subprocess
+    # that, on some CUDA images, does NOT see the GPU (torch.accelerator
+    # returns None and unsloth aborts). A direct python subprocess inherits
+    # the same GPU context as CPT.py itself, which is known to work.
+    conv = subprocess.run(
         [
             sys.executable, "-m", "jupyter", "nbconvert",
-            "--to", "notebook",
-            "--execute",
-            "--ExecutePreprocessor.timeout=-1",
-            "--output", nb,
+            "--to", "script",
+            "--output", stem,
             nb_path,
         ],
+        cwd=EVAL_DIR,
+    )
+    if conv.returncode != 0:
+        print(f"[{i}/{total_notebooks}] FAILED nbconvert --to script: {nb} "
+              f"(exit {conv.returncode})")
+        continue
+
+    result = subprocess.run(
+        [sys.executable, script_path],
         cwd=EVAL_DIR,
         env=eval_env,
     )

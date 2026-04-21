@@ -10,6 +10,7 @@ final_model
 # **/*.jsonl
 outputs/**
 EVAL/outputs/
+EVAL/Unsloth_QA_*.py
 logs
 sample
 **/wandb
