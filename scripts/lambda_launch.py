@@ -135,8 +135,12 @@ def ssh_cmd(key: str, ip: str, remote_cmd: str, *, check: bool = True,
         f"{REMOTE_USER}@{ip}",
         remote_cmd,
     ]
+    # errors='replace' so `tail -c +N` mid-multibyte-sequence (Vietnamese
+    # text in logs) doesn't crash the orchestrator and terminate the
+    # instance mid-eval.
     return subprocess.run(cmd, check=check,
-                          capture_output=capture, text=True)
+                          capture_output=capture, text=True,
+                          encoding="utf-8", errors="replace")
 
 
 def scp_to(key: str, ip: str, local_path: str, remote_path: str,
