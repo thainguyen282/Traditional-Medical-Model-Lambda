@@ -7,7 +7,7 @@ model:
   # Đổi về "unsloth/Qwen3-4B-Instruct-2507" (và xoá revision) nếu muốn
   # SFT từ base model.
   name: "huyennkai/Venera-CPT-TMModel"
-  revision: "cpt-tm-cpt-1776765759"
+  revision: "cpt-tm-cpt-1776775114"
   max_seq_length: 2048
 
 datasets:
