@@ -1,6 +1,6 @@
 # Báo cáo đánh giá mô hình Y học cổ truyền (Qwen3-4B)
 
-**Cập nhật cuối: 16/04/2026 — sau khi áp dụng Tier 1 (sửa CPT)**
+**Cập nhật cuối: 21/04/2026 — infra & pipeline overhaul (Dockerize, Lambda Cloud, HF-round-trip eval, CPT hyperparam fix)**
 
 ---
 
@@ -253,3 +253,113 @@ cd .. && python main.py --config configs/experiments/unsloth-qwen3-4B/exp0001/co
 ```
 
 Kết quả eval lưu tại [EVAL/outputs/](EVAL/outputs/).
+
+---
+
+## 7. Changelog — 2026-04-21: Infra + pipeline overhaul
+
+Ngày này tập trung chuẩn hoá cách train/eval chạy, không đụng tới kết quả eval
+ở các phần trên. Các thay đổi dưới đây ảnh hưởng trực tiếp tới **real run tiếp
+theo**, nên cần đọc trước khi so sánh kết quả với bảng tổng ở phần 2.
+
+### 7.1. Dockerize toàn bộ deps — bỏ `pip install` trên mỗi lần launch
+
+- Thêm [Dockerfile](Dockerfile) (base `nvidia/cuda:12.8.0-cudnn-devel-ubuntu22.04` +
+  Python 3.10 + toàn bộ `requirements.txt` + `nbconvert` + `nbformat`).
+- [.github/workflows/docker.yml](.github/workflows/docker.yml): CI tự build + push
+  `ghcr.io/venera-ai/traditional-medical-model:<branch>` khi `Dockerfile` hoặc
+  `requirements.txt` thay đổi.
+- Trước: mỗi Lambda launch mất 15–20 phút cài deps, thỉnh thoảng OOM pip resolver.
+- Sau: `docker pull` ~3–5 phút, không OOM, reproducible theo commit sha.
+
+### 7.2. Lambda Cloud orchestrator
+
+- [scripts/lambda_launch.py](scripts/lambda_launch.py): 1 lệnh local → Lambda API
+  provision → scp bootstrap → train → auto-terminate. Mặc định
+  `gpu_1x_a100_sxm4`, fallback `gpu_1x_a10` khi hết stock.
+- [scripts/lambda_bootstrap.sh](scripts/lambda_bootstrap.sh): chạy trên host
+  Lambda, `docker pull` + `docker run` job. Dùng `sudo docker` (user `ubuntu`
+  không ở group `docker`); scp retry + stable-SSH check (3 echo liên tiếp) để
+  chịu được phase flaky ngay sau boot.
+- [scripts/lambda_push_to_hf.py](scripts/lambda_push_to_hf.py): upload adapter +
+  eval outputs + `train.log` lên HF branch; thêm `--skip-model`, `--print-revision`,
+  `--eval-src`, `--log-file` để orchestrator compose pass.
+- Chi tiết workflow: [scripts/LAMBDA_README.md](scripts/LAMBDA_README.md).
+
+### 7.3. HF-round-trip eval (quan trọng nhất về tính đúng đắn)
+
+**Vấn đề cũ**: notebook eval load adapter từ local disk → có lúc nhầm adapter
+cũ → bảng kết quả trong [EVAL/outputs/](EVAL/outputs/) có thể không phải của
+model vừa train. Trước đây kết quả CPT-SFT nghi ngờ bất thường (−8% vs Instruct)
+một phần có thể do vấn đề này.
+
+**Flow mới**:
+1. Train → save local → **push adapter lên HF revision `<task>-<cfg>-<tag>`**
+2. Eval notebook **load model từ HF revision đó** (qua `revision=` kwarg của
+   `FastLanguageModel.from_pretrained`) — không dùng path local nữa.
+3. Push `EVAL/outputs/` + `benchmark_evaluations/` + `train.log` vào cùng
+   revision với `--skip-model`.
+
+Kết quả: mỗi HF revision là **self-contained snapshot** gồm adapter + kết quả
+eval tương ứng + log training. Có thể reproduce lại bằng `load_dataset`/`from_pretrained`
+với `revision=<tag>`.
+
+### 7.4. Fork-after-CUDA bug fix
+
+**Phát hiện**: khi `CPT.py` (hoặc `main.py`) trained xong rồi spawn subprocess
+để chạy notebook eval, subprocess bị `torch.cuda.is_available() = False` và
+`Can't initialize NVML`. Lý do: CUDA context của parent không fork-safe, NVML
+handle bị corrupted trong child.
+
+**Fix**: bootstrap.sh giờ spawn **một docker run riêng cho mỗi notebook** (fresh
+process tree, fresh CUDA init). Áp dụng cho cả CPT (`run_cpt`) và SFT
+(`run_sft`). Trade-off: mỗi eval có thêm ~5–10s overhead khởi container, đổi
+lại không bao giờ đụng fork issue.
+
+### 7.5. SFT config giờ hỗ trợ `model.revision`
+
+- [src/commands/train_command.py](src/commands/train_command.py):
+  `_load_training_model`/`_load_baseline_model` giờ đọc `config.model.revision`
+  và pass xuống `FastLanguageModel.from_pretrained`.
+- [configs/experiments/unsloth-qwen3-4B/exp0001/config_cpt.yaml](configs/experiments/unsloth-qwen3-4B/exp0001/config_cpt.yaml):
+  đổi từ local path `CPT/cpt_qwen3_medical` → HF `huyennkai/Venera-CPT-TMModel`
+  @ revision cố định. Fresh Lambda clone không còn phụ thuộc file local.
+
+### 7.6. CPT hyperparam — phát hiện và sửa footguns
+
+Review lại [CPT/CPT.py](CPT/CPT.py):
+
+| Vấn đề | Trước | Sau |
+|---|---|---|
+| Warmup > train | `warmup_steps=200`, `max_steps=40` → LR chưa lên tới peak | `warmup_ratio=0.03`, `num_train_epochs=2` |
+| LR quá cao cho Instruct | 5e-5 | 3e-5 |
+| Không packing → phí compute padding | — | `packing=True` |
+| Không eval, không biết đang học gì | — | eval trên split `test` của `Maverfrick/Continued-Pretraining-Vietnamese-TCM`, `eval_steps=200` |
+| Logging mỗi step | 1 | 10 |
+| Save mỗi 40 step | 40 | 500 (cuối epoch) |
+| Embedding training | cân nhắc bật | **tắt** (dataset 1.5K rows × 300 tok quá nhỏ để shift 150K×4096 embedding; đang CPT trên Instruct nên rủi ro collapse cao). Giữ `embedding_learning_rate=3e-6` inert để flip 2 dòng là bật lại. |
+
+**Dataset mixing**: KHÔNG mix chat data ở run này (user quyết định). Theo dõi
+eval_loss + thử SFT-continue sau CPT; nếu format collapse nặng mới revisit.
+
+### 7.7. Tạp vụ
+
+- `EVAL/outputs/` được untrack khỏi git (122 file từ run cũ commit nhầm gây
+  Lambda push eval output cũ đè nhau). Thêm vào `.gitignore`.
+- Thêm `nbconvert==7.16.4` + `nbformat==5.10.4` vào `requirements.txt` (trước đó
+  image không có → notebook eval fail).
+- [scripts/_patch_cpt_notebooks.py](scripts/_patch_cpt_notebooks.py) +
+  [scripts/_patch_sft_notebooks.py](scripts/_patch_sft_notebooks.py): idempotent
+  patchers cho cell `model_path` và `FastLanguageModel.from_pretrained` — đọc env
+  `{CPT,SFT}_HF_REPO/REVISION` rồi mới fallback path cũ.
+- README.md viết lại để phản ánh flow Lambda + HF-round-trip.
+
+### 7.8. Việc tiếp theo cần làm trước real run
+
+1. Launch CPT real (num_train_epochs=2, packing, eval trên HF) — xem `eval_loss`
+   có giảm không, có dấu hiệu overfit/collapse không.
+2. Kick SFT từ CPT revision đó (`config_cpt.yaml` → chọn revision mới push) →
+   compare với CPT-SFT cũ (39.72% VM14K, 11.35% deviation). Target: deviation
+   <2%, Acc ≥48%.
+3. Nếu SFT vẫn collapse → mix 10% chat data (đã có sẵn `mlabonne/FineTome-100k`
+   dùng cho SFT regular) và re-CPT.
