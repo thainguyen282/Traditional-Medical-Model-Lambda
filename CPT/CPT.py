@@ -18,9 +18,13 @@ model, tokenizer = FastLanguageModel.from_pretrained(
     load_in_4bit=False,
 )
 
-# Full CPT mode: train cả embed_tokens + lm_head (LR 10x nhỏ hơn main LR,
-# set qua UnslothTrainingArguments.embedding_learning_rate). Cần thiết vì
-# dataset có nhiều thuật ngữ y học cổ truyền Việt mà base model chưa phủ kín.
+# LoRA chỉ trên linear projections — KHÔNG train embed_tokens / lm_head.
+# Dataset quá nhỏ (~460K tokens) để dịch chuyển embedding một cách có ích,
+# và việc đụng input/output representation trên 1 model đã được Instruct
+# align rất dễ gây format collapse. Nếu sau này dataset ≥ 50M tokens hoặc
+# phát hiện token TCM bị tokenize vỡ vụn, thêm "embed_tokens" + "lm_head"
+# vào list dưới đây (embedding_learning_rate trong training_args sẽ tự
+# kích hoạt).
 model = FastLanguageModel.get_peft_model(
     model,
     r=32,
@@ -32,7 +36,6 @@ model = FastLanguageModel.get_peft_model(
     target_modules=[
         "q_proj", "k_proj", "v_proj", "o_proj",
         "gate_proj", "up_proj", "down_proj",
-        "embed_tokens", "lm_head",
     ],
 )
 
@@ -89,7 +92,8 @@ training_args = UnslothTrainingArguments(
     num_train_epochs=2,
     # CPT trên model Instruct → LR thấp hơn SFT-from-base để giữ alignment.
     learning_rate=3e-5,
-    # 10× nhỏ hơn main LR: embedding dễ drift, LR cao sẽ phá vocab.
+    # Inert khi target_modules không có embed_tokens/lm_head — giữ sẵn để
+    # khi nào bật Full CPT mode thì đã có giá trị hợp lý (10× < main LR).
     embedding_learning_rate=3e-6,
     fp16=False,
     bf16=True,
