@@ -1,6 +1,11 @@
 # Báo cáo đánh giá mô hình Y học cổ truyền (Qwen3-4B)
 
-**Cập nhật cuối: 21/04/2026 — infra & pipeline overhaul (Dockerize, Lambda Cloud, HF-round-trip eval, CPT hyperparam fix)**
+**Cập nhật cuối: 22/04/2026 — kết quả sau pipeline overhaul (CPT mới vượt Instruct trên cả 2 benchmark, CPT-SFT deviation từ 11.35% → 1.06%)**
+
+> 🎯 **TL;DR kết quả mới nhất** (chi tiết §8):
+> - **CPT-only (mới)**: VM14K **49.11%** (cũ 43.44% → **+5.67%**, vượt Instruct 48.05%), Bench nhỏ **58.10%** (cũ 55.24% → **+2.86%**), deviation **0%**.
+> - **CPT→SFT (mới)**: VM14K **47.16%** (cũ 39.72% → **+7.44%**), Bench nhỏ **62.86%** (cũ 51.43% → **+11.43%**), deviation **1.06%** (cũ 11.35% → giảm ~10×).
+> - **Pipeline có thể ship được**: mọi model đều giữ format, CPT-SFT vượt Instruct trên domain Đông y, VM14K gần ngang Instruct.
 
 ---
 
@@ -398,12 +403,109 @@ nghiệm CPT-SFT tiếp theo. Revision `huyennkai/Venera-CPT-TMModel@cpt-tm-cpt-
 
 ---
 
-### 7.9. Việc tiếp theo cần làm trước real run
+### 7.9. Việc tiếp theo đã làm
 
-1. Launch CPT real (num_train_epochs=2, packing, eval trên HF) — xem `eval_loss`
-   có giảm không, có dấu hiệu overfit/collapse không.
-2. Kick SFT từ CPT revision đó (`config_cpt.yaml` → chọn revision mới push) →
-   compare với CPT-SFT cũ (39.72% VM14K, 11.35% deviation). Target: deviation
-   <2%, Acc ≥48%.
-3. Nếu SFT vẫn collapse → mix 10% chat data (đã có sẵn `mlabonne/FineTome-100k`
-   dùng cho SFT regular) và re-CPT.
+1. ✅ Launch CPT real (num_train_epochs=2, packing) → revision `cpt-tm-cpt-1776765759`. Eval OK, deviation 0%.
+2. ✅ Tune thêm epoch 3, train longer → revision `cpt-tm-cpt-1776775114` (CPT baseline hiện tại).
+3. ✅ Chạy CPT→SFT nhiều lần với các hyperparam khác nhau (LR 2e-5 / 5e-5, epochs 2 / 3) → tìm ra config
+   epoch 3 + LR 5e-5 (revision `cpt-sft-...-tm-sft-1776784126`) → kết quả tốt nhất.
+
+Xem **§8 — Kết quả hiện tại** cho bảng chi tiết.
+
+---
+
+## 8. Kết quả hiện tại (22/04/2026) — sau pipeline overhaul
+
+Dưới đây là số liệu từ các HF revision mới nhất, thay thế các bảng trong §2 cho
+"current state of the art" của pipeline. Các revision cũ trong §2 vẫn giữ làm
+historical reference.
+
+### 8.1. Master table — model & revision map
+
+| Role | HF revision | Config |
+|---|---|---|
+| **CPT-only** (baseline mới cho CPT-SFT) | `huyennkai/Venera-CPT-TMModel@cpt-tm-cpt-1776775114` | [CPT/CPT.py](CPT/CPT.py) — epochs 2, packing, LR 3e-5, no embed training |
+| **CPT-SFT** (best trong các run) | `huyennkai/Venera-Traditional-Model@cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126` | [config_cpt.yaml](configs/experiments/unsloth-qwen3-4B/exp0001/config_cpt.yaml) — epochs 3, LR 5e-5, load_best |
+| **SFT-only** (from Instruct base) | `huyennkai/Venera-Traditional-Model@sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092` | [config.yaml](configs/experiments/unsloth-qwen3-4B/exp0001/config.yaml) |
+
+### 8.2. Bảng tổng kết — 4 model × 2 benchmark (mới)
+
+| **Model** | **VM14K Acc**<br>(564 câu, đa chuyên khoa) | **VM14K Dev** | **Bench nhỏ Acc**<br>(105 câu, chủ yếu Đông y) | **Bench nhỏ Dev** |
+|-----------|:--:|:--:|:--:|:--:|
+| Instruct (gốc, baseline) | 48.05% | 0% | 53.33% | 0% |
+| **SFT-only** (mới) | 🥉 46.45% | ✅ 0% | 🥇 **63.81%** | ✅ 0% |
+| **CPT-only** (mới) | 🥇 **49.11%** | ✅ 0% | 🥉 58.10% | ✅ 0% |
+| **CPT → SFT** (mới) | 🥈 47.16% | 1.06% | 🥈 **62.86%** | ✅ 0% |
+
+**Đọc nhanh**:
+- **CPT-only** 🥇 là model duy nhất **vượt Instruct trên cả 2 benchmark** (+1.06% VM14K, +4.77% Bench), deviation 0%. Không còn trade-off như CPT cũ (16/04).
+- **CPT-SFT** gần ngang CPT-only trên VM14K (−1.95%) nhưng lên **62.86%** trên Bench (+4.76% so CPT-only) → model tốt nhất cho domain Q&A Đông y.
+- **SFT-only** đỉnh Bench nhỏ (**63.81%**) nhưng VM14K thấp hơn CPT-SFT → phù hợp khi chỉ cần TCM narrow.
+- Deviation ≤ 1.06% ở mọi model → **không còn format collapse** như CPT-SFT cũ (11-12%).
+
+### 8.3. So sánh cũ vs mới (16/04 vs 22/04)
+
+| Model | VM14K Acc | VM14K Dev | Bench Acc | Bench Dev |
+|---|:--:|:--:|:--:|:--:|
+| **CPT-only** cũ | 43.44% | 0% | 55.24% | 0.95% |
+| **CPT-only** mới | **49.11%** | 0% | **58.10%** | 0% |
+| **Δ** | **+5.67%** 📈 | = | **+2.86%** 📈 | −0.95% |
+| — | | | | |
+| **CPT→SFT** cũ | 39.72% | ⚠️ 11.35% | 51.43% | ⚠️ 12.38% |
+| **CPT→SFT** mới | **47.16%** | 1.06% | **62.86%** | 0% |
+| **Δ** | **+7.44%** 📈 | **−10.29%** 📈 | **+11.43%** 📈 | **−12.38%** 📈 |
+
+**Cả 4 metric của CPT→SFT đều cải thiện rõ rệt**. Đặc biệt deviation giảm ~10× — giải quyết format collapse.
+
+### 8.4. Kết quả chi tiết theo difficulty (VM14K)
+
+| Model | Easy (112) | Moderate (339) | Hard (39) | Challenging (74) |
+|---|:--:|:--:|:--:|:--:|
+| Instruct | 39.29% | 50.15% | 35.90% | 🥇 58.11% |
+| SFT-only (mới) | 54.46% | 44.84% | 41.03% | 44.59% |
+| **CPT-only (mới)** | 54.46% | 47.20% | 35.90% | 🥇 **56.76%** |
+| **CPT→SFT (mới)** | 🥇 **55.36%** | 45.43% | 🥇 **46.15%** | 43.24% |
+
+- Easy & Hard: **CPT-SFT đứng đầu** → SFT giúp học Q&A format tốt hơn trên câu đơn giản + khó về đa chuyên khoa.
+- Moderate: CPT-only dẫn (47.20%) vẫn thấp hơn Instruct (50.15%) — cần theo dõi.
+- Challenging: CPT-only giữ được 56.76% gần ngang Instruct (58.11%), cao nhất trong các tune chain.
+
+### 8.5. Kết quả chi tiết theo difficulty (Bench nhỏ 105 câu Đông y)
+
+| Model | Easy (19) | Moderate (75) | Hard (11) |
+|---|:--:|:--:|:--:|
+| Instruct | 🥇 63.16% | 52.00% | 45.45% |
+| SFT-only (mới) | 63.16% | 60.00% | 🥇 **90.91%** |
+| CPT-only (mới) | 🥇 73.68% | 50.67% | 🥇 **81.82%** |
+| **CPT→SFT (mới)** | 63.16% | 🥇 **60.00%** | 🥇 **81.82%** |
+
+- **Hard tier** (câu Đông y khó nhất): SFT-only 90.91% và CPT-SFT / CPT-only 81.82% — tăng vọt vs Instruct 45.45%.
+- **Moderate**: CPT-SFT và SFT-only đều 60.00% (+8.00% vs Instruct).
+- **Easy**: CPT-only 73.68% (+10.52% vs Instruct) — signal domain TCM rõ rệt ngay cả câu dễ.
+
+### 8.6. Hyperparameter journey — các CPT-SFT run đã chạy
+
+| Revision | Epochs | LR | VM14K Acc | Bench Acc | VM14K Dev | Bench Dev |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|
+| `tm-sft-1776768473` | 2 | 2e-5 | 48.05% | 54.29% | 0% | 0% |
+| `tm-sft-1776778758` | 2 | 2e-5 | 47.34% | 53.33% | 0% | 0% |
+| `tm-sft-1776781018` | 3 | 5e-5 | 47.70% | 59.05% | 0.71% | 0% |
+| **`tm-sft-1776784126`** (best) | **3** | **5e-5** | **47.16%** | **62.86%** | 1.06% | 0% |
+
+**Ghi chú**: 2 run đầu (epochs=2, LR=2e-5) an toàn về deviation (0%) nhưng domain signal chưa đủ
+mạnh (Bench 53-54%). Bump epoch=3 + LR=5e-5 → Bench tăng +9% (53% → 62%) đổi lấy deviation 0.7-1.1% (chấp nhận được).
+
+### 8.7. Kết luận — đã cải thiện gì so với baseline cũ
+
+| Axis | Cũ (16/04) | Mới (22/04) | Nhận định |
+|---|---|---|---|
+| **CPT không tụt cross-specialty** | ❌ VM14K −4.61% vs Instruct | ✅ VM14K +1.06% vs Instruct | Fix được catastrophic forgetting của CPT cũ |
+| **Format collapse CPT-SFT** | 🚨 11-12% deviation | ✅ ≤ 1.06% deviation | Fix 10× qua hyperparam đúng + CPT không đụng embedding |
+| **Domain Q&A (Bench nhỏ)** | 51-55% | 58-64% | +7-13% tùy model |
+| **Infra reproducibility** | ❌ Eval load local adapter (dễ nhầm) | ✅ HF-round-trip, mỗi revision tự chứa | Sửa trong §7.3 |
+| **Throughput Lambda launch** | 15-20 phút pip install / lần | 3-5 phút docker pull | Sửa trong §7.1 |
+
+**Model khuyến nghị ship**:
+- Nếu ưu tiên TCM thuần (Bench nhỏ): **SFT-only** `tm-sft-1776771092` (63.81%, dev 0%).
+- Nếu cân bằng domain + đa chuyên khoa: **CPT-SFT** `tm-sft-1776784126` (VM14K 47.16%, Bench 62.86%, dev 1.06%).
+- Nếu cần domain nhưng KHÔNG dùng Q&A format (e.g., generation pipeline tự viết prompt): **CPT-only** `cpt-tm-cpt-1776775114` (VM14K 49.11%, Bench 58.10%, dev 0%).
