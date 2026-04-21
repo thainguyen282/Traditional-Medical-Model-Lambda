@@ -37,7 +37,7 @@ import requests
 from dotenv import load_dotenv
 
 LAMBDA_API = "https://cloud.lambda.ai/api/v1"
-DEFAULT_INSTANCE_TYPE = "gpu_2x_a100"  # 2x A100 40GB PCIe
+DEFAULT_INSTANCE_TYPE = "gpu_1x_a100_sxm4"  # 1x A100 40GB SXM4
 REMOTE_REPO_DIR = "Traditional-Medical-Model"
 REMOTE_USER = "ubuntu"
 POLL_INTERVAL_LAUNCH = 15  # seconds
