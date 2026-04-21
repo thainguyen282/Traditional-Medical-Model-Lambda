@@ -6,6 +6,42 @@ Hỗ trợ 2 chế độ chạy:
 - **Local** — train trên máy có GPU (hoặc kiểm thử dry-run).
 - **Lambda Cloud (khuyến nghị)** — launch từ máy local, pre-baked Docker image tự chạy train + auto-eval + push artifact & eval outputs lên Hugging Face, tự terminate khi xong. Xem [scripts/LAMBDA_README.md](scripts/LAMBDA_README.md).
 
+## 🎯 Model output (kết quả mới nhất — 22/04/2026)
+
+Ba adapter LoRA đã train + eval, public trên Hugging Face. Mỗi branch là **snapshot tự chứa**: adapter + eval outputs + train.log.
+
+| Use case | HF repo @ branch | VM14K Acc | Bench nhỏ Acc | Deviation |
+|---|---|:--:|:--:|:--:|
+| 🥇 **TCM thuần** (Q&A Đông y hẹp) | [`huyennkai/Venera-Traditional-Model` @ `sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092) | 46.45% | **63.81%** | 0% |
+| 🥈 **Cân bằng** (đa chuyên khoa + Đông y) | [`huyennkai/Venera-Traditional-Model` @ `cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126) | 47.16% | **62.86%** | 1.06% |
+| 🧠 **Generation tự do** (không cần Q&A format) | [`huyennkai/Venera-CPT-TMModel` @ `cpt-tm-cpt-1776775114`](https://huggingface.co/huyennkai/Venera-CPT-TMModel/tree/cpt-tm-cpt-1776775114) | **49.11%** | 58.10% | 0% |
+
+Baseline so sánh: **Qwen3-4B-Instruct-2507 (gốc)** — VM14K 48.05%, Bench nhỏ 53.33%.
+
+So sánh với kỳ training cũ (16/04): CPT-only VM14K +5.67%, CPT-SFT deviation giảm ~10× (11.35% → 1.06%). Chi tiết cải thiện: [REPORT_fix.md](REPORT_fix.md); số liệu đầy đủ: [REPORT.md §8](REPORT.md).
+
+### Load model trong code
+
+```python
+from unsloth import FastLanguageModel
+
+# CPT-SFT (model cân bằng — khuyến nghị cho pipeline inference y học thông thường)
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name="huyennkai/Venera-Traditional-Model",
+    revision="cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126",
+    max_seq_length=2048,
+    load_in_4bit=True,
+)
+FastLanguageModel.for_inference(model)
+
+messages = [{"role": "user", "content": "Kinh Dương Minh đi qua những huyệt nào trên mặt?"}]
+inputs = tokenizer.apply_chat_template(messages, return_tensors="pt", add_generation_prompt=True).to("cuda")
+out = model.generate(inputs, max_new_tokens=512, temperature=0.7)
+print(tokenizer.decode(out[0], skip_special_tokens=True))
+```
+
+Đổi `model_name` + `revision` theo bảng trên để load 2 model còn lại. `revision=` là bắt buộc — nhánh `main` của HF repo có thể khác.
+
 ## Tổng quan
 
 ```

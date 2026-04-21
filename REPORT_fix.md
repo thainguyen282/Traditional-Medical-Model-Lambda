@@ -54,12 +54,19 @@ Tổng hợp gọn các thay đổi và hiệu quả đo được. Chi tiết: [
 
 ---
 
-## 3. Model khuyến nghị ship
+## 3. Model output — khuyến nghị ship
 
-| Use case | Model | VM14K | Bench | Dev |
+| Use case | HF repo @ branch | VM14K | Bench | Dev |
 |---|---|:--:|:--:|:--:|
-| TCM thuần (narrow Q&A Đông y) | SFT-only `tm-sft-1776771092` | 46.45% | 🥇 63.81% | 0% |
-| Cân bằng đa chuyên khoa + Đông y | CPT-SFT `tm-sft-1776784126` | 47.16% | 🥈 62.86% | 1.06% |
-| Generation tự do (không cần Q&A format) | CPT-only `cpt-tm-cpt-1776775114` | 🥇 49.11% | 58.10% | 0% |
+| 🥇 TCM thuần (Q&A Đông y hẹp) | [Venera-Traditional-Model @ `sft-…-tm-sft-1776771092`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092) | 46.45% | **63.81%** | 0% |
+| 🥈 Cân bằng đa chuyên khoa + Đông y | [Venera-Traditional-Model @ `cpt-sft-…-tm-sft-1776784126`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126) | 47.16% | **62.86%** | 1.06% |
+| 🧠 Generation tự do (không Q&A format) | [Venera-CPT-TMModel @ `cpt-tm-cpt-1776775114`](https://huggingface.co/huyennkai/Venera-CPT-TMModel/tree/cpt-tm-cpt-1776775114) | **49.11%** | 58.10% | 0% |
 
-Tất cả đều public trên HF, `revision=<tên branch>`, hash reproducible qua ghcr image tag.
+Tất cả public; mỗi branch chứa sẵn adapter + `eval/outputs/` + `train.log`. Load:
+```python
+FastLanguageModel.from_pretrained(
+    model_name="huyennkai/Venera-Traditional-Model",
+    revision="cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126",
+    max_seq_length=2048, load_in_4bit=True,
+)
+```

@@ -420,13 +420,15 @@ Dưới đây là số liệu từ các HF revision mới nhất, thay thế cá
 "current state of the art" của pipeline. Các revision cũ trong §2 vẫn giữ làm
 historical reference.
 
-### 8.1. Master table — model & revision map
+### 8.1. Model output — master table (HF links clickable)
 
-| Role | HF revision | Config |
+| Role | HF repo @ branch | Config |
 |---|---|---|
-| **CPT-only** (baseline mới cho CPT-SFT) | `huyennkai/Venera-CPT-TMModel@cpt-tm-cpt-1776775114` | [CPT/CPT.py](CPT/CPT.py) — epochs 2, packing, LR 3e-5, no embed training |
-| **CPT-SFT** (best trong các run) | `huyennkai/Venera-Traditional-Model@cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126` | [config_cpt.yaml](configs/experiments/unsloth-qwen3-4B/exp0001/config_cpt.yaml) — epochs 3, LR 5e-5, load_best |
-| **SFT-only** (from Instruct base) | `huyennkai/Venera-Traditional-Model@sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092` | [config.yaml](configs/experiments/unsloth-qwen3-4B/exp0001/config.yaml) |
+| **CPT-only** (baseline mới cho CPT-SFT, generation tự do) | [`Venera-CPT-TMModel` @ `cpt-tm-cpt-1776775114`](https://huggingface.co/huyennkai/Venera-CPT-TMModel/tree/cpt-tm-cpt-1776775114) | [CPT/CPT.py](CPT/CPT.py) — epochs 2, packing, LR 3e-5, no embed training |
+| **CPT-SFT** (best đa chuyên khoa + Đông y) | [`Venera-Traditional-Model` @ `cpt-sft-…-tm-sft-1776784126`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126) | [config_cpt.yaml](configs/experiments/unsloth-qwen3-4B/exp0001/config_cpt.yaml) — epochs 3, LR 5e-5, load_best |
+| **SFT-only** (best TCM narrow Q&A) | [`Venera-Traditional-Model` @ `sft-…-tm-sft-1776771092`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092) | [config.yaml](configs/experiments/unsloth-qwen3-4B/exp0001/config.yaml) |
+
+Mỗi branch tự chứa: `adapter_config.json` + safetensors + tokenizer + `eval/outputs/` (PNG + txt từ notebook) + `eval/benchmark_evaluations/` (JSON từ lm-eval) + `train.log`.
 
 ### 8.2. Bảng tổng kết — 4 model × 2 benchmark (mới)
 
