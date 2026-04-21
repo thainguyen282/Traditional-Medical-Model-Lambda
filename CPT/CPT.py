@@ -180,10 +180,6 @@ for i, nb in enumerate(notebooks, 1):
     print(f"{'='*60}")
 
     # Convert ipynb → .py first, then run as a plain python script.
-    # Running via `jupyter nbconvert --execute` spawns an ipykernel subprocess
-    # that, on some CUDA images, does NOT see the GPU (torch.accelerator
-    # returns None and unsloth aborts). A direct python subprocess inherits
-    # the same GPU context as CPT.py itself, which is known to work.
     conv = subprocess.run(
         [
             sys.executable, "-m", "jupyter", "nbconvert",
@@ -197,6 +193,32 @@ for i, nb in enumerate(notebooks, 1):
         print(f"[{i}/{total_notebooks}] FAILED nbconvert --to script: {nb} "
               f"(exit {conv.returncode})")
         continue
+
+    # Prepend a CUDA warmup block. Without this, unsloth_zoo's import-time
+    # `torch.accelerator.current_accelerator()` returns None in the fresh
+    # subprocess because torch hasn't actually touched CUDA yet, and it
+    # aborts with "cannot find any torch accelerator".
+    with open(script_path, "r") as f:
+        original = f.read()
+    preamble = (
+        "import os as _os\n"
+        "import torch as _torch\n"
+        "print(f'[eval-preamble] CUDA_VISIBLE_DEVICES='"
+        "f'{_os.environ.get(\"CUDA_VISIBLE_DEVICES\", \"<unset>\")}')\n"
+        "print(f'[eval-preamble] NVIDIA_VISIBLE_DEVICES='"
+        "f'{_os.environ.get(\"NVIDIA_VISIBLE_DEVICES\", \"<unset>\")}')\n"
+        "print(f'[eval-preamble] torch.cuda.is_available()={_torch.cuda.is_available()}')\n"
+        "print(f'[eval-preamble] torch.cuda.device_count()={_torch.cuda.device_count()}')\n"
+        "if _torch.cuda.is_available():\n"
+        "    _ = _torch.tensor([0.0], device='cuda')\n"
+        "    print(f'[eval-preamble] warmed up on {_torch.cuda.get_device_name(0)}')\n"
+        "else:\n"
+        "    raise RuntimeError('[eval-preamble] no CUDA in this subprocess — aborting')\n"
+        "del _os, _torch\n"
+        "\n"
+    )
+    with open(script_path, "w") as f:
+        f.write(preamble + original)
 
     result = subprocess.run(
         [sys.executable, script_path],
