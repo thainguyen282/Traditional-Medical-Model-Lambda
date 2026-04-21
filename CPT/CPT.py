@@ -7,6 +7,7 @@ from unsloth import UnslothTrainer, UnslothTrainingArguments
 MODEL_NAME = "unsloth/Qwen3-4B-Instruct-2507"
 OUTPUT_DIR = "cpt_qwen3_medical"
 MAX_SEQ_LENGTH = 2048
+EVAL_DATASET_ID = "Maverfrick/Continued-Pretraining-Vietnamese-TCM"
 
 # =========================
 # LOAD MODEL
@@ -17,6 +18,9 @@ model, tokenizer = FastLanguageModel.from_pretrained(
     load_in_4bit=False,
 )
 
+# Full CPT mode: train cả embed_tokens + lm_head (LR 10x nhỏ hơn main LR,
+# set qua UnslothTrainingArguments.embedding_learning_rate). Cần thiết vì
+# dataset có nhiều thuật ngữ y học cổ truyền Việt mà base model chưa phủ kín.
 model = FastLanguageModel.get_peft_model(
     model,
     r=32,
@@ -28,21 +32,9 @@ model = FastLanguageModel.get_peft_model(
     target_modules=[
         "q_proj", "k_proj", "v_proj", "o_proj",
         "gate_proj", "up_proj", "down_proj",
+        "embed_tokens", "lm_head",
     ],
 )
-
-# =========================
-# LOAD DATASET
-# =========================
-dataset = load_dataset(
-    "parquet",
-    data_files={
-        "train": "train-00000-of-00001.parquet",
-    },
-)["train"]
-
-print("Columns:", dataset.column_names)
-print("Sample:", dataset[0])
 
 # =========================
 # HELPER: CLEAN TEXT
@@ -53,9 +45,6 @@ def clean_text(text):
     lines = [" ".join(line.split()) for line in text.splitlines()]
     return "\n".join(line for line in lines if line)
 
-# =========================
-# FORMAT → RAW-TEXT COMPLETION
-# =========================
 # CPT = continual pre-training: train next-token prediction trên text y học thuần.
 # KHÔNG bọc chat template, KHÔNG fake user/assistant turn — tránh dạy model hành vi
 # "trả lời bằng cách copy lại câu hỏi" gây format collapse ở bước SFT.
@@ -65,8 +54,27 @@ def format_text(example):
         return {"text": ""}
     return {"text": clean_text(raw_text) + tokenizer.eos_token}
 
-dataset = dataset.map(format_text)
-dataset = dataset.filter(lambda x: len(x["text"]) > 0)
+# =========================
+# LOAD TRAIN DATASET (local parquet)
+# =========================
+train_dataset = load_dataset(
+    "parquet",
+    data_files={"train": "train-00000-of-00001.parquet"},
+)["train"]
+print("Train cols:", train_dataset.column_names, "rows:", len(train_dataset))
+
+train_dataset = train_dataset.map(format_text)
+train_dataset = train_dataset.filter(lambda x: len(x["text"]) > 0)
+
+# =========================
+# LOAD EVAL DATASET (HF — held-out TCM text)
+# =========================
+# Dùng split "test" của cùng source data để monitor CPT có học được domain
+# hay không. eval_loss giảm = học được; tăng nhanh = overfit hoặc format collapse.
+eval_dataset = load_dataset(EVAL_DATASET_ID, split="test")
+print("Eval cols:", eval_dataset.column_names, "rows:", len(eval_dataset))
+eval_dataset = eval_dataset.map(format_text)
+eval_dataset = eval_dataset.filter(lambda x: len(x["text"]) > 0)
 
 # =========================
 # TRAIN
@@ -74,25 +82,37 @@ dataset = dataset.filter(lambda x: len(x["text"]) > 0)
 training_args = UnslothTrainingArguments(
     output_dir=OUTPUT_DIR,
     per_device_train_batch_size=2,
+    per_device_eval_batch_size=2,
     gradient_accumulation_steps=4,
-    warmup_steps=200,
-    max_steps=40,
-    learning_rate=5e-5,
+    # warmup_ratio thay cho warmup_steps — tự scale theo tổng steps.
+    warmup_ratio=0.03,
+    num_train_epochs=2,
+    # CPT trên model Instruct → LR thấp hơn SFT-from-base để giữ alignment.
+    learning_rate=3e-5,
+    # 10× nhỏ hơn main LR: embedding dễ drift, LR cao sẽ phá vocab.
+    embedding_learning_rate=3e-6,
     fp16=False,
     bf16=True,
-    logging_steps=1,
+    logging_steps=10,
     optim="adamw_8bit",
     lr_scheduler_type="cosine",
-    save_steps=40,
+    save_steps=500,
     save_total_limit=2,
+    eval_strategy="steps",
+    eval_steps=200,
+    seed=3407,
 )
 
 trainer = UnslothTrainer(
     model=model,
     tokenizer=tokenizer,
-    train_dataset=dataset,
+    train_dataset=train_dataset,
+    eval_dataset=eval_dataset,
     dataset_text_field="text",
     max_seq_length=MAX_SEQ_LENGTH,
+    # Pack short docs thành sequence đủ max_seq_length → bỏ hết padding,
+    # compute không bị phí cho token <pad>.
+    packing=True,
     args=training_args,
 )
 
@@ -107,7 +127,7 @@ print("Training complete.")
 # =========================
 # FREE GPU MEMORY BEFORE PUSH + EVAL
 # =========================
-del model, trainer, tokenizer, dataset
+del model, trainer, tokenizer, train_dataset, eval_dataset
 torch.cuda.empty_cache()
 import gc
 gc.collect()
