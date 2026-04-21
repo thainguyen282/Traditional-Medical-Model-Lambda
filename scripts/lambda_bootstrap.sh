@@ -137,11 +137,41 @@ in_docker() {
 # 7. Run training (+ auto-eval, + HF push) inside the container.
 # ------------------------------------------------------------------
 run_cpt() {
-    echo "[bootstrap] ===== CPT ====="
-    # CPT.py does it all: train → push adapter → eval (load from HF) →
-    # push eval outputs + train.log to the same revision. No separate push
-    # call needed here.
+    # Step 1: train + push adapter to HF inside container #1.
+    echo "[bootstrap] ===== CPT: train + push adapter ====="
     in_docker "cd /workspace/CPT && python CPT.py" || return $?
+
+    # Step 2: run eval notebooks in SEPARATE docker runs (one fresh CUDA
+    # context per notebook). CPT.py's training initialises CUDA, and any
+    # subprocess forked from that python process inherits a corrupted NVML
+    # state (torch.cuda.is_available=False). A new `docker run` is a new
+    # process tree → clean CUDA init.
+    local HF_REVISION="cpt-${JOB_TAG//_/-}"
+    echo "[bootstrap] ===== CPT: eval (fresh containers, model from HF) ====="
+    for nb in Unsloth_QA_CPT_new.ipynb Unsloth_QA_CPT_VM14K.ipynb; do
+        local stem="${nb%.ipynb}"
+        echo "[bootstrap] -- eval: $nb"
+        in_docker "cd /workspace/EVAL && \
+            jupyter nbconvert --to script --output '$stem' '$nb'" \
+            || { echo "[bootstrap] WARN: nbconvert failed for $nb"; continue; }
+        in_docker "cd /workspace/EVAL && \
+            export CPT_HF_REPO='$HF_CPT_REPO' && \
+            export CPT_HF_REVISION='$HF_REVISION' && \
+            python '$stem.py'" \
+            || echo "[bootstrap] WARN: eval $nb exited non-zero, continuing"
+    done
+
+    # Step 3: push eval outputs + train.log to the same revision.
+    echo "[bootstrap] ===== CPT: push eval outputs + log ====="
+    in_docker "python /workspace/scripts/lambda_push_to_hf.py \
+        --task cpt \
+        --repo '$HF_CPT_REPO' \
+        --src /workspace/CPT/cpt_qwen3_medical \
+        --revision '$JOB_TAG' \
+        --skip-model \
+        --eval-src /workspace/EVAL/outputs \
+        --log-file /host/train.log" \
+        || echo "[bootstrap] WARN: eval push failed (adapter is already on HF)"
 }
 
 run_sft() {
