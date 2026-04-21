@@ -54,6 +54,8 @@ joblib==1.5.3
 jsonlines==4.0.0
 jupyter_client==8.8.0
 jupyter_core==5.9.1
+nbconvert==7.16.4
+nbformat==5.10.4
 kiwisolver==1.5.0
 lm_eval==0.4.11
 lxml==6.0.2

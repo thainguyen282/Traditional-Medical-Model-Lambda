@@ -142,11 +142,17 @@ if rc != 0:
 
 # =========================
 # CLEAN PRIOR EVAL OUTPUTS (so we only push this run's results)
+# Wipe everything under EVAL/outputs/ — if the repo accidentally ships
+# older results (tracked by mistake), they won't leak into this run's HF
+# revision. The notebooks recreate the subdirs they need.
 # =========================
-for sub in ("CPT_MedQA", "CPT_New", "CPT_VM14K"):
-    p = os.path.join(EVAL_OUTPUTS_DIR, sub)
-    if os.path.isdir(p):
-        shutil.rmtree(p)
+if os.path.isdir(EVAL_OUTPUTS_DIR):
+    for entry in os.listdir(EVAL_OUTPUTS_DIR):
+        p = os.path.join(EVAL_OUTPUTS_DIR, entry)
+        if os.path.isdir(p):
+            shutil.rmtree(p)
+        else:
+            os.remove(p)
 
 # =========================
 # AUTO-RUN EVAL NOTEBOOKS — they read CPT_HF_REPO/CPT_HF_REVISION
