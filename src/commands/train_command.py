@@ -266,13 +266,20 @@ class TrainCommand:
 
     def _load_training_model(self):
 
-        model, tokenizer = FastLanguageModel.from_pretrained(
+        _fp_kwargs = dict(
             model_name=self.config["model"]["name"],
             max_seq_length=self.config["model"]["max_seq_length"],
             load_in_4bit=self.config["unsloth"]["load_in_4bit"],
             attn_implementation=self.config["unsloth"]["attn_implementation"],
             device_map={"": 0},
         )
+        model_revision = self.config["model"].get("revision")
+        if model_revision:
+            _fp_kwargs["revision"] = model_revision
+            self.logger.info(
+                f"Loading model {self.config['model']['name']}@{model_revision}"
+            )
+        model, tokenizer = FastLanguageModel.from_pretrained(**_fp_kwargs)
 
         model_name = self.config["model"]["name"]
 
@@ -342,13 +349,17 @@ class TrainCommand:
 
     def _load_baseline_model(self):
 
-        model, tokenizer = FastLanguageModel.from_pretrained(
+        _fp_kwargs = dict(
             model_name=self.config["model"]["name"],
             max_seq_length=self.config["model"]["max_seq_length"],
             load_in_4bit=self.config["unsloth"]["load_in_4bit"],
             attn_implementation=self.config["unsloth"]["attn_implementation"],
             device_map={"": 0},
         )
+        model_revision = self.config["model"].get("revision")
+        if model_revision:
+            _fp_kwargs["revision"] = model_revision
+        model, tokenizer = FastLanguageModel.from_pretrained(**_fp_kwargs)
 
         model_name = self.config["model"]["name"]
 
