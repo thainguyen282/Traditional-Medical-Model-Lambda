@@ -53,9 +53,12 @@ echo "=========================================================="
 
 # ------------------------------------------------------------------
 # 1. Sanity: docker + nvidia runtime (preinstalled on Lambda images).
+#    Lambda ships docker but 'ubuntu' user isn't in the 'docker' group,
+#    so we invoke docker via sudo throughout. Passwordless sudo is on.
 # ------------------------------------------------------------------
 command -v docker >/dev/null 2>&1 || fail "docker not found on host"
-docker info >/dev/null 2>&1 || fail "docker daemon not reachable (user not in docker group?)"
+DOCKER="sudo docker"
+$DOCKER info >/dev/null 2>&1 || fail "docker daemon not reachable even via sudo"
 
 # ------------------------------------------------------------------
 # 2. System deps needed OUTSIDE the container (just git for cloning).
@@ -87,11 +90,11 @@ cd "$REPO_DIR" || fail "cd repo"
 #    private, add: echo "$GH_TOKEN" | docker login ghcr.io -u <user> --password-stdin
 # ------------------------------------------------------------------
 if [ -n "${GH_TOKEN:-}" ] && [ "${GHCR_LOGIN:-}" = "1" ]; then
-    echo "$GH_TOKEN" | docker login ghcr.io \
+    echo "$GH_TOKEN" | $DOCKER login ghcr.io \
         -u "${GHCR_USER:-$USER}" --password-stdin \
         || fail "docker login ghcr.io"
 fi
-docker pull "$IMAGE" || fail "docker pull $IMAGE"
+$DOCKER pull "$IMAGE" || fail "docker pull $IMAGE"
 
 # ------------------------------------------------------------------
 # 5. Mirror .env in the repo so main.py/CPT.py see the same vars.
@@ -110,15 +113,17 @@ EOF
 #    - --shm-size : dataloader workers need large /dev/shm
 # ------------------------------------------------------------------
 in_docker() {
-    docker run --rm --gpus all \
+    $DOCKER run --rm --gpus all \
         --shm-size=32g \
         --ipc=host \
         -v "$REPO_DIR":/workspace \
         -v /home/ubuntu:/host \
-        -e HF_TOKEN \
+        -e HF_TOKEN="$HF_TOKEN" \
         -e WANDB_API_KEY="${WANDB_KEY:-}" \
-        -e HF_CPT_REPO -e HF_SFT_REPO \
-        -e JOB_TAG -e ROOT=/workspace \
+        -e HF_CPT_REPO="$HF_CPT_REPO" \
+        -e HF_SFT_REPO="$HF_SFT_REPO" \
+        -e JOB_TAG="$JOB_TAG" \
+        -e ROOT=/workspace \
         --workdir /workspace \
         "$IMAGE" \
         bash -lc "$1"
