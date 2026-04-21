@@ -373,6 +373,11 @@ def main() -> int:
         "GH_TOKEN": os.environ.get("GH_TOKEN", ""),
         "HF_CPT_REPO": os.environ.get("HF_CPT_REPO", "huyennkai/Venera-CPT-TMModel"),
         "HF_SFT_REPO": os.environ.get("HF_SFT_REPO", "huyennkai/Venera-Traditional-Model"),
+        # Docker image overrides (all optional; bootstrap falls back to
+        # ghcr.io/venera-ai/traditional-medical-model:<GIT_BRANCH>).
+        "DOCKER_IMAGE": os.environ.get("DOCKER_IMAGE", ""),
+        "GHCR_LOGIN":   os.environ.get("GHCR_LOGIN", ""),
+        "GHCR_USER":    os.environ.get("GHCR_USER", ""),
     }
 
     return run_job(

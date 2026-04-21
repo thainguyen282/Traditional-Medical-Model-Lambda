@@ -1,21 +1,26 @@
 # Lambda Cloud training runner
 
-Train CPT / SFT jobs on a Lambda Cloud GPU instance, push artifacts to HF Hub,
-then auto-terminate the instance.
+Train CPT / SFT jobs on a Lambda Cloud GPU instance, push artifacts + eval
+outputs + train.log to HF Hub, then auto-terminate the instance.
 
-## Files — 3 script, 2 nơi chạy
+Deps are baked into a pre-built Docker image (`ghcr.io/venera-ai/traditional-medical-model:<branch>`)
+so instances don't `pip install` on every launch — they just `docker pull`.
+
+## Files
 
 | File | Chạy ở đâu | Vai trò |
 |---|---|---|
-| [lambda_launch.py](lambda_launch.py) | **máy local của bạn** | Tổng chỉ huy từ xa. Gọi Lambda API tạo instance, scp 2 script kia lên, khởi chạy, theo dõi log, cuối cùng gọi API terminate. Không bao giờ chạy trên instance. |
-| [lambda_bootstrap.sh](lambda_bootstrap.sh) | **trên instance Lambda** | Script khởi động bên trong GPU instance. `apt install`, `git clone`, `pip install`, login HF/W&B, chạy `CPT.py` hay `main.py` tuỳ `TASK_TYPE`, gọi `lambda_push_to_hf.py`, viết sentinel `DONE_SUCCESS`/`DONE_FAILED` cho `launch.py` biết. |
-| [lambda_push_to_hf.py](lambda_push_to_hf.py) | **trên instance Lambda** | Công cụ upload HF. `bootstrap.sh` gọi sau khi training xong. Đọc YAML để xác định artifact là CPT/CPT-SFT/SFT, tạo repo + branch, upload LoRA adapter + tokenizer. |
+| [lambda_launch.py](lambda_launch.py) | **máy local** | Tổng chỉ huy từ xa. Gọi Lambda API tạo instance, scp 2 script kia lên, khởi chạy, theo dõi log, cuối cùng gọi API terminate. |
+| [lambda_bootstrap.sh](lambda_bootstrap.sh) | **instance Lambda (host)** | Ensure docker, git clone repo, `docker pull` image, `docker run` training+eval+push inside container. Ghi sentinel `DONE_SUCCESS`/`DONE_FAILED`. |
+| [lambda_push_to_hf.py](lambda_push_to_hf.py) | **instance Lambda (container)** | Upload LoRA adapter + tokenizer + `benchmark_evaluations/` + `EVAL/outputs/` + `train.log` lên HF branch. |
+| [../Dockerfile](../Dockerfile) | **GitHub Actions** | CUDA 12.8 + Python 3.10 + toàn bộ `requirements.txt`. Rebuild tự động khi `Dockerfile` hoặc `requirements.txt` thay đổi. |
+| [../.github/workflows/docker.yml](../.github/workflows/docker.yml) | **GitHub Actions** | Build + push image lên `ghcr.io/venera-ai/traditional-medical-model:<branch>`. |
 
 ### Flow tổng quan
 
 ```
-Máy bạn                          Lambda Cloud instance
-────────                         ─────────────────────
+Máy bạn                          Lambda Cloud instance (host)            Container
+────────                         ─────────────────────────               ─────────
 lambda_launch.py ──API──▶ [tạo instance]
        │
        ├── scp ─▶  lambda_bootstrap.sh
@@ -23,18 +28,20 @@ lambda_launch.py ──API──▶ [tạo instance]
        │
        └── ssh ─▶  bash lambda_bootstrap.sh
                          │
-                         ├─ git clone, pip install
-                         ├─ python CPT.py  (hoặc main.py)
-                         └─ python lambda_push_to_hf.py ──▶ HF Hub
+                         ├─ git clone repo
+                         ├─ docker pull ghcr.io/...:<branch>
+                         └─ docker run --gpus all  ─────────────▶   python CPT.py / main.py
+                                                                    python lambda_push_to_hf.py ──▶ HF Hub
 
 lambda_launch.py ──API──▶ [terminate instance]
 ```
 
-### Tại sao phải tách 3 file thay vì gộp 1
+### Tại sao split layer như vậy
 
-- `launch.py` buộc phải ở **local** (chỉ nó biết IP/SSH key để kết nối instance).
-- `bootstrap.sh` là **Bash** vì cần `apt install`, `source venv`, `tmux` — tự nhiên hơn Python.
-- `push_to_hf.py` tách riêng vì logic đọc YAML + gọi `HfApi` dễ viết bằng Python, **và có thể chạy lại độc lập nếu push fail** (ssh vào, chạy tay với `--revision` khác).
+- `lambda_launch.py` **local** — chỉ nó biết IP/SSH key.
+- `lambda_bootstrap.sh` **host** — Bash tự nhiên hơn Python cho `apt`, `docker run`, `tmux`.
+- `lambda_push_to_hf.py` **container** — có thể rerun độc lập nếu push fail (ssh vào host, `docker run --rm -v $PWD:/workspace $IMAGE python scripts/lambda_push_to_hf.py --revision <tag>`).
+- **Docker image chỉ bake deps** (không bake code) — code luôn lấy từ `git clone` mới nhất, image chỉ rebuild khi `requirements.txt` đổi.
 
 ## One-time setup
 
@@ -55,6 +62,13 @@ lambda_launch.py ──API──▶ [terminate instance]
    ```bash
    pip install requests python-dotenv
    ```
+7. **Trigger the first Docker image build** so Lambda instances have something to pull:
+   - Push any change touching `Dockerfile` / `requirements.txt` to `main2`, or
+   - Go to GitHub → Actions → "Build & push training image" → Run workflow on `main2`.
+   - The image will appear at `ghcr.io/venera-ai/traditional-medical-model:main2`.
+   - It is **public by default** — if the repo is private, the package will also be private. In that case, either:
+     - Make the package public under `Packages → Settings → Change visibility`, or
+     - Pass `GHCR_LOGIN=1` and `GHCR_USER=<gh-username>` in env so bootstrap does `docker login` with `$GH_TOKEN`.
 
 ## Usage
 
@@ -101,7 +115,14 @@ python scripts/lambda_launch.py --task sft --config ... --keep-alive
 
 ### Other flags
 - `--instance-type gpu_1x_h100_pcie` — override default `gpu_2x_a100`.
-- `--git-branch some-branch` — override default `main2`.
+- `--git-branch some-branch` — override default `main2`. Also determines the Docker image tag pulled (`ghcr.io/.../...:<branch>`).
+
+### Override the Docker image
+If you want to pin a specific image (e.g. a prior build after the Dockerfile changed), set `DOCKER_IMAGE` in your `.env`:
+```dotenv
+DOCKER_IMAGE=ghcr.io/venera-ai/traditional-medical-model:sha-abc1234
+```
+`lambda_launch.py` forwards all env vars; bootstrap picks this up instead of the branch default.
 
 ## How it works (flow)
 
