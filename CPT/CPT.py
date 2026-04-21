@@ -105,7 +105,7 @@ print(f"LoRA adapter saved to {OUTPUT_DIR} (no merge — SFT sẽ continue-train
 print("Training complete.")
 
 # =========================
-# FREE GPU MEMORY BEFORE EVAL
+# FREE GPU MEMORY BEFORE PUSH + EVAL
 # =========================
 del model, trainer, tokenizer, dataset
 torch.cuda.empty_cache()
@@ -113,18 +113,56 @@ import gc
 gc.collect()
 
 # =========================
-# AUTO-RUN EVAL NOTEBOOKS
+# PUSH ADAPTER TO HF (so eval loads the exact published version)
 # =========================
-import subprocess, sys
+import subprocess, sys, shutil, time
 
-EVAL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "EVAL")
+HERE = os.path.dirname(os.path.abspath(__file__))
+PUSH_SCRIPT = os.path.abspath(os.path.join(HERE, "..", "scripts", "lambda_push_to_hf.py"))
+EVAL_DIR = os.path.abspath(os.path.join(HERE, "..", "EVAL"))
+EVAL_OUTPUTS_DIR = os.path.join(EVAL_DIR, "outputs")
+HOST_LOG = "/host/train.log"  # bind-mounted from Lambda host
+
+HF_CPT_REPO = os.environ.get("HF_CPT_REPO", "huyennkai/Venera-CPT-TMModel")
+JOB_TAG = os.environ.get("JOB_TAG") or f"local-{int(time.time())}"
+# Must mirror lambda_push_to_hf.py's naming: `cpt-<slugified_tag>`.
+HF_REVISION = f"cpt-{JOB_TAG.replace('_', '-')}"
+
+print(f"\n[CPT.py] pushing adapter to {HF_CPT_REPO}@{HF_REVISION}")
+rc = subprocess.run([
+    sys.executable, PUSH_SCRIPT,
+    "--task", "cpt",
+    "--repo", HF_CPT_REPO,
+    "--src", OUTPUT_DIR,
+    "--revision", JOB_TAG,
+], cwd=HERE).returncode
+if rc != 0:
+    print(f"[CPT.py] ERROR: model push failed (exit {rc}); aborting before eval.")
+    sys.exit(rc)
+
+# =========================
+# CLEAN PRIOR EVAL OUTPUTS (so we only push this run's results)
+# =========================
+for sub in ("CPT_MedQA", "CPT_New", "CPT_VM14K"):
+    p = os.path.join(EVAL_OUTPUTS_DIR, sub)
+    if os.path.isdir(p):
+        shutil.rmtree(p)
+
+# =========================
+# AUTO-RUN EVAL NOTEBOOKS — they read CPT_HF_REPO/CPT_HF_REVISION
+# and load the adapter straight from the Hub (not local disk).
+# =========================
+eval_env = os.environ.copy()
+eval_env["CPT_HF_REPO"] = HF_CPT_REPO
+eval_env["CPT_HF_REVISION"] = HF_REVISION
+
 notebooks = [
     "Unsloth_QA_CPT_new.ipynb",
     "Unsloth_QA_CPT_VM14K.ipynb",
 ]
 
 total_notebooks = len(notebooks)
-print(f"\nStarting eval for CPT ({total_notebooks} notebooks)")
+print(f"\nStarting eval for CPT ({total_notebooks} notebooks, model={HF_CPT_REPO}@{HF_REVISION})")
 
 for i, nb in enumerate(notebooks, 1):
     nb_path = os.path.join(EVAL_DIR, nb)
@@ -141,6 +179,7 @@ for i, nb in enumerate(notebooks, 1):
             nb_path,
         ],
         cwd=EVAL_DIR,
+        env=eval_env,
     )
     if result.returncode == 0:
         print(f"[{i}/{total_notebooks}] Done: {nb}")
@@ -148,3 +187,24 @@ for i, nb in enumerate(notebooks, 1):
         print(f"[{i}/{total_notebooks}] FAILED: {nb} (exit code {result.returncode})")
 
 print(f"\nAll eval notebooks finished ({total_notebooks}/{total_notebooks})")
+
+# =========================
+# PUSH EVAL OUTPUTS + TRAIN.LOG to the same HF revision (--skip-model
+# so we don't re-upload the adapter we already pushed before eval).
+# =========================
+push_args = [
+    sys.executable, PUSH_SCRIPT,
+    "--task", "cpt",
+    "--repo", HF_CPT_REPO,
+    "--src", OUTPUT_DIR,  # required arg, but --skip-model prevents re-upload
+    "--revision", JOB_TAG,
+    "--skip-model",
+    "--eval-src", EVAL_OUTPUTS_DIR,
+]
+if os.path.exists(HOST_LOG):
+    push_args += ["--log-file", HOST_LOG]
+
+print(f"\n[CPT.py] pushing eval outputs + log to {HF_CPT_REPO}@{HF_REVISION}")
+rc = subprocess.run(push_args, cwd=HERE).returncode
+if rc != 0:
+    print(f"[CPT.py] WARN: eval push exited {rc} (adapter already on HF, continuing).")

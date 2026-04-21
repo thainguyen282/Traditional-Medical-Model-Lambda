@@ -134,16 +134,10 @@ in_docker() {
 # ------------------------------------------------------------------
 run_cpt() {
     echo "[bootstrap] ===== CPT ====="
+    # CPT.py does it all: train → push adapter → eval (load from HF) →
+    # push eval outputs + train.log to the same revision. No separate push
+    # call needed here.
     in_docker "cd /workspace/CPT && python CPT.py" || return $?
-
-    echo "[bootstrap] pushing CPT artifact + eval outputs to HF: $HF_CPT_REPO"
-    in_docker "python /workspace/scripts/lambda_push_to_hf.py \
-        --task cpt \
-        --repo '$HF_CPT_REPO' \
-        --src /workspace/CPT/cpt_qwen3_medical \
-        --revision '$JOB_TAG' \
-        --eval-src /workspace/EVAL/outputs \
-        --log-file /host/train.log" || return $?
 }
 
 run_sft() {

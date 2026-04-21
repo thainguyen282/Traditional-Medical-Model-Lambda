@@ -103,6 +103,10 @@ def main() -> int:
     p.add_argument("--log-file",
                    help="File to upload as train.log at the revision root. "
                         "Skipped if missing.")
+    p.add_argument("--skip-model", action="store_true",
+                   help="Do not upload the main artifact folder. Useful for "
+                        "secondary passes that only add eval outputs/logs to a "
+                        "revision already pushed earlier.")
     args = p.parse_args()
 
     token = os.environ.get("HF_TOKEN")
@@ -128,12 +132,14 @@ def main() -> int:
         revision = f"{prefix}-{cfg_slug}-{slugify(args.revision)}"
         auto_eval_srcs.append(benchmark_dir)
 
-    if not artifact_dir.exists():
-        die(f"artifact dir missing: {artifact_dir}")
-    if not any(artifact_dir.iterdir()):
-        die(f"artifact dir empty: {artifact_dir}")
+    if not args.skip_model:
+        if not artifact_dir.exists():
+            die(f"artifact dir missing: {artifact_dir}")
+        if not any(artifact_dir.iterdir()):
+            die(f"artifact dir empty: {artifact_dir}")
 
-    log(f"task={args.task} label={pipeline_label} src={artifact_dir}")
+    log(f"task={args.task} label={pipeline_label} src={artifact_dir}"
+        f"{' (skip-model)' if args.skip_model else ''}")
     log(f"target: {args.repo}@{revision}")
 
     api = HfApi(token=token)
@@ -141,15 +147,18 @@ def main() -> int:
     ensure_branch(args.repo, revision, token)
 
     commit_msg = args.commit_message or f"Upload {pipeline_label} artifact ({args.revision})"
-    log(f"uploading {artifact_dir} -> {args.repo}@{revision}")
-    api.upload_folder(
-        folder_path=str(artifact_dir),
-        repo_id=args.repo,
-        revision=revision,
-        commit_message=commit_msg,
-        token=token,
-        ignore_patterns=["*.pyc", "__pycache__/*", ".git/*"],
-    )
+    if args.skip_model:
+        log(f"--skip-model set, not uploading artifact")
+    else:
+        log(f"uploading {artifact_dir} -> {args.repo}@{revision}")
+        api.upload_folder(
+            folder_path=str(artifact_dir),
+            repo_id=args.repo,
+            revision=revision,
+            commit_message=commit_msg,
+            token=token,
+            ignore_patterns=["*.pyc", "__pycache__/*", ".git/*"],
+        )
 
     eval_srcs = auto_eval_srcs + [Path(s) for s in args.eval_src]
     for src_path in eval_srcs:
