@@ -139,27 +139,53 @@ def ssh_cmd(key: str, ip: str, remote_cmd: str, *, check: bool = True,
                           capture_output=capture, text=True)
 
 
-def scp_to(key: str, ip: str, local_path: str, remote_path: str) -> None:
+def scp_to(key: str, ip: str, local_path: str, remote_path: str,
+           *, retries: int = 4, delay: int = 10) -> None:
     cmd = [
         "scp",
         "-o", "StrictHostKeyChecking=no",
         "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "ConnectTimeout=15",
         "-i", key,
         local_path,
         f"{REMOTE_USER}@{ip}:{remote_path}",
     ]
-    subprocess.run(cmd, check=True)
+    last_err: subprocess.CalledProcessError | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            subprocess.run(cmd, check=True)
+            return
+        except subprocess.CalledProcessError as e:
+            last_err = e
+            if attempt < retries:
+                log(f"  scp attempt {attempt}/{retries} failed, retrying in {delay}s...")
+                time.sleep(delay)
+    assert last_err is not None
+    raise last_err
 
 
-def wait_for_ssh(key: str, ip: str, timeout: int = 300) -> None:
+def wait_for_ssh(key: str, ip: str, timeout: int = 300,
+                 stable_successes: int = 3, stable_interval: int = 5) -> None:
+    """
+    Wait until SSH is not only reachable but *stable* — require N consecutive
+    successful echoes spaced stable_interval seconds apart. Lambda's sshd is
+    flaky in the first ~30s after the instance goes active (cloud-init can
+    regen host keys), so a single success doesn't mean the next scp will
+    succeed.
+    """
     log(f"waiting for SSH to come up at {ip}...")
     deadline = time.time() + timeout
+    successes = 0
     while time.time() < deadline:
         try:
             ssh_cmd(key, ip, "echo ok", check=True, capture=True)
-            log("  SSH ready")
-            return
+            successes += 1
+            if successes >= stable_successes:
+                log(f"  SSH ready ({successes} consecutive successes)")
+                return
+            time.sleep(stable_interval)
         except subprocess.CalledProcessError:
+            successes = 0
             time.sleep(10)
     die(f"SSH did not come up on {ip} within {timeout}s")
 
