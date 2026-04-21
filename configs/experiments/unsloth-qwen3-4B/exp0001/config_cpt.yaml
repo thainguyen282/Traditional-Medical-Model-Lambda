@@ -28,10 +28,11 @@ training:
   output_dir: "group_outputs/outputs"
   per_device_train_batch_size: 4
   per_device_eval_batch_size: 4
-  num_train_epochs: 2
-  # Giảm 5x so với SFT-from-base: adapter đã pre-adapted từ CPT,
-  # lr cao sẽ xoá kiến thức CPT đã học.
-  learning_rate: 2e-5
+  num_train_epochs: 3
+  # 5e-5 = trade-off: vẫn thấp hơn SFT-from-base (2e-4) để giữ kiến thức
+  # CPT, nhưng đủ cao để SFT reset được chat format (tránh format collapse
+  # 11% như run cũ ở LR 2e-5).
+  learning_rate: 5e-5
   weight_decay: 0.01
   warmup_steps: 100
   lr_scheduler_type: "cosine"
