@@ -16,6 +16,7 @@ Adapter LoRA đã train + eval, public trên Hugging Face. Mỗi branch là **sn
 |---|---|:--:|:--:|:--:|
 | 🥈 **Cân bằng** (đa chuyên khoa + Đông y) | [`Venera-Traditional-Model` @ `cpt-sft-…-tm-sft-1776945292`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776945292) | **48.05%** | 58.10% | **0% / 0%** |
 | 🧠 **Generation tự do** (không cần Q&A format) | [`Venera-CPT-TMModel` @ `cpt-tm-cpt-1776775114`](https://huggingface.co/huyennkai/Venera-CPT-TMModel/tree/cpt-tm-cpt-1776775114) | **49.11%** | 58.10% | 0% |
+| ⚠️ SFT-only (regression — không khuyến nghị ship) | [`Venera-Traditional-Model` @ `sft-…-tm-sft-1776949731`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/sft-unsloth-qwen3-4B-exp0001-tm-sft-1776949731) | 34.04% | 30.48% | 3.01% / 7.62% |
 
 ### Historical — dataset cũ `Maverfrick/TradMedInstruct-2topics-3546` (22/04/2026)
 
@@ -27,7 +28,8 @@ Adapter LoRA đã train + eval, public trên Hugging Face. Mỗi branch là **sn
 Baseline: **Qwen3-4B-Instruct-2507 (gốc)** — VM14K 48.05%, Bench nhỏ 53.33%, deviation 0%.
 
 **Nhận xét**:
-- Dataset mới (`multiplechoice`, 3379 rows) → CPT-SFT hiện tại **không còn deviation nào** (0% trên cả 2 bench) và **ngang Instruct trên VM14K**. Đánh đổi: Bench nhỏ −4.76% vs dataset cũ (vì dataset cũ `2topics-3546` vốn gần distribution Bench nhỏ hơn).
+- Dataset mới (`multiplechoice`, 3379 rows) → **CPT-SFT không còn deviation nào** (0% / 0%) và **ngang Instruct trên VM14K**. Đánh đổi: Bench nhỏ −4.76% vs dataset cũ (vì dataset cũ `2topics-3546` vốn gần distribution Bench nhỏ hơn).
+- **SFT-only trên multiplechoice bị regression nặng** (VM14K −12.41%, Bench −33.33%, deviation tăng). Khả năng: multiplechoice format quá narrow, SFT thẳng không có CPT adapter đệm → overwrite general Q&A capability của Instruct. **CPT → SFT pipeline bắt buộc với dataset này**.
 - So sánh với kỳ 16/04: CPT-only VM14K **+5.67%**, CPT-SFT deviation giảm ~10× (11.35% → 0%).
 - Chi tiết cải thiện: [REPORT_fix.md](REPORT_fix.md); số liệu đầy đủ: [REPORT.md §8](REPORT.md).
 
