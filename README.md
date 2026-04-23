@@ -55,6 +55,45 @@ print(tokenizer.decode(out[0], skip_special_tokens=True))
 
 Đổi `model_name` + `revision` theo bảng trên để load 2 model còn lại. `revision=` là bắt buộc — nhánh `main` của HF repo có thể khác.
 
+## 🔍 Nhận xét định tính (inference so sánh, 23/04)
+
+Ngoài MCQ benchmark (VM14K / Bench nhỏ) chỉ đo *câu trả lời đúng A/B/C/D*, tôi chạy thêm **5 câu hỏi mở về Đông y** trên cả 6 model để kiểm tra chất lượng generation. Dataset + response đầy đủ ở HF:
+
+📊 [`Venera-Traditional-Model @ inference-tm-inference-1776953351`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/inference-tm-inference-1776953351) — chứa [`comparison_20260423_142330.md`](https://huggingface.co/huyennkai/Venera-Traditional-Model/blob/inference-tm-inference-1776953351/eval/comparison/comparison_20260423_142330.md) (table readable), `.csv` (full text cho Excel), `.json` (structured).
+
+### Metric định lượng rút ra từ 5 × 6 = 30 response
+
+| Model | Avg length (chars) | `<tool_call>` leak | `<think>` leak | Empty response |
+|---|:--:|:--:|:--:|:--:|
+| Qwen3-4B-Instruct (gốc) | 1535 | ✅ 0/5 | ✅ 0/5 | ✅ 0/5 |
+| **CPT-only** | **1574** | ✅ **0/5** | ✅ **0/5** | ✅ **0/5** |
+| CPT-SFT (multiplechoice) | 611 | 🚨 **5/5** | 1/5 | 0/5 |
+| SFT-only (multiplechoice) | 657 | 🚨 4/5 | 🚨 3/5 | 0/5 |
+| SFT-only (2topics) | 557 | 🚨 4/5 | 2/5 | 0/5 |
+| CPT-SFT (2topics) | 285 | 2/5 | 1/5 | 🚨 **2/5** |
+
+### Kết luận chính
+
+1. **Chỉ Instruct và CPT-only giữ được format sạch**. CPT-only thậm chí có response **dài hơn Instruct** (1574 vs 1535 chars, trung bình), có cấu trúc tốt hơn, biết viết thuật ngữ chuyên môn (vd ghi đúng `Hợp Cốc (L.I.-4)` — huyệt thứ 4 của Kinh Đại Trường — trong khi Instruct chỉ viết "Hợp Cốc").
+
+2. **Tất cả 4 biến thể SFT leak token prompt** (`<tool_call>`, `<think>`) — artifact của dataset chat-template có chứa reasoning tokens. CPT-SFT (multiplechoice) **5/5 câu đều có `<tool_call>` prefix**, dù deviation MCQ = 0%. MCQ benchmark không bắt được lỗi này vì chỉ check ký tự A/B/C/D cuối cùng.
+
+3. **CPT-SFT (2topics)** — dù đứng thứ 2 trên Bench nhỏ MCQ (62.86%) — có **2/5 câu generate rỗng** trong inference mở. Response trung bình chỉ 285 chars, ngắn nhất mọi model. Dataset cũ có thể đã overfit → degenerate generation.
+
+4. **Hallucination domain-specific vẫn tồn tại ở mọi model**:
+   - *Vị trí huyệt Hợp Cốc* (Q1): Instruct nói "đầu ngón tay trỏ" (sai), CPT-only nói "giữa ngón út và ngón giữa" (sai khác kiểu), CPT-SFT-2topics gần đúng nhất ("khớp gian đốt giữa ngón tay trỏ và ngón giữa"), SFT-2topics nói "đầu ngón chân cái" (sai nghiêm trọng vì Hợp Cốc nằm ở tay).
+   - *Bài Kiện vận tỳ vị* (Q2): CPT-only **hallucinate liệt kê "Bạch Truật, Nhân Sâm, Xa tiền tử, Bạch Truật, Bạch Truật"** — lặp Bạch Truật 3 lần, lỗi rõ.
+
+### Hệ quả tuyển model
+
+| Use case | Chọn |
+|---|---|
+| Sinh câu trả lời y học tự do (chatbot, explain) | **CPT-only** (`cpt-tm-cpt-1776775114`) — format sạch, domain signal, không leak |
+| Pipeline Q&A narrow chỉ cần chọn A/B/C/D | **CPT-SFT (multiplechoice)** (`tm-sft-1776945292`) — 0% deviation, dù có `<tool_call>` nếu không strip sẽ mess cho downstream parser |
+| Avoid | **CPT-SFT (2topics)** — 2/5 câu rỗng; **SFT-only (multiplechoice)** — regression; |
+
+**Hành động tiếp theo nên cân nhắc**: strip `<tool_call>`/`<think>` tokens khỏi dataset SFT trước khi train lại, hoặc thêm post-processing ở inference layer. Chi tiết xem `train.log` + `.md` table ở HF revision trên.
+
 ## Tổng quan
 
 ```
