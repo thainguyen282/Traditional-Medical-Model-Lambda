@@ -5,12 +5,15 @@ from datetime import datetime
 from unsloth import FastLanguageModel
 
 
-def load_model(model_path, load_in_4bit=True):
-    model, tokenizer = FastLanguageModel.from_pretrained(
+def load_model(model_path, revision=None, load_in_4bit=True):
+    kwargs = dict(
         model_name=model_path,
         load_in_4bit=load_in_4bit,
         attn_implementation="sdpa",
     )
+    if revision:
+        kwargs["revision"] = revision
+    model, tokenizer = FastLanguageModel.from_pretrained(**kwargs)
     FastLanguageModel.for_inference(model)
     return model, tokenizer
 
@@ -46,13 +49,19 @@ def compare_models(models_config, questions, output_dir="EVAL/outputs/comparison
 
     results = []
 
-    for model_name, model_path in models_config.items():
+    for model_name, cfg in models_config.items():
+        # Support both old flat str form and new {path, revision} form.
+        if isinstance(cfg, str):
+            model_path, revision = cfg, None
+        else:
+            model_path, revision = cfg["path"], cfg.get("revision")
+
         print(f"\n{'='*60}")
         print(f"Loading model: {model_name}")
-        print(f"Path: {model_path}")
+        print(f"Path: {model_path}" + (f"  @ {revision}" if revision else ""))
         print(f"{'='*60}")
 
-        model, tokenizer = load_model(model_path)
+        model, tokenizer = load_model(model_path, revision=revision)
 
         for i, question in enumerate(questions):
             print(f"\n--- Question {i+1}: {question[:80]}... ---")
@@ -63,6 +72,7 @@ def compare_models(models_config, questions, output_dir="EVAL/outputs/comparison
             results.append({
                 "model": model_name,
                 "model_path": model_path,
+                "revision": revision,
                 "question": question,
                 "response": response,
             })
@@ -94,45 +104,48 @@ def compare_models(models_config, questions, output_dir="EVAL/outputs/comparison
 
 
 if __name__ == "__main__":
+    # 6 models: Instruct baseline + 5 finetuned variants from README
+    # (see README.md "🎯 Model output" section).
+    VENERA_SFT = "huyennkai/Venera-Traditional-Model"
+    VENERA_CPT = "huyennkai/Venera-CPT-TMModel"
+
     models_config = {
-        "Qwen3-4B-Goc": "unsloth/Qwen3-4B-Instruct-2507",
-        # CPT mới (Tier 1, raw-text completion, alpha=32) — load adapter trực tiếp
-        "Qwen3-4B-CPT": "CPT/cpt_qwen3_medical",
-        "Qwen3-4B-CPT-SFT": "group_outputs/outputs/CPT_SFT/model",
-        # SFT-only chưa có model local. Bỏ comment khi train xong:
-        # "Qwen3-4B-SFT": "group_outputs/outputs/SFT/model",
+        "Qwen3-4B-Instruct-goc": {
+            "path": "unsloth/Qwen3-4B-Instruct-2507",
+        },
+        # --- Hiện tại (dataset Maverfrick/TradMedInstruct-multiplechoice) ---
+        "CPT-only": {
+            "path": VENERA_CPT,
+            "revision": "cpt-tm-cpt-1776775114",
+        },
+        "CPT-SFT (multiplechoice)": {
+            "path": VENERA_SFT,
+            "revision": "cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776945292",
+        },
+        "SFT-only (multiplechoice, regression)": {
+            "path": VENERA_SFT,
+            "revision": "sft-unsloth-qwen3-4B-exp0001-tm-sft-1776949731",
+        },
+        # --- Historical (dataset Maverfrick/TradMedInstruct-2topics-3546) ---
+        "SFT-only (2topics)": {
+            "path": VENERA_SFT,
+            "revision": "sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092",
+        },
+        "CPT-SFT (2topics)": {
+            "path": VENERA_SFT,
+            "revision": "cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126",
+        },
     }
 
-    # Bỏ qua các path không tồn tại (skip thay vì crash)
-    models_config = {
-        name: path for name, path in models_config.items()
-        if path.startswith("unsloth/") or os.path.exists(path)
-    }
     print(f"Models to compare: {list(models_config.keys())}")
 
+    # 5 câu đại diện: 2 câu CPT-flavored (kiến thức nền YHCT), 3 câu SFT-flavored
+    # (QA / ứng dụng lâm sàng) — đủ để so sánh định tính giữa các model.
     questions = [
-        # === Từ CPT data (sách Đông y cổ truyền) ===
-        # CPT: kiến thức về huyệt vị và kinh lạc
         "Huyệt Hợp Cốc có vị trí ở đâu và thường được sử dụng để khu phong nhiệt trong trường hợp nào?",
-        # CPT: kinh lạc - hệ thống kinh Tam Tiêu
-        "Hệ thống kinh Tam Tiêu Thủ Thiếu Dương có đường đi như thế nào và ý nghĩa lâm sàng là gì?",
-        # CPT: bài thuốc cổ phương - Bình Vị Tán / kiện tỳ
         "Bài thuốc kiện vận tỳ vị có tác dụng táo thấp như thế nào và bạch truật đóng vai trò gì trong phương?",
-        # CPT: châm cứu - thủ pháp châm
-        "Phương pháp châm hành khí đao pháp được thực hiện như thế nào và có tác dụng thông quan tiết gì?",
-        # CPT: mạch chẩn - biểu chứng lý chứng
-        "Mạch phù chủ biểu chứng, mạch trầm chủ lý chứng được giải thích như thế nào trong tứ chẩn Đông y?",
-
-        # === Từ SFT data (Maverfrick/TradMedInstructData) ===
-        # SFT: nhiệt độ cơ thể và ung thư
-        "Tại sao nhiệt độ cơ thể thấp lại có thể làm giảm hiệu quả điều trị ung thư theo Đông y?",
-        # SFT: khí huyết và chứng lạnh tay chân
         "Chứng lạnh tay chân liên quan thế nào đến khí huyết trong Đông y, và bài dẫn huyết có thể cải thiện ra sao?",
-        # SFT: sốt là cơ chế tự vệ
         "Vì sao sốt lại là cơ chế tự vệ có lợi cho cơ thể theo Đông y?",
-        # SFT: viêm xoang và luân nhiệt
-        "Khi bị viêm xoang, liệu pháp luân nhiệt nóng-lạnh có tác dụng gì theo Đông y?",
-        # SFT: bấm huyệt Thập Chỉ Đạo
         "Bấm huyệt Thập Chỉ Đạo là gì trong Đông y và có tác dụng điều trị như thế nào?",
     ]
 
