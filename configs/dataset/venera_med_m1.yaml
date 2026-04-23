@@ -1,4 +1,6 @@
 name: "venera_med_m1"
-data: https://huggingface.co/datasets/Maverfrick/TradMedInstruct-2topics-3546
+data: https://huggingface.co/datasets/Maverfrick/TradMedInstruct-multiplechoice
 metadata:
   source: "huggingface"
+  # Train 3379 / Test 178. Column `messages` = [{role, content}, …] (OpenAI chat format);
+  # VeneraMedDatasetStrategy.convert_to_conversations xử lý trực tiếp.

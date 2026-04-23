@@ -91,26 +91,28 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
         train_samples = config.get("train_samples", -1)
         split_ratio = config.get("train_val_split", 0.2)
 
-        # ---- Cache ----
-        cache_key = f"TradMedD_{train_samples}_{split_ratio}"
+        # ---- Data source ----
+        # Lấy từ config; fallback default. Phải biết source TRƯỚC khi tính
+        # cache key để không lẫn cache giữa các dataset khác nhau.
+        data_source = config.get("data", "Maverfrick/TradMedInstruct-multiplechoice")
+        if "https://huggingface.co/datasets/" in data_source:
+            data_source = data_source.replace("https://huggingface.co/datasets/", "")
+
+        # ---- Cache (include data_source trong key để tránh stale cache) ----
+        safe_src = data_source.replace("/", "_")
+        cache_key = f"{safe_src}_{train_samples}_{split_ratio}"
         cache_file = os.path.join(
             self.cache_dir, f"tradmedd_cache_{hash(cache_key)}.pkl"
         )
 
         if os.path.exists(cache_file):
-            print("✅ Loading dataset from cache")
+            print(f"✅ Loading dataset from cache ({data_source})")
             with open(cache_file, "rb") as f:
                 cached = pickle.load(f)
                 return cached["train"], cached["val"]
 
         # ---- Load dataset from HF ----
-        print("⬇️ Loading dataset from Hugging Face Hub...")
-
-        # Get the data source from config if available, otherwise use default
-        data_source = config.get("data", "Maverfrick/TradMedInstruct-2topics-3546")
-        # Extract dataset ID if it's a full URL
-        if "https://huggingface.co/datasets/" in data_source:
-            data_source = data_source.replace("https://huggingface.co/datasets/", "")
+        print(f"⬇️ Loading dataset from Hugging Face Hub: {data_source}")
         
         dataset = load_dataset(data_source)
 
