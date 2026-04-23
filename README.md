@@ -6,29 +6,40 @@ Hỗ trợ 2 chế độ chạy:
 - **Local** — train trên máy có GPU (hoặc kiểm thử dry-run).
 - **Lambda Cloud (khuyến nghị)** — launch từ máy local, pre-baked Docker image tự chạy train + auto-eval + push artifact & eval outputs lên Hugging Face, tự terminate khi xong. Xem [scripts/LAMBDA_README.md](scripts/LAMBDA_README.md).
 
-## 🎯 Model output (kết quả mới nhất — 22/04/2026)
+## 🎯 Model output
 
-Ba adapter LoRA đã train + eval, public trên Hugging Face. Mỗi branch là **snapshot tự chứa**: adapter + eval outputs + train.log.
+Adapter LoRA đã train + eval, public trên Hugging Face. Mỗi branch là **snapshot tự chứa**: adapter + eval outputs + train.log.
+
+### Hiện tại (25/04/2026, SFT trên `Maverfrick/TradMedInstruct-multiplechoice`)
 
 | Use case | HF repo @ branch | VM14K Acc | Bench nhỏ Acc | Deviation |
 |---|---|:--:|:--:|:--:|
-| 🥇 **TCM thuần** (Q&A Đông y hẹp) | [`huyennkai/Venera-Traditional-Model` @ `sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092) | 46.45% | **63.81%** | 0% |
-| 🥈 **Cân bằng** (đa chuyên khoa + Đông y) | [`huyennkai/Venera-Traditional-Model` @ `cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126) | 47.16% | **62.86%** | 1.06% |
-| 🧠 **Generation tự do** (không cần Q&A format) | [`huyennkai/Venera-CPT-TMModel` @ `cpt-tm-cpt-1776775114`](https://huggingface.co/huyennkai/Venera-CPT-TMModel/tree/cpt-tm-cpt-1776775114) | **49.11%** | 58.10% | 0% |
+| 🥈 **Cân bằng** (đa chuyên khoa + Đông y) | [`Venera-Traditional-Model` @ `cpt-sft-…-tm-sft-1776945292`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776945292) | **48.05%** | 58.10% | **0% / 0%** |
+| 🧠 **Generation tự do** (không cần Q&A format) | [`Venera-CPT-TMModel` @ `cpt-tm-cpt-1776775114`](https://huggingface.co/huyennkai/Venera-CPT-TMModel/tree/cpt-tm-cpt-1776775114) | **49.11%** | 58.10% | 0% |
 
-Baseline so sánh: **Qwen3-4B-Instruct-2507 (gốc)** — VM14K 48.05%, Bench nhỏ 53.33%.
+### Historical — dataset cũ `Maverfrick/TradMedInstruct-2topics-3546` (22/04/2026)
 
-So sánh với kỳ training cũ (16/04): CPT-only VM14K +5.67%, CPT-SFT deviation giảm ~10× (11.35% → 1.06%). Chi tiết cải thiện: [REPORT_fix.md](REPORT_fix.md); số liệu đầy đủ: [REPORT.md §8](REPORT.md).
+| Use case | HF repo @ branch | VM14K Acc | Bench nhỏ Acc | Deviation |
+|---|---|:--:|:--:|:--:|
+| 🥇 **TCM thuần** (Q&A Đông y hẹp) | [`Venera-Traditional-Model` @ `sft-…-tm-sft-1776771092`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092) | 46.45% | 🥇 **63.81%** | 0% |
+| 🥈 Cân bằng (đa chuyên khoa + Đông y) | [`Venera-Traditional-Model` @ `cpt-sft-…-tm-sft-1776784126`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126) | 47.16% | 62.86% | 1.06% |
+
+Baseline: **Qwen3-4B-Instruct-2507 (gốc)** — VM14K 48.05%, Bench nhỏ 53.33%, deviation 0%.
+
+**Nhận xét**:
+- Dataset mới (`multiplechoice`, 3379 rows) → CPT-SFT hiện tại **không còn deviation nào** (0% trên cả 2 bench) và **ngang Instruct trên VM14K**. Đánh đổi: Bench nhỏ −4.76% vs dataset cũ (vì dataset cũ `2topics-3546` vốn gần distribution Bench nhỏ hơn).
+- So sánh với kỳ 16/04: CPT-only VM14K **+5.67%**, CPT-SFT deviation giảm ~10× (11.35% → 0%).
+- Chi tiết cải thiện: [REPORT_fix.md](REPORT_fix.md); số liệu đầy đủ: [REPORT.md §8](REPORT.md).
 
 ### Load model trong code
 
 ```python
 from unsloth import FastLanguageModel
 
-# CPT-SFT (model cân bằng — khuyến nghị cho pipeline inference y học thông thường)
+# CPT-SFT (dataset mới multiplechoice — khuyến nghị cho pipeline inference y học thông thường)
 model, tokenizer = FastLanguageModel.from_pretrained(
     model_name="huyennkai/Venera-Traditional-Model",
-    revision="cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126",
+    revision="cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776945292",
     max_seq_length=2048,
     load_in_4bit=True,
 )
