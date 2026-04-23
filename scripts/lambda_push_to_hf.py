@@ -89,7 +89,7 @@ def ensure_branch(repo_id: str, revision: str, token: str) -> None:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--task", choices=["cpt", "sft"], required=True)
+    p.add_argument("--task", choices=["cpt", "sft", "inference"], required=True)
     p.add_argument("--repo", required=True, help="HF repo id e.g. user/name")
     p.add_argument("--revision", required=True,
                    help="Branch/tag to push to (created if missing)")
@@ -124,6 +124,12 @@ def main() -> int:
         artifact_dir = Path(args.src)
         revision = f"cpt-{slugify(args.revision)}"
         pipeline_label = "CPT"
+    elif args.task == "inference":
+        # No model artifact to upload — only eval_src (comparison dir) + log.
+        artifact_dir = Path(args.src) if args.src else Path("/tmp/__noop__")
+        revision = f"inference-{slugify(args.revision)}"
+        pipeline_label = "INFERENCE"
+        args.skip_model = True  # implicit for inference task
     else:
         if not args.config:
             die("--config required for sft")

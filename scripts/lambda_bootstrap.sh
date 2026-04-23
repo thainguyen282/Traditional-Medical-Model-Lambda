@@ -245,6 +245,24 @@ print('yes' if 'cpt' in cfg.get('model', {}).get('name', '').lower() else 'no')
         || echo "[bootstrap] WARN: eval push failed (adapter is already on HF)"
 }
 
+run_inference() {
+    # inference.py load từng model trên HF revision của nó → generate 5 câu →
+    # ghi EVAL/outputs/comparison/comparison_<ts>.{json,txt}. Không train gì,
+    # không đụng CUDA fork (chỉ 1 docker run duy nhất).
+    echo "[bootstrap] ===== inference compare ====="
+    in_docker "cd /workspace && python inference.py" || return $?
+
+    local HF_INF_REPO="${HF_INF_REPO:-$HF_SFT_REPO}"
+    echo "[bootstrap] ===== push comparison + log to $HF_INF_REPO ====="
+    in_docker "python /workspace/scripts/lambda_push_to_hf.py \
+        --task inference \
+        --repo '$HF_INF_REPO' \
+        --revision '$JOB_TAG' \
+        --eval-src /workspace/EVAL/outputs/comparison \
+        --log-file /host/train.log" \
+        || echo "[bootstrap] WARN: inference push failed"
+}
+
 status=0
 if [ "$TASK_TYPE" = "cpt" ]; then
     run_cpt || status=$?
@@ -254,6 +272,8 @@ elif [ "$TASK_TYPE" = "sft" ]; then
         [ -z "$cfg" ] && continue
         run_sft "$cfg" || { status=$?; break; }
     done <<< "$CONFIG_LIST"
+elif [ "$TASK_TYPE" = "inference" ]; then
+    run_inference || status=$?
 else
     fail "unknown TASK_TYPE=$TASK_TYPE"
 fi

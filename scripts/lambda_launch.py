@@ -341,8 +341,8 @@ def parse_configs(args: argparse.Namespace) -> list[str]:
         if not configs:
             die(f"config list file is empty: {p}")
         return configs
-    if args.task == "cpt":
-        return []  # CPT.py has no config arg
+    if args.task in ("cpt", "inference"):
+        return []  # CPT.py / inference.py take no config arg
     die("--config or --config-list required for SFT task")
     return []  # unreachable
 
@@ -352,8 +352,9 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--task", choices=["cpt", "sft"], required=True,
-                        help="cpt -> runs CPT/CPT.py; sft -> runs main.py --config <...>")
+    parser.add_argument("--task", choices=["cpt", "sft", "inference"], required=True,
+                        help="cpt -> CPT/CPT.py; sft -> main.py --config; "
+                             "inference -> inference.py (compare models from README)")
     parser.add_argument("--config", help="Path to a single SFT config yaml")
     parser.add_argument("--config-list",
                         help="Path to a text file with one config path per line")
