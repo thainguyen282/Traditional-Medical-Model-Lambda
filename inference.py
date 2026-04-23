@@ -2,8 +2,36 @@ import torch
 import json
 import os
 import csv
+import re
 from datetime import datetime
 from unsloth import FastLanguageModel
+
+
+# =========================================================================
+# Post-processing: strip reasoning / tool-call artifacts that leak from the
+# base model's Qwen3 chat scaffolding when SFT pushes it into an MCQ-only
+# register. Removed both paired blocks (<tag>…</tag>) and any stray opening
+# or closing tags that leak alone.
+# =========================================================================
+_REASONING_TAGS = ("think", "tool_call", "tool_use", "reasoning", "thought",
+                   "scratchpad")
+_BLOCK_RE = re.compile(
+    r"<(?P<t>" + "|".join(_REASONING_TAGS) + r")\b[^>]*>.*?</(?P=t)>",
+    re.IGNORECASE | re.DOTALL,
+)
+_STRAY_TAG_RE = re.compile(
+    r"</?(?:" + "|".join(_REASONING_TAGS) + r")\b[^>]*>",
+    re.IGNORECASE,
+)
+
+
+def strip_reasoning(text: str) -> str:
+    if not text:
+        return text
+    text = _BLOCK_RE.sub("", text)
+    text = _STRAY_TAG_RE.sub("", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
 
 
 def load_model(model_path, revision=None, load_in_4bit=True):
@@ -19,7 +47,26 @@ def load_model(model_path, revision=None, load_in_4bit=True):
     return model, tokenizer
 
 
-def generate_response(model, tokenizer, messages, max_new_tokens=512, temperature=0.7, top_p=0.8, top_k=20):
+SYSTEM_PROMPT = (
+    "Bạn là chuyên gia Y học cổ truyền. Trả lời câu hỏi bằng văn bản tự nhiên "
+    "tiếng Việt, cấu trúc rõ ràng, dẫn giải cơ chế và nêu ví dụ minh họa khi "
+    "phù hợp. TUYỆT ĐỐI KHÔNG dùng <tool_call>, <think>, <reasoning> hay bất "
+    "kỳ thẻ hệ thống nào. Trả lời trực tiếp, đầy đủ, không viết tắt."
+)
+
+
+def generate_response(model, tokenizer, messages,
+                      max_new_tokens=1536,
+                      min_new_tokens=256,
+                      temperature=0.7, top_p=0.9, top_k=40,
+                      repetition_penalty=1.05,
+                      use_system_prompt=True,
+                      strip_tags=True):
+    # Prepend system prompt if caller hasn't already supplied one. Helps keep
+    # SFT-tuned models (which overfit to MCQ brevity) from truncating.
+    if use_system_prompt and (not messages or messages[0].get("role") != "system"):
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}, *messages]
+
     text = tokenizer.apply_chat_template(
         messages,
         tokenize=False,
@@ -32,16 +79,20 @@ def generate_response(model, tokenizer, messages, max_new_tokens=512, temperatur
         outputs = model.generate(
             **inputs,
             max_new_tokens=max_new_tokens,
+            min_new_tokens=min_new_tokens,
             temperature=temperature,
             top_p=top_p,
             top_k=top_k,
             do_sample=True,
+            repetition_penalty=repetition_penalty,
         )
 
     generated_text = tokenizer.decode(
         outputs[0][inputs["input_ids"].shape[1]:],
         skip_special_tokens=True,
     )
+    if strip_tags:
+        generated_text = strip_reasoning(generated_text)
     return generated_text
 
 
