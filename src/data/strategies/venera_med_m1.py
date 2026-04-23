@@ -90,6 +90,11 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
 
         train_samples = config.get("train_samples", -1)
         split_ratio = config.get("train_val_split", 0.2)
+        # Optional: mix in a fraction of open-chat data (FineTome-100k) so the
+        # model doesn't collapse onto the MCQ "letter + phân tích" pattern and
+        # keep emitting Qwen3 tool_call scaffolding on open-ended prompts.
+        # Set in exp yaml: chat_mix_ratio: 0.1  # 10% of final dataset
+        chat_mix_ratio = float(config.get("chat_mix_ratio", 0.0))
 
         # ---- Data source ----
         # Lấy từ config; fallback default. Phải biết source TRƯỚC khi tính
@@ -98,9 +103,9 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
         if "https://huggingface.co/datasets/" in data_source:
             data_source = data_source.replace("https://huggingface.co/datasets/", "")
 
-        # ---- Cache (include data_source trong key để tránh stale cache) ----
+        # ---- Cache (include data_source + chat_mix_ratio) ----
         safe_src = data_source.replace("/", "_")
-        cache_key = f"{safe_src}_{train_samples}_{split_ratio}"
+        cache_key = f"{safe_src}_{train_samples}_{split_ratio}_mix{chat_mix_ratio}"
         cache_file = os.path.join(
             self.cache_dir, f"tradmedd_cache_{hash(cache_key)}.pkl"
         )
@@ -139,6 +144,29 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
 
         train_set = preformat(split["train"])
         val_set = preformat(split["test"])
+
+        # ---- Optional chat mix (FineTome-100k) -------------------------
+        # Mục tiêu: đẩy vào SFT khoảng `chat_mix_ratio` tổng samples là
+        # general-chat long-form. Giúp model không collapse vào MCQ-brevity
+        # và không regress về Qwen3 tool-call scaffolding trên prompt mở.
+        if chat_mix_ratio and chat_mix_ratio > 0:
+            from datasets import concatenate_datasets
+
+            from src.data.strategies.fine_tome import preformat as finetome_preformat
+            n_target = int(len(train_set) * chat_mix_ratio / (1.0 - chat_mix_ratio))
+            print(f"🔀 Mixing {n_target} chat samples from mlabonne/FineTome-100k "
+                  f"(ratio={chat_mix_ratio:.0%})")
+
+            chat_ds = load_dataset("mlabonne/FineTome-100k")
+            chat_ds = chat_ds[list(chat_ds.keys())[0]]
+            chat_ds = chat_ds.shuffle(seed=42).select(range(min(n_target, len(chat_ds))))
+            chat_ds = chat_ds.map(
+                finetome_preformat,
+                batched=False,
+                desc="FineTome -> conversations",
+                remove_columns=chat_ds.column_names,
+            )
+            train_set = concatenate_datasets([train_set, chat_ds]).shuffle(seed=42)
 
         # ---- Cache ----
         with open(cache_file, "wb") as f:

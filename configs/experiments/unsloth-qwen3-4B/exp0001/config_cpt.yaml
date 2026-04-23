@@ -14,6 +14,11 @@ datasets:
   - path: "configs/dataset/venera_med_m1.yaml"
     train_samples: -1
     train_val_split: 0.2
+    # Bật khi muốn chống format collapse + SFT ra response dài tự nhiên.
+    # chat_mix_ratio=0.1 nghĩa là 10% tổng train sẽ là FineTome-100k
+    # (general-chat long-form) — model sẽ thấy response dài có cấu trúc,
+    # không bị kẹt vào MCQ letter-brief và không emit <tool_call>.
+    # chat_mix_ratio: 0.10
 
 benchmark:
   path: "configs/evals/minimal_mmlu.yaml"
