@@ -1,6 +1,7 @@
 import torch
 import json
 import os
+import csv
 from datetime import datetime
 from unsloth import FastLanguageModel
 
@@ -81,25 +82,55 @@ def compare_models(models_config, questions, output_dir="EVAL/outputs/comparison
         del model, tokenizer
         torch.cuda.empty_cache()
 
-    # Save results
+    # ------------------------------------------------------------------
+    # Save results as a table (rows = questions, cols = models).
+    # 3 formats:
+    #   - .json : structured, per-cell (model, question, response, revision)
+    #   - .csv  : full-text table, open trong Excel / Google Sheet
+    #   - .md   : Markdown table, responses trimmed cho readable preview
+    # ------------------------------------------------------------------
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = os.path.join(output_dir, f"comparison_{timestamp}.json")
-    with open(output_file, "w", encoding="utf-8") as f:
+    base = os.path.join(output_dir, f"comparison_{timestamp}")
+
+    json_file = f"{base}.json"
+    with open(json_file, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
-    # Save readable text report
-    report_file = os.path.join(output_dir, f"comparison_{timestamp}.txt")
-    with open(report_file, "w", encoding="utf-8") as f:
-        for i, question in enumerate(questions):
-            f.write(f"\n{'='*80}\n")
-            f.write(f"Câu hỏi {i+1}: {question}\n")
-            f.write(f"{'='*80}\n")
-            for r in results:
-                if r["question"] == question:
-                    f.write(f"\n[{r['model']}]:\n{r['response']}\n")
-                    f.write(f"{'-'*40}\n")
+    # Pivot: table[question] = {model_name: response}
+    model_names = list(models_config.keys())
+    table = {q: {m: "" for m in model_names} for q in questions}
+    for r in results:
+        table[r["question"]][r["model"]] = r["response"]
 
-    print(f"\n\nResults saved to:\n  - {output_file}\n  - {report_file}")
+    # --- CSV (full text, each cell = full response) -------------------
+    csv_file = f"{base}.csv"
+    with open(csv_file, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["Question"] + model_names)
+        for q in questions:
+            w.writerow([q] + [table[q][m] for m in model_names])
+
+    # --- Markdown (GitHub/HF-friendly preview) ------------------------
+    PREVIEW_LEN = 400
+
+    def md_cell(text: str) -> str:
+        """Escape pipes, collapse newlines to <br>, trim for readability."""
+        if len(text) > PREVIEW_LEN:
+            text = text[:PREVIEW_LEN].rstrip() + "…"
+        return text.replace("|", "\\|").replace("\n", "<br>")
+
+    md_file = f"{base}.md"
+    with open(md_file, "w", encoding="utf-8") as f:
+        f.write(f"# Inference comparison — {timestamp}\n\n")
+        f.write(f"Responses trimmed to {PREVIEW_LEN} chars; full text in "
+                f"`{os.path.basename(csv_file)}` / `{os.path.basename(json_file)}`.\n\n")
+        f.write("| # | Question | " + " | ".join(model_names) + " |\n")
+        f.write("|---|---|" + "|".join(["---"] * len(model_names)) + "|\n")
+        for i, q in enumerate(questions, 1):
+            row = [str(i), md_cell(q)] + [md_cell(table[q][m]) for m in model_names]
+            f.write("| " + " | ".join(row) + " |\n")
+
+    print(f"\n\nResults saved to:\n  - {json_file}\n  - {csv_file}\n  - {md_file}")
     return results
 
 
