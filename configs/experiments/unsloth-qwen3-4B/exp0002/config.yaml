@@ -1,0 +1,62 @@
+name: "unsloth/Qwen3-4B-Instruct-2507-0002"
+
+model:
+  # Same model setup as exp0001. Đổi sang "CPT/cpt_qwen3_medical" (hoặc
+  # tên có "cpt" để pipeline_label = CPT_SFT) nếu muốn CPT-SFT trên mixed.
+  name: "unsloth/Qwen3-4B-Instruct-2507"
+  max_seq_length: 2048
+
+datasets:
+  # Mixed = full concat of multiplechoice (3379) + 2topics-3546 (3546) ≈ 6925
+  # train rows. 2× compute vs exp0001 — A100 40GB cần ~1h/epoch.
+  - path: "configs/dataset/venera_med_mixed.yaml"
+    train_samples: -1
+    train_val_split: 0.2
+
+benchmark:
+  path: "configs/evals/minimal_mmlu.yaml"
+
+unsloth:
+  load_in_4bit: false
+  attn_implementation: "sdpa"
+
+training:
+  output_dir: "group_outputs/outputs"
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  num_train_epochs: 1
+  learning_rate: 2e-4
+  weight_decay: 0.01
+  warmup_steps: 100
+  lr_scheduler_type: "cosine"
+  optim: "adamw_8bit"
+  eval_strategy: "steps"
+  eval_steps: 40
+  save_total_limit: 2
+  logging_steps: 10
+  fp16: false
+  bf16: true
+  save_steps: 40
+  seed: 3407
+  gradient_checkpointing: true
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+
+lora:
+  r: 32
+  lora_alpha: 32
+  lora_dropout: 0
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  use_rslora: true
+
+monitoring:
+  project: "VeneraMedicalM1"
+  tags: ["lora", "unsloth", "unsloth/Qwen3-4B-Instruct-2507", "exp0002", "mixed-dataset"]

@@ -1,0 +1,11 @@
+name: "venera_med_mixed"
+# Full mix: TradMedInstruct-multiplechoice (3379 rows, target distribution for
+# VM14K MCQ pipeline) + TradMedInstruct-2topics-3546 (3546 rows, closer to
+# Bench nhỏ distribution per README §"Hiện tại"). No reweighting — each source
+# concat'd full, train/val split applied per-source so val stays balanced.
+data:
+  - https://huggingface.co/datasets/Maverfrick/TradMedInstruct-multiplechoice
+  - https://huggingface.co/datasets/Maverfrick/TradMedInstruct-2topics-3546
+
+metadata:
+  source: "huggingface"

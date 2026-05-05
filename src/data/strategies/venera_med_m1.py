@@ -96,54 +96,67 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
         # Set in exp yaml: chat_mix_ratio: 0.1  # 10% of final dataset
         chat_mix_ratio = float(config.get("chat_mix_ratio", 0.0))
 
-        # ---- Data source ----
-        # Lấy từ config; fallback default. Phải biết source TRƯỚC khi tính
-        # cache key để không lẫn cache giữa các dataset khác nhau.
+        # ---- Data source(s) ----
+        # `data` accepts either a single string (HF repo or URL) or a LIST of
+        # strings — when list, all sources are concat'd full (no reweighting).
+        # Backward-compatible: existing string configs unchanged.
+        # Phải biết source TRƯỚC khi tính cache key để không lẫn cache.
         data_source = config.get("data", "Maverfrick/TradMedInstruct-multiplechoice")
-        if "https://huggingface.co/datasets/" in data_source:
-            data_source = data_source.replace("https://huggingface.co/datasets/", "")
+        if isinstance(data_source, str):
+            sources = [data_source]
+        else:
+            sources = list(data_source)
 
-        # ---- Cache (include data_source + chat_mix_ratio) ----
-        safe_src = data_source.replace("/", "_")
+        def _normalize(s: str) -> str:
+            return s.replace("https://huggingface.co/datasets/", "")
+
+        sources = [_normalize(s) for s in sources]
+
+        # ---- Cache (key includes ALL sources + chat_mix_ratio) ----
+        safe_src = "__".join(s.replace("/", "_") for s in sources)
         cache_key = f"{safe_src}_{train_samples}_{split_ratio}_mix{chat_mix_ratio}"
         cache_file = os.path.join(
             self.cache_dir, f"tradmedd_cache_{hash(cache_key)}.pkl"
         )
 
         if os.path.exists(cache_file):
-            print(f"✅ Loading dataset from cache ({data_source})")
+            print(f"✅ Loading dataset from cache ({sources})")
             with open(cache_file, "rb") as f:
                 cached = pickle.load(f)
                 return cached["train"], cached["val"]
 
-        # ---- Load dataset from HF ----
-        print(f"⬇️ Loading dataset from Hugging Face Hub: {data_source}")
-        
-        dataset = load_dataset(data_source)
+        # ---- Load each source, split, then concat. Splitting BEFORE concat
+        # guarantees val contains rows from every source proportionally.
+        train_parts = []
+        val_parts = []
+        for src in sources:
+            print(f"⬇️ Loading dataset from Hugging Face Hub: {src}")
+            ds = load_dataset(src)
+            if "train" in ds:
+                ds = ds["train"]
+            else:
+                ds = list(ds.values())[0]
+            print(f"   columns={ds.column_names}  rows={len(ds)}")
 
-        # Nếu có nhiều split
-        if "train" in dataset:
-            dataset = dataset["train"]
+            # `train_samples` applies PER-SOURCE for mixes (caps each source
+            # before concat). For single-source it matches old behavior.
+            if train_samples != -1:
+                n = min(train_samples, len(ds))
+                ds = ds.shuffle(seed=42).select(range(n))
+
+            split = ds.train_test_split(test_size=split_ratio, seed=42)
+            train_parts.append(preformat(split["train"]))
+            val_parts.append(preformat(split["test"]))
+
+        if len(train_parts) > 1:
+            from datasets import concatenate_datasets
+            train_set = concatenate_datasets(train_parts).shuffle(seed=42)
+            val_set = concatenate_datasets(val_parts)
+            print(f"🔀 Concatenated {len(sources)} sources: "
+                  f"train={len(train_set)} val={len(val_set)}")
         else:
-            # lấy split đầu tiên nếu không có train
-            dataset = list(dataset.values())[0]
-
-        print("📊 Dataset columns:", dataset.column_names)
-        print("🔎 First sample:", dataset[0])
-
-        # ---- Sampling ----
-        if train_samples != -1:
-            train_samples = min(train_samples, len(dataset))
-            dataset = dataset.shuffle(seed=42).select(range(train_samples))
-
-        # ---- Train / Val split ----
-        split = dataset.train_test_split(
-            test_size=split_ratio,
-            seed=42,
-        )
-
-        train_set = preformat(split["train"])
-        val_set = preformat(split["test"])
+            train_set = train_parts[0]
+            val_set = val_parts[0]
 
         # ---- Optional chat mix (FineTome-100k) -------------------------
         # Mục tiêu: đẩy vào SFT khoảng `chat_mix_ratio` tổng samples là
