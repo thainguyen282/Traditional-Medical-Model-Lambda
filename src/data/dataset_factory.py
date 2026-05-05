@@ -13,7 +13,11 @@ from src.data.strategies.venera_med_m1 import  VeneraMedDatasetStrategy
 class DatasetFactory:
     STRATEGIES = {
         "fine_tome": FineTomeDatasetStrategy,
-        "venera_med_m1": VeneraMedDatasetStrategy
+        "venera_med_m1": VeneraMedDatasetStrategy,
+        # Same strategy as venera_med_m1 — separate tag so the library can hold
+        # both (single-source mc) and (multi-source mc + 2topics) without
+        # tag collisions when an experiment ever lists both datasets.
+        "venera_med_mixed": VeneraMedDatasetStrategy,
     }
 
     @classmethod
