@@ -1,0 +1,73 @@
+name: "unsloth/Qwen3-4B-Instruct-2507-0002"
+
+model:
+  # CPT LoRA adapter trên HF Hub. Unsloth đọc adapter_config.json trong
+  # revision này để tìm base model (unsloth/Qwen3-4B-Instruct-2507), tải
+  # base xuống, rồi attach LoRA — SFT sẽ continue-train đúng adapter đó.
+  # Đổi về "unsloth/Qwen3-4B-Instruct-2507" (và xoá revision) nếu muốn
+  # SFT từ base model.
+  name: "huyennkai/Venera-CPT-TMModel"
+  revision: "cpt-tm-cpt-1776775114"
+  max_seq_length: 2048
+
+datasets:
+  # Mixed = full concat of multiplechoice (3379) + 2topics-3546 (3546).
+  # ~5540 train rows × 3 epochs ≈ 16.6k samples seen — gấp ~2× exp0001
+  # (8.1k). eval_steps + save_steps tăng tương ứng để giữ ~50 lần eval/run.
+  - path: "configs/dataset/venera_med_mixed.yaml"
+    train_samples: -1
+    train_val_split: 0.2
+    # chat_mix_ratio: 0.10   # bật nếu muốn chống format collapse
+
+benchmark:
+  path: "configs/evals/minimal_mmlu.yaml"
+
+unsloth:
+  load_in_4bit: false
+  attn_implementation: "sdpa"
+
+training:
+  output_dir: "group_outputs/outputs"
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  num_train_epochs: 3
+  # 5e-5: thấp hơn SFT-from-base (2e-4) để giữ kiến thức CPT, đủ cao để
+  # SFT reset chat format. Giữ giống exp0001 cho fair comparison.
+  learning_rate: 5e-5
+  weight_decay: 0.01
+  warmup_steps: 100
+  lr_scheduler_type: "cosine"
+  optim: "adamw_8bit"
+  eval_strategy: "steps"
+  # exp0001: ~676 steps/ep × 3 ≈ 2028 total, eval_steps=40 → ~50 lần.
+  # exp0002: ~1108 steps/ep × 3 ≈ 3324 total — gấp 1.6× cần eval_steps=80
+  # để giữ tần suất eval tương đương.
+  eval_steps: 80
+  save_total_limit: 2
+  logging_steps: 10
+  fp16: false
+  bf16: true
+  save_steps: 80
+  seed: 3407
+  gradient_checkpointing: true
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+
+lora:
+  r: 32
+  lora_alpha: 32
+  lora_dropout: 0
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  use_rslora: true
+
+monitoring:
+  project: "VeneraMedicalM1"
+  tags: ["lora", "unsloth", "unsloth/Qwen3-4B-Instruct-2507", "exp0002", "mixed-dataset", "cpt-sft"]
