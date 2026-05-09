@@ -89,7 +89,8 @@ def ensure_branch(repo_id: str, revision: str, token: str) -> None:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--task", choices=["cpt", "sft", "inference"], required=True)
+    p.add_argument("--task", choices=["cpt", "sft", "inference", "eval"],
+                   required=True)
     p.add_argument("--repo", required=True, help="HF repo id e.g. user/name")
     p.add_argument("--revision", required=True,
                    help="Branch/tag to push to (created if missing)")
@@ -130,6 +131,15 @@ def main() -> int:
         revision = f"inference-{slugify(args.revision)}"
         pipeline_label = "INFERENCE"
         args.skip_model = True  # implicit for inference task
+    elif args.task == "eval":
+        # Eval-only: push notebook outputs to an EXISTING revision of an
+        # adapter (each README model has its own HF branch). --revision is
+        # used VERBATIM here — no slugify, no prefix — because bootstrap
+        # passes the exact branch name where the adapter lives.
+        artifact_dir = Path(args.src) if args.src else Path("/tmp/__noop__")
+        revision = args.revision
+        pipeline_label = "EVAL"
+        args.skip_model = True
     else:
         if not args.config:
             die("--config required for sft")

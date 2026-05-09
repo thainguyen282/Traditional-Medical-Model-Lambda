@@ -245,6 +245,115 @@ print('yes' if 'cpt' in cfg.get('model', {}).get('name', '').lower() else 'no')
         || echo "[bootstrap] WARN: eval push failed (adapter is already on HF)"
 }
 
+# Sync with inference.py / README.md "🎯 Model output". Format per row:
+#   <display_name>|<hf_repo>|<hf_revision>|<variant>
+# variant ∈ {goc, cpt, sft, cpt_sft}: picks the matching Unsloth_QA_<variant>_*
+# notebooks and the right HF_REPO/HF_REVISION env vars.
+EVAL_README_MODELS=(
+    "Goc|unsloth/Qwen3-4B-Instruct-2507||goc"
+    "CPT-only|huyennkai/Venera-CPT-TMModel|cpt-tm-cpt-1776775114|cpt"
+    "CPT-SFT-multiplechoice|huyennkai/Venera-Traditional-Model|cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776945292|cpt_sft"
+    "SFT-multiplechoice|huyennkai/Venera-Traditional-Model|sft-unsloth-qwen3-4B-exp0001-tm-sft-1776949731|sft"
+    "SFT-2topics|huyennkai/Venera-Traditional-Model|sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092|sft"
+    "CPT-SFT-2topics|huyennkai/Venera-Traditional-Model|cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126|cpt_sft"
+)
+
+run_eval() {
+    # Re-run Unsloth_QA notebooks for each README model, push outputs to that
+    # model's existing HF branch (Goc has no branch → eval-goc-<JOB_TAG>).
+    # Each notebook runs in a fresh `docker run` (CUDA-fork-after-train issue
+    # documented in run_cpt — same root cause; load+infer in one container,
+    # then exit so the next notebook gets a clean CUDA init).
+    local fail_count=0
+    for entry in "${EVAL_README_MODELS[@]}"; do
+        IFS='|' read -r display repo revision variant <<< "$entry"
+        echo "[bootstrap] ===== EVAL $display ($variant) ====="
+        echo "[bootstrap] repo=$repo revision=${revision:-<none>}"
+
+        # Pick notebook pair for this variant.
+        local nb_new nb_vm14k env_export
+        case "$variant" in
+            goc)
+                nb_new="Unsloth_QA_goc_new.ipynb"
+                nb_vm14k="Unsloth_QA_goc_VM14K.ipynb"
+                env_export=""    # Goc loads base model directly, no env override
+                ;;
+            cpt)
+                nb_new="Unsloth_QA_CPT_new.ipynb"
+                nb_vm14k="Unsloth_QA_CPT_VM14K.ipynb"
+                env_export="export CPT_HF_REPO='$repo' && export CPT_HF_REVISION='$revision' &&"
+                ;;
+            sft)
+                nb_new="Unsloth_QA_SFT_new.ipynb"
+                nb_vm14k="Unsloth_QA_SFT_VM14K.ipynb"
+                env_export="export SFT_HF_REPO='$repo' && export SFT_HF_REVISION='$revision' &&"
+                ;;
+            cpt_sft)
+                nb_new="Unsloth_QA_CPT_SFT_new.ipynb"
+                nb_vm14k="Unsloth_QA_CPT_SFT_VM14K.ipynb"
+                env_export="export SFT_HF_REPO='$repo' && export SFT_HF_REVISION='$revision' &&"
+                ;;
+            *)
+                echo "[bootstrap] WARN: unknown variant '$variant' for $display — skipping"
+                continue
+                ;;
+        esac
+
+        # Clear EVAL/outputs so notebooks for this model write into a clean
+        # dir; otherwise responses.jsonl from the previous model would
+        # append (we open in mode "a"). Run inside docker because the bind
+        # mount belongs to root, not ubuntu.
+        in_docker "rm -rf /workspace/EVAL/outputs && mkdir -p /workspace/EVAL/outputs" \
+            || { echo "[bootstrap] WARN: clear outputs failed for $display"; ((fail_count++)); continue; }
+
+        local nb_failed=0
+        for nb in "$nb_new" "$nb_vm14k"; do
+            local stem="${nb%.ipynb}"
+            in_docker "cd /workspace/EVAL && jupyter nbconvert --to script --output '$stem' '$nb'" \
+                || { echo "[bootstrap] WARN: nbconvert failed for $nb"; nb_failed=1; continue; }
+            in_docker "cd /workspace/EVAL && $env_export python '$stem.py'" \
+                || { echo "[bootstrap] WARN: $nb exit non-zero — continuing"; nb_failed=1; }
+        done
+
+        # Push to HF: existing branch for trained models, fresh branch for Goc.
+        local target_repo target_revision
+        if [ "$variant" = "goc" ]; then
+            target_repo="$HF_SFT_REPO"
+            target_revision="eval-goc-$JOB_TAG"
+        else
+            target_repo="$repo"
+            target_revision="$revision"
+        fi
+
+        echo "[bootstrap] push eval outputs -> $target_repo @ $target_revision"
+        in_docker "python /workspace/scripts/lambda_push_to_hf.py \
+            --task eval \
+            --repo '$target_repo' \
+            --revision '$target_revision' \
+            --eval-src /workspace/EVAL/outputs" \
+            || { echo "[bootstrap] WARN: push failed for $display"; ((fail_count++)); }
+
+        if [ "$nb_failed" = "1" ]; then
+            ((fail_count++))
+        fi
+    done
+
+    # Final log push to a dedicated revision so train.log isn't lost.
+    echo "[bootstrap] ===== EVAL: push aggregated train.log ====="
+    in_docker "python /workspace/scripts/lambda_push_to_hf.py \
+        --task eval \
+        --repo '$HF_SFT_REPO' \
+        --revision 'eval-$JOB_TAG' \
+        --log-file /host/train.log" \
+        || echo "[bootstrap] WARN: log push failed"
+
+    if [ "$fail_count" -gt 0 ]; then
+        echo "[bootstrap] EVAL completed with $fail_count partial failures"
+        return 1
+    fi
+    return 0
+}
+
 run_inference() {
     # inference.py load từng model trên HF revision của nó → generate 5 câu →
     # ghi EVAL/outputs/comparison/comparison_<ts>.{json,txt}. Không train gì,
@@ -274,6 +383,8 @@ elif [ "$TASK_TYPE" = "sft" ]; then
     done <<< "$CONFIG_LIST"
 elif [ "$TASK_TYPE" = "inference" ]; then
     run_inference || status=$?
+elif [ "$TASK_TYPE" = "eval" ]; then
+    run_eval || status=$?
 else
     fail "unknown TASK_TYPE=$TASK_TYPE"
 fi
