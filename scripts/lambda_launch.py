@@ -60,7 +60,13 @@ class LambdaAPI:
 
     def _req(self, method: str, path: str, **kw: Any) -> dict:
         url = f"{LAMBDA_API}{path}"
-        r = self.session.request(method, url, timeout=30, **kw)
+        # /instance-operations/launch can take 30-60s server-side. A 30s
+        # client timeout there leaves an orphan instance: the launch
+        # succeeds on Lambda's side but our requests.post raises ReadTimeout,
+        # we never persist the instance_id, never scp bootstrap, never
+        # terminate. Give launch endpoints ample time.
+        timeout = kw.pop("timeout", 90 if "launch" in path else 30)
+        r = self.session.request(method, url, timeout=timeout, **kw)
         if r.status_code >= 400:
             die(f"{method} {path} -> {r.status_code}: {r.text}")
         return r.json().get("data", r.json())
