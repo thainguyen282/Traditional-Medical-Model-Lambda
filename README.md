@@ -25,6 +25,17 @@ Adapter LoRA đã train + eval, public trên Hugging Face. Mỗi branch là **sn
 | 🥇 **TCM thuần** (Q&A Đông y hẹp) | [`Venera-Traditional-Model` @ `sft-…-tm-sft-1776771092`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092) | 46.45% | 🥇 **63.81%** | 0% |
 | 🥈 Cân bằng (đa chuyên khoa + Đông y) | [`Venera-Traditional-Model` @ `cpt-sft-…-tm-sft-1776784126`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126) | 47.16% | 62.86% | 1.06% |
 
+### exp0003 — CPT-SFT trên `2topics-3546` + NEFTune (13/05/2026)
+
+| Use case | HF repo @ branch | VM14K Acc | Bench nhỏ Acc | Deviation |
+|---|---|:--:|:--:|:--:|
+| 🥇 **Cân bằng (best 2topics)** — CPT-SFT + NEFTune α=5 | [`Venera-Traditional-Model` @ `cpt-sft-…-exp0003-tm-sft-1778605702`](https://huggingface.co/huyennkai/Venera-Traditional-Model/tree/cpt-sft-unsloth-qwen3-4B-exp0003-tm-sft-1778605702) | **47.52%** | 🥇 **63.81%** | **0%** |
+
+**Nhận xét exp0003** (vs CPT-SFT 2topics no-NEFTune `tm-sft-1776784126`):
+- VM14K **+0.36%** (47.16 → 47.52), Bench nhỏ **+0.95%** (62.86 → 63.81 — tie 🥇 với SFT-only).
+- **Deviation 1.06% → 0%** — NEFTune chống format-collapse rõ.
+- Chạy **A10 24GB ở 4-bit** (vs A100 bf16 cũ) — về lý thuyết 4-bit kém ~0.5-1% nhưng vẫn beat. Effective batch giữ = 4 (batch 2 × grad_accum 2). Config: [`exp0003/config_cpt.yaml`](configs/experiments/unsloth-qwen3-4B/exp0003/config_cpt.yaml).
+
 Baseline: **Qwen3-4B-Instruct-2507 (gốc)** — VM14K 48.05%, Bench nhỏ 53.33%, deviation 0%.
 
 **Nhận xét**:
