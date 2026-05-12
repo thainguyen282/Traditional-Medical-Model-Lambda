@@ -18,6 +18,7 @@ class DatasetFactory:
         # both (single-source mc) and (multi-source mc + 2topics) without
         # tag collisions when an experiment ever lists both datasets.
         "venera_med_mixed": VeneraMedDatasetStrategy,
+        "venera_med_2topics": VeneraMedDatasetStrategy,
     }
 
     @classmethod

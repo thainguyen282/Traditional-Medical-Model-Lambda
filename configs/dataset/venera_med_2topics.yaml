@@ -1,0 +1,9 @@
+name: "venera_med_2topics"
+# Dataset cũ: Maverfrick/TradMedInstruct-2topics-3546 (~3546 rows). Theo
+# README §"Historical" — đạt Bench nhỏ tốt nhất (63.81% TCM-thuần,
+# 62.86% Cân bằng) trong các baseline. Format `messages` giống mc → cùng
+# strategy VeneraMedDatasetStrategy xử lý được.
+data: https://huggingface.co/datasets/Maverfrick/TradMedInstruct-2topics-3546
+
+metadata:
+  source: "huggingface"

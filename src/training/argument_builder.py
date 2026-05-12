@@ -38,6 +38,12 @@ class ArgumentBuilder:
             fp16=train_config.get("fp16", False),
             bf16=train_config.get("bf16", False),
 
+            # NEFTune: adds uniform noise to input embeddings during the
+            # train forward pass (Jain et al. 2023, arXiv:2310.05914).
+            # Acts as implicit regularization — frequently +2-10% on
+            # instruction-tuning benchmarks. 0.0 disables. Recommended: 5.
+            neftune_noise_alpha=float(train_config.get("neftune_noise_alpha", 0.0)) or None,
+
             # SFT-specific: only compute loss on completion tokens
             # completion_only_loss auto-detects from prompt/completion columns
             max_length=train_config.get("max_seq_length", 2048),
