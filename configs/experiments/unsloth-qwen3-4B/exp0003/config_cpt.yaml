@@ -16,13 +16,18 @@ benchmark:
   path: "configs/evals/minimal_mmlu.yaml"
 
 unsloth:
-  load_in_4bit: false
+  # A10 24GB cần 4-bit để fit Qwen3-4B + LoRA + grad_ckpt. exp0001 dùng
+  # false (A100 40GB) — 4-bit có thể kém hơn ~0.5-1%, nhưng cần để fit.
+  load_in_4bit: true
   attn_implementation: "sdpa"
 
 training:
   output_dir: "group_outputs/outputs"
-  per_device_train_batch_size: 4
-  per_device_eval_batch_size: 4
+  # A10 batch 2; grad_accum 2 → effective batch = 4 (= exp0001), cùng
+  # số optimization steps → fair comparison.
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 2
+  per_device_eval_batch_size: 2
   num_train_epochs: 3
   # Giống exp0001/config_cpt.yaml — đã được tune cho CPT-SFT pipeline.
   learning_rate: 5e-5
