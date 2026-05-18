@@ -364,6 +364,12 @@ def main() -> int:
                              "inference -> inference.py (compare models from README); "
                              "eval -> re-run Unsloth_QA_*.ipynb on all 6 README "
                              "models, push to each model's HF branch")
+    parser.add_argument("--eval-only",
+                        help="(eval task only) Override the 6-model loop with a "
+                             "single model. Format: 'name|repo|revision|variant' "
+                             "where variant ∈ {goc,cpt,sft,cpt_sft}. Example: "
+                             "'SFT-exp0002|huyennkai/Venera-Traditional-Model|"
+                             "sft-unsloth-qwen3-4B-exp0002-tm-sft-1777957925|sft'")
     parser.add_argument("--config", help="Path to a single SFT config yaml")
     parser.add_argument("--config-list",
                         help="Path to a text file with one config path per line")
@@ -418,6 +424,9 @@ def main() -> int:
         "DOCKER_IMAGE": os.environ.get("DOCKER_IMAGE", ""),
         "GHCR_LOGIN":   os.environ.get("GHCR_LOGIN", ""),
         "GHCR_USER":    os.environ.get("GHCR_USER", ""),
+        # eval task: when set, run_eval() loops over JUST this one entry
+        # instead of the hard-coded 6-model README list.
+        "EVAL_ONLY":    args.eval_only or "",
     }
 
     return run_job(

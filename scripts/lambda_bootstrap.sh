@@ -264,8 +264,19 @@ run_eval() {
     # Each notebook runs in a fresh `docker run` (CUDA-fork-after-train issue
     # documented in run_cpt — same root cause; load+infer in one container,
     # then exit so the next notebook gets a clean CUDA init).
+    #
+    # If EVAL_ONLY env var is set ("name|repo|revision|variant"), override
+    # the README list with just that single entry. Used to re-eval one model
+    # after an extract_answer fix, without re-running all 6.
+    local models_to_run=()
+    if [ -n "${EVAL_ONLY:-}" ]; then
+        echo "[bootstrap] EVAL_ONLY set — overriding 6-model loop"
+        models_to_run=("$EVAL_ONLY")
+    else
+        models_to_run=("${EVAL_README_MODELS[@]}")
+    fi
     local fail_count=0
-    for entry in "${EVAL_README_MODELS[@]}"; do
+    for entry in "${models_to_run[@]}"; do
         IFS='|' read -r display repo revision variant <<< "$entry"
         echo "[bootstrap] ===== EVAL $display ($variant) ====="
         echo "[bootstrap] repo=$repo revision=${revision:-<none>}"
