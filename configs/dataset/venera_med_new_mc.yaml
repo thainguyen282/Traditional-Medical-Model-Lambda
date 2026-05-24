@@ -1,0 +1,11 @@
+name: "venera_med_new_mc"
+# Dataset MỚI: Maverfrick/New-TradMedInstruct-multiplechoice (train 3198 / test 169).
+# Schema: `messages` (role/content, OpenAI chat format) + extra fields
+# (id, source_id, page_id, qa_type, answer_letter). Strategy `VeneraMed*`
+# đã handle `messages` route trong convert_to_conversations — không cần đụng.
+# Assistant trả lời format: "<giải thích> ... ### <letter>" → extract_answer v3
+# có pattern `### A` priority cao nhất, OK.
+data: https://huggingface.co/datasets/Maverfrick/New-TradMedInstruct-multiplechoice
+
+metadata:
+  source: "huggingface"

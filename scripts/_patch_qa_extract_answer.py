@@ -24,12 +24,20 @@ ROOT = Path(__file__).resolve().parent.parent
 EVAL_DIR = ROOT / "EVAL"
 
 OLD_ANCHOR = "_FINAL_ANSWER_PATTERN"   # present in every old notebook
-NEW_MARKER = "# === extract_answer v2"
+# Anchor accepts v2 too — re-run upgrades v2 → v3.
+NEW_MARKER = "# === extract_answer v3"
+V2_MARKER = "# === extract_answer v2"
 
-NEW_CELL = r'''# === extract_answer v2: VN-aware + reasoning-tag stripping + first-match fallback
+NEW_CELL = r'''# === extract_answer v3: v2 + Markdown-heading recognition (`### A` / `#### B`)
 _REASONING_TAG_RE = re.compile(
     r"<(?:tool_call|think|tool_use|reasoning|thought|scratchpad)\b[^>]*>?",
     re.IGNORECASE,
+)
+# Markdown heading style answer (HIGHEST priority — common in datasets where
+# the trained assistant trailer is `### A`, e.g. Maverfrick/New-*-multiplechoice).
+# Matches `## A` ... `##### A`, optional bold, at end of line.
+_MARKDOWN_HEADING_RE = re.compile(
+    r"(?m)^#{2,5}\s+\*{0,2}([A-E])\*{0,2}\s*$",
 )
 # Explicit answer markers in EN and VN:
 #   "Final Answer: B", "Final answer is B", "the answer is B",
@@ -69,6 +77,12 @@ def extract_answer(model_response):
     if not cleaned:
         return "EMPTY_RESPONSE"
 
+    # 1. Markdown heading `### A` — trained Maverfrick/New-* format. Highest
+    # priority because heading-style answers are unambiguous and intentional.
+    m = _MARKDOWN_HEADING_RE.search(cleaned)
+    if m:
+        return m.group(1).upper()
+
     m = _EXPLICIT_ANSWER_RE.search(cleaned)
     if m:
         return m.group(1).upper()
@@ -101,8 +115,10 @@ def patch_notebook(path: Path) -> str:
         src = cell["source"] if isinstance(cell["source"], list) else [cell["source"]]
         joined = "".join(src)
         if NEW_MARKER in joined:
-            return "SKIP (already v2)"
-        if OLD_ANCHOR not in joined or "def extract_answer" not in joined:
+            return "SKIP (already v3)"
+        # Match the original anchor OR the v2 marker (re-run upgrades v2→v3).
+        if (OLD_ANCHOR not in joined and V2_MARKER not in joined) \
+                or "def extract_answer" not in joined:
             continue
         # Replace this entire cell — old extract_answer block.
         cell["source"] = [l + "\n" for l in NEW_CELL.split("\n")[:-1]]

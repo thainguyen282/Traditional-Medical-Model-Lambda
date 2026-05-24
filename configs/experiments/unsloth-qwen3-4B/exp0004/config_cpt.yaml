@@ -1,0 +1,63 @@
+name: "unsloth/Qwen3-4B-Instruct-2507-0004"
+
+model:
+  # CPT-SFT: continue-train trên CPT adapter (giống exp0001/0003/config_cpt.yaml).
+  name: "huyennkai/Venera-CPT-TMModel"
+  revision: "cpt-tm-cpt-1776775114"
+  max_seq_length: 2048
+
+datasets:
+  - path: "configs/dataset/venera_med_new_mc.yaml"
+    train_samples: -1
+    train_val_split: 0.2
+
+benchmark:
+  path: "configs/evals/minimal_mmlu.yaml"
+
+unsloth:
+  load_in_4bit: true
+  attn_implementation: "sdpa"
+
+training:
+  output_dir: "group_outputs/outputs"
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 2
+  per_device_eval_batch_size: 2
+  num_train_epochs: 3
+  # lr 5e-5: CPT-SFT (thấp hơn SFT-from-base để giữ kiến thức CPT). Match exp0003.
+  learning_rate: 5e-5
+  weight_decay: 0.01
+  warmup_steps: 100
+  lr_scheduler_type: "cosine"
+  optim: "adamw_8bit"
+  eval_strategy: "steps"
+  eval_steps: 40
+  save_total_limit: 2
+  logging_steps: 10
+  fp16: false
+  bf16: true
+  save_steps: 40
+  seed: 3407
+  gradient_checkpointing: true
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  neftune_noise_alpha: 5
+
+lora:
+  r: 32
+  lora_alpha: 32
+  lora_dropout: 0
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  use_rslora: true
+
+monitoring:
+  project: "VeneraMedicalM1"
+  tags: ["lora", "unsloth", "unsloth/Qwen3-4B-Instruct-2507", "exp0004", "new-multiplechoice", "cpt-sft", "neftune"]

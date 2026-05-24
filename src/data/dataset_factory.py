@@ -19,6 +19,7 @@ class DatasetFactory:
         # tag collisions when an experiment ever lists both datasets.
         "venera_med_mixed": VeneraMedDatasetStrategy,
         "venera_med_2topics": VeneraMedDatasetStrategy,
+        "venera_med_new_mc": VeneraMedDatasetStrategy,
     }
 
     @classmethod
