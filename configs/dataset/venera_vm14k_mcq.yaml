@@ -1,0 +1,13 @@
+name: "venera_vm14k_mcq"
+# Dataset MỚI: Maverfrick/VM14K-MCQ-Instruct (train 535 / test 29).
+# Schema GIỐNG hệt venera_med_new_mc: `messages` (role/content, OpenAI chat) +
+# extra fields (id, source_id, page_id, qa_type, answer_letter). Strategy
+# VeneraMed* handle `messages` route trong convert_to_conversations.
+# Assistant trả lời format "<giải thích> ... ### <letter>" → extract_answer v3
+# có pattern `### A` priority cao nhất, OK.
+# LƯU Ý: strategy chỉ dùng split `train` (535 rows) rồi tự re-split 0.2 →
+# ~428 train / 107 val; split `test` (29) bị bỏ qua (đúng behavior cũ).
+data: https://huggingface.co/datasets/Maverfrick/VM14K-MCQ-Instruct
+
+metadata:
+  source: "huggingface"

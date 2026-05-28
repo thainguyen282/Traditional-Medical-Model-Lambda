@@ -20,6 +20,10 @@ class DatasetFactory:
         "venera_med_mixed": VeneraMedDatasetStrategy,
         "venera_med_2topics": VeneraMedDatasetStrategy,
         "venera_med_new_mc": VeneraMedDatasetStrategy,
+        # VM14K-MCQ-Instruct single-source (exp0005) and its mix with
+        # New-TradMedInstruct-multiplechoice (exp0006). Same strategy.
+        "venera_vm14k_mcq": VeneraMedDatasetStrategy,
+        "venera_vm14k_mixed": VeneraMedDatasetStrategy,
     }
 
     @classmethod

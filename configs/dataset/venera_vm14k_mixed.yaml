@@ -1,0 +1,12 @@
+name: "venera_vm14k_mixed"
+# Mix: VM14K-MCQ-Instruct (535 rows) + New-TradMedInstruct-multiplechoice
+# (3198 rows — dataset của exp0004). Cùng schema `messages` + answer_letter,
+# đáp án format `### <letter>`. No reweighting — mỗi source concat full,
+# train/val split áp dụng PER-SOURCE nên val giữ tỉ lệ từ cả 2 nguồn.
+# Sau split 0.2: ~2986 train / ~746 val.
+data:
+  - https://huggingface.co/datasets/Maverfrick/VM14K-MCQ-Instruct
+  - https://huggingface.co/datasets/Maverfrick/New-TradMedInstruct-multiplechoice
+
+metadata:
+  source: "huggingface"
