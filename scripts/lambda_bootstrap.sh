@@ -382,7 +382,22 @@ run_inference() {
     # không đụng CUDA fork (chỉ 1 docker run duy nhất).
     echo "[bootstrap] ===== inference compare ====="
     # Allow overriding the inference script via INFERENCE_SCRIPT env var
-    in_docker "cd /workspace && python ${INFERENCE_SCRIPT:-inference.py}" || return $?
+    # If a custom inference script was provided, call it. For the
+    # `test_inference_max_tokens.py` helper (which expects `--model`),
+    # default the `--model` to `HF_SFT_REPO` so the job can run without
+    # additional CLI args.
+    if [ -n "${INFERENCE_SCRIPT:-}" ]; then
+        script_path="/workspace/${INFERENCE_SCRIPT}"
+        script_basename=$(basename "${INFERENCE_SCRIPT}")
+        if [ "$script_basename" = "test_inference_max_tokens.py" ]; then
+            echo "[bootstrap] running custom inference script: $script_basename (auto --model from HF_SFT_REPO)"
+            in_docker "cd /workspace && python '$script_path' --model '$HF_SFT_REPO'" || return $?
+        else
+            in_docker "cd /workspace && python '$script_path'" || return $?
+        fi
+    else
+        in_docker "cd /workspace && python inference.py" || return $?
+    fi
 
     local HF_INF_REPO="${HF_INF_REPO:-$HF_SFT_REPO}"
     echo "[bootstrap] ===== push comparison + log to $HF_INF_REPO ====="
