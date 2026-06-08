@@ -240,6 +240,16 @@ def run_job(
         scp_to(ssh_private_key, ip, str(scripts_dir / "lambda_push_to_hf.py"),
                "/home/ubuntu/lambda_push_to_hf.py")
 
+        # Optionally scp a custom inference script (basename copied).
+        inf_script = env_vars.get("INFERENCE_SCRIPT", "")
+        if inf_script:
+            local_inf = scripts_dir / Path(inf_script).name
+            if local_inf.exists():
+                log(f"scp custom inference script: {local_inf.name}")
+                scp_to(ssh_private_key, ip, str(local_inf), f"/home/ubuntu/{local_inf.name}")
+            else:
+                log(f"INFERENCE_SCRIPT set but local file not found: {local_inf} — proceeding without scp")
+
         # Write remote .env with secrets + job params.
         remote_env = {
             **env_vars,
@@ -382,6 +392,8 @@ def main() -> int:
                         help="Do not terminate the instance after the job ends")
     parser.add_argument("--list-types", action="store_true",
                         help="List all instance types + availability and exit")
+    parser.add_argument("--inference-script", default=None,
+                        help="(inference task) path to a custom inference script inside the repo (e.g. scripts/test_inference_max_tokens.py)")
     args = parser.parse_args()
 
     lambda_key = os.environ.get("LAMBDA_API_KEY")
@@ -427,6 +439,9 @@ def main() -> int:
         # eval task: when set, run_eval() loops over JUST this one entry
         # instead of the hard-coded 6-model README list.
         "EVAL_ONLY":    args.eval_only or "",
+        # Optional override: run a custom inference script instead of
+        # the default `inference.py` inside the container.
+        "INFERENCE_SCRIPT": args.inference_script or os.environ.get("INFERENCE_SCRIPT", ""),
     }
 
     return run_job(

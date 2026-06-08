@@ -88,6 +88,17 @@ if [ ! -d "$REPO_DIR/.git" ]; then
 fi
 cd "$REPO_DIR" || fail "cd repo"
 
+# If a custom inference script was scp'd to /home/ubuntu, move it into the
+# cloned repo so subsequent steps can run it from /workspace/scripts/.
+if [ -n "${INFERENCE_SCRIPT:-}" ]; then
+    script_basename=$(basename "$INFERENCE_SCRIPT")
+    if [ -f "/home/ubuntu/$script_basename" ]; then
+        mkdir -p "$REPO_DIR/scripts"
+        mv "/home/ubuntu/$script_basename" "$REPO_DIR/scripts/$script_basename" || \
+            echo "[bootstrap] WARN: failed moving $script_basename into repo"
+    fi
+fi
+
 # ------------------------------------------------------------------
 # 4. Docker pull the pre-baked image.
 #    Public ghcr.io images need no login. If you flip the package to
@@ -370,7 +381,8 @@ run_inference() {
     # ghi EVAL/outputs/comparison/comparison_<ts>.{json,txt}. Không train gì,
     # không đụng CUDA fork (chỉ 1 docker run duy nhất).
     echo "[bootstrap] ===== inference compare ====="
-    in_docker "cd /workspace && python inference.py" || return $?
+    # Allow overriding the inference script via INFERENCE_SCRIPT env var
+    in_docker "cd /workspace && python ${INFERENCE_SCRIPT:-inference.py}" || return $?
 
     local HF_INF_REPO="${HF_INF_REPO:-$HF_SFT_REPO}"
     echo "[bootstrap] ===== push comparison + log to $HF_INF_REPO ====="
