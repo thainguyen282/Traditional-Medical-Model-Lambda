@@ -99,6 +99,14 @@ if [ -n "${INFERENCE_SCRIPT:-}" ]; then
     fi
 fi
 
+# If lambda_push_to_hf.py was scp'd to /home/ubuntu, move it into the repo's
+# scripts directory so later in-docker pushes can reference /workspace/scripts/.
+if [ -f "/home/ubuntu/lambda_push_to_hf.py" ]; then
+    mkdir -p "$REPO_DIR/scripts"
+    mv "/home/ubuntu/lambda_push_to_hf.py" "$REPO_DIR/scripts/lambda_push_to_hf.py" || \
+        echo "[bootstrap] WARN: failed moving lambda_push_to_hf.py into repo"
+fi
+
 # ------------------------------------------------------------------
 # 4. Docker pull the pre-baked image.
 #    Public ghcr.io images need no login. If you flip the package to
