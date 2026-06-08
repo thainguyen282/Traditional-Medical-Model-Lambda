@@ -391,7 +391,12 @@ run_inference() {
         script_basename=$(basename "${INFERENCE_SCRIPT}")
         if [ "$script_basename" = "test_inference_max_tokens.py" ]; then
             echo "[bootstrap] running custom inference script: $script_basename (auto --model from HF_SFT_REPO)"
-            in_docker "cd /workspace && python '$script_path' --model '$HF_SFT_REPO'" || return $?
+            if [ -n "${INFERENCE_REVISION:-}" ]; then
+                echo "[bootstrap] passing --revision ${INFERENCE_REVISION} to inference script"
+                in_docker "cd /workspace && python '$script_path' --model '$HF_SFT_REPO' --revision '$INFERENCE_REVISION'" || return $?
+            else
+                in_docker "cd /workspace && python '$script_path' --model '$HF_SFT_REPO'" || return $?
+            fi
         else
             in_docker "cd /workspace && python '$script_path'" || return $?
         fi

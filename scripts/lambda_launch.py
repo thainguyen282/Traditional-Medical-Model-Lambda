@@ -394,6 +394,8 @@ def main() -> int:
                         help="List all instance types + availability and exit")
     parser.add_argument("--inference-script", default=None,
                         help="(inference task) path to a custom inference script inside the repo (e.g. scripts/test_inference_max_tokens.py)")
+    parser.add_argument("--inference-revision", default=None,
+                        help="(inference task) HF revision to pass as --revision to the inference script")
     args = parser.parse_args()
 
     lambda_key = os.environ.get("LAMBDA_API_KEY")
@@ -442,6 +444,8 @@ def main() -> int:
         # Optional override: run a custom inference script instead of
         # the default `inference.py` inside the container.
         "INFERENCE_SCRIPT": args.inference_script or os.environ.get("INFERENCE_SCRIPT", ""),
+        # Optional: pass a HF revision string to the inference script.
+        "INFERENCE_REVISION": args.inference_revision or os.environ.get("INFERENCE_REVISION", ""),
     }
 
     return run_job(
