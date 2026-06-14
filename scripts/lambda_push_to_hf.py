@@ -123,7 +123,9 @@ def main() -> int:
         if not args.src:
             die("--src required for cpt")
         artifact_dir = Path(args.src)
-        revision = f"cpt-{slugify(args.revision)}"
+        # "main" được dùng VERBATIM (push thẳng vào branch chính); mọi tag khác
+        # vẫn tạo branch per-run cpt-<slug> như cũ → giữ tương thích ngược.
+        revision = "main" if args.revision == "main" else f"cpt-{slugify(args.revision)}"
         pipeline_label = "CPT"
     elif args.task == "inference":
         # No model artifact to upload — only eval_src (comparison dir) + log.

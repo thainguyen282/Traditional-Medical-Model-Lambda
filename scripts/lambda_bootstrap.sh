@@ -165,7 +165,8 @@ run_cpt() {
     # subprocess forked from that python process inherits a corrupted NVML
     # state (torch.cuda.is_available=False). A new `docker run` is a new
     # process tree → clean CUDA init.
-    local HF_REVISION="cpt-${JOB_TAG//_/-}"
+    # CPT.py pushes the adapter to `main`, so eval must load from main too.
+    local HF_REVISION="main"
     echo "[bootstrap] ===== CPT: eval (fresh containers, model from HF) ====="
     for nb in Unsloth_QA_CPT_new.ipynb Unsloth_QA_CPT_VM14K.ipynb; do
         local stem="${nb%.ipynb}"
@@ -186,7 +187,7 @@ run_cpt() {
         --task cpt \
         --repo '$HF_CPT_REPO' \
         --src /workspace/CPT/cpt_qwen3_medical \
-        --revision '$JOB_TAG' \
+        --revision main \
         --skip-model \
         --eval-src /workspace/EVAL/outputs \
         --log-file /host/train.log" \

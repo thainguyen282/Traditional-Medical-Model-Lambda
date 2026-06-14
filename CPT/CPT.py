@@ -7,7 +7,8 @@ from unsloth import UnslothTrainer, UnslothTrainingArguments
 MODEL_NAME = "unsloth/Qwen3-4B-Instruct-2507"
 OUTPUT_DIR = "cpt_qwen3_medical"
 MAX_SEQ_LENGTH = 2048
-EVAL_DATASET_ID = "Maverfrick/Continued-Pretraining-Vietnamese-TCM"
+# Dataset đã pre-chunk ~2048 tokens và có sẵn split train/validation.
+DATASET_ID = "Maverfrick/TradMed-CPT-53k-2048"
 
 # =========================
 # LOAD MODEL
@@ -19,17 +20,19 @@ model, tokenizer = FastLanguageModel.from_pretrained(
 )
 
 # LoRA chỉ trên linear projections — KHÔNG train embed_tokens / lm_head.
-# Dataset quá nhỏ (~460K tokens) để dịch chuyển embedding một cách có ích,
-# và việc đụng input/output representation trên 1 model đã được Instruct
-# align rất dễ gây format collapse. Nếu sau này dataset ≥ 50M tokens hoặc
-# phát hiện token TCM bị tokenize vỡ vụn, thêm "embed_tokens" + "lm_head"
-# vào list dưới đây (embedding_learning_rate trong training_args sẽ tự
-# kích hoạt).
+# Dataset mới TradMed-CPT-53k-2048 ~ 15–30M tokens (51.4k chunk × ~600–900 tok),
+# vẫn DƯỚI ngưỡng 50M để dịch chuyển embedding một cách có ích, và việc đụng
+# input/output representation trên 1 model đã được Instruct align rất dễ gây
+# format collapse. Chỉ thêm "embed_tokens" + "lm_head" vào list dưới đây nếu
+# phát hiện thuật ngữ Hán-Việt/TCM bị tokenize vỡ vụn (embedding_learning_rate
+# trong training_args sẽ tự kích hoạt).
 model = FastLanguageModel.get_peft_model(
     model,
-    r=32,
+    # r=64: data domain lớn hơn ~30–60× so với run cũ → cần nhiều capacity hơn
+    # r=32 để hấp thụ kiến thức TCM.
+    r=64,
     # alpha=r với rsLoRA → scale nhất quán với SFT, tránh shock khi continue-train.
-    lora_alpha=32,
+    lora_alpha=64,
     lora_dropout=0,
     bias="none",
     use_rslora=True,
@@ -51,30 +54,29 @@ def clean_text(text):
 # CPT = continual pre-training: train next-token prediction trên text y học thuần.
 # KHÔNG bọc chat template, KHÔNG fake user/assistant turn — tránh dạy model hành vi
 # "trả lời bằng cách copy lại câu hỏi" gây format collapse ở bước SFT.
+#
+# Dataset đã pre-chunk: nhiều chunk (chunk_index 0..N) thuộc cùng một `source`
+# là các đoạn LIÊN TỤC của cùng tài liệu. KHÔNG append eos cho mọi chunk — làm
+# vậy sẽ chèn eos giữa các đoạn liền nhau, dạy model "tài liệu chỉ dài 2048 tok"
+# và cắt đứt ngữ cảnh xuyên chunk. Để packing=True nối các chunk lại; eos chỉ
+# nên xuất hiện ở ranh giới tài liệu thật (ngoài phạm vi xử lý ở đây).
 def format_text(example):
     raw_text = example.get("text", "")
     if not raw_text:
         return {"text": ""}
-    return {"text": clean_text(raw_text) + tokenizer.eos_token}
+    return {"text": clean_text(raw_text)}
 
 # =========================
-# LOAD TRAIN DATASET (local parquet)
+# LOAD DATASET (HF — đã có sẵn split train/validation)
 # =========================
-train_dataset = load_dataset(
-    "parquet",
-    data_files={"train": "train-00000-of-00001.parquet"},
-)["train"]
+train_dataset = load_dataset(DATASET_ID, split="train")
 print("Train cols:", train_dataset.column_names, "rows:", len(train_dataset))
-
 train_dataset = train_dataset.map(format_text)
 train_dataset = train_dataset.filter(lambda x: len(x["text"]) > 0)
 
-# =========================
-# LOAD EVAL DATASET (HF — held-out TCM text)
-# =========================
-# Dùng split "test" của cùng source data để monitor CPT có học được domain
-# hay không. eval_loss giảm = học được; tăng nhanh = overfit hoặc format collapse.
-eval_dataset = load_dataset(EVAL_DATASET_ID, split="test")
+# validation split held-out → monitor CPT có học được domain hay không.
+# eval_loss giảm = học được; tăng nhanh = overfit hoặc format collapse.
+eval_dataset = load_dataset(DATASET_ID, split="validation")
 print("Eval cols:", eval_dataset.column_names, "rows:", len(eval_dataset))
 eval_dataset = eval_dataset.map(format_text)
 eval_dataset = eval_dataset.filter(lambda x: len(x["text"]) > 0)
@@ -86,10 +88,14 @@ training_args = UnslothTrainingArguments(
     output_dir=OUTPUT_DIR,
     per_device_train_batch_size=2,
     per_device_eval_batch_size=2,
-    gradient_accumulation_steps=4,
+    # eff batch = 2 × 8 = 16: ổn định gradient hơn trên data lớn (51.4k chunk).
+    gradient_accumulation_steps=8,
     # warmup_ratio thay cho warmup_steps — tự scale theo tổng steps.
     warmup_ratio=0.03,
-    num_train_epochs=2,
+    # 1 epoch: data giờ lớn ~30–60× run cũ → một lượt là đủ; cày nhiều epoch
+    # trên Instruct model dễ format collapse. Nâng lên 2 nếu eval_loss vẫn giảm
+    # đều ở cuối epoch 1.
+    num_train_epochs=1,
     # CPT trên model Instruct → LR thấp hơn SFT-from-base để giữ alignment.
     learning_rate=3e-5,
     # Inert khi target_modules không có embed_tokens/lm_head — giữ sẵn để
@@ -149,8 +155,9 @@ HOST_LOG = "/host/train.log"  # bind-mounted from Lambda host
 
 HF_CPT_REPO = os.environ.get("HF_CPT_REPO", "huyennkai/Venera-CPT-TMModel")
 JOB_TAG = os.environ.get("JOB_TAG") or f"local-{int(time.time())}"
-# Must mirror lambda_push_to_hf.py's naming: `cpt-<slugified_tag>`.
-HF_REVISION = f"cpt-{JOB_TAG.replace('_', '-')}"
+# Push thẳng adapter vào branch `main` (lambda_push_to_hf.py dùng "main"
+# verbatim). JOB_TAG vẫn được nhúng vào commit message để truy vết run nào.
+HF_REVISION = "main"
 
 print(f"\n[CPT.py] pushing adapter to {HF_CPT_REPO}@{HF_REVISION}")
 rc = subprocess.run([
@@ -158,7 +165,8 @@ rc = subprocess.run([
     "--task", "cpt",
     "--repo", HF_CPT_REPO,
     "--src", OUTPUT_DIR,
-    "--revision", JOB_TAG,
+    "--revision", HF_REVISION,
+    "--commit-message", f"Upload CPT adapter ({JOB_TAG})",
 ], cwd=HERE).returncode
 if rc != 0:
     print(f"[CPT.py] ERROR: model push failed (exit {rc}); aborting before eval.")
