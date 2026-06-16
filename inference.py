@@ -191,31 +191,16 @@ if __name__ == "__main__":
     VENERA_SFT = "huyennkai/Venera-Traditional-Model"
     VENERA_CPT = "huyennkai/Venera-CPT-TMModel"
 
+    # Focused: chỉ so sánh base vs CPT-only@main để check riêng CPT adapter mới.
+    # (Bỏ các bản SFT — xem git history nếu cần lại bảng so sánh 6 model.)
     models_config = {
         "Qwen3-4B-Instruct-goc": {
             "path": "unsloth/Qwen3-4B-Instruct-2507",
         },
-        # --- Hiện tại (dataset Maverfrick/TradMedInstruct-multiplechoice) ---
         "CPT-only": {
             "path": VENERA_CPT,
-            "revision": "cpt-tm-cpt-1776775114",
-        },
-        "CPT-SFT (multiplechoice)": {
-            "path": VENERA_SFT,
-            "revision": "cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776945292",
-        },
-        "SFT-only (multiplechoice, regression)": {
-            "path": VENERA_SFT,
-            "revision": "sft-unsloth-qwen3-4B-exp0001-tm-sft-1776949731",
-        },
-        # --- Historical (dataset Maverfrick/TradMedInstruct-2topics-3546) ---
-        "SFT-only (2topics)": {
-            "path": VENERA_SFT,
-            "revision": "sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092",
-        },
-        "CPT-SFT (2topics)": {
-            "path": VENERA_SFT,
-            "revision": "cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126",
+            # CPT adapter giờ push thẳng vào branch `main` (xem CPT.py).
+            "revision": "main",
         },
     }
 

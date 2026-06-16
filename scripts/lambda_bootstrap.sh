@@ -271,7 +271,7 @@ print('yes' if 'cpt' in cfg.get('model', {}).get('name', '').lower() else 'no')
 # notebooks and the right HF_REPO/HF_REVISION env vars.
 EVAL_README_MODELS=(
     "Goc|unsloth/Qwen3-4B-Instruct-2507||goc"
-    "CPT-only|huyennkai/Venera-CPT-TMModel|cpt-tm-cpt-1776775114|cpt"
+    "CPT-only|huyennkai/Venera-CPT-TMModel|main|cpt"
     "CPT-SFT-multiplechoice|huyennkai/Venera-Traditional-Model|cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776945292|cpt_sft"
     "SFT-multiplechoice|huyennkai/Venera-Traditional-Model|sft-unsloth-qwen3-4B-exp0001-tm-sft-1776949731|sft"
     "SFT-2topics|huyennkai/Venera-Traditional-Model|sft-unsloth-qwen3-4B-exp0001-tm-sft-1776771092|sft"
