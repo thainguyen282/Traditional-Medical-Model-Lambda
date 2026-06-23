@@ -30,7 +30,9 @@ training:
   per_device_train_batch_size: 2
   gradient_accumulation_steps: 2
   per_device_eval_batch_size: 2
-  num_train_epochs: 3
+  # 20k rows (~16k train sau split) ở eff_batch 4 → ~4k steps/epoch. 2 epoch
+  # (~8k steps) đủ cho QA tự luận; 3 epoch dễ overfit trên data lớn này.
+  num_train_epochs: 2
   # Giống exp0001/config_cpt.yaml — đã được tune cho CPT-SFT pipeline.
   learning_rate: 5e-5
   weight_decay: 0.01
@@ -38,12 +40,14 @@ training:
   lr_scheduler_type: "cosine"
   optim: "adamw_8bit"
   eval_strategy: "steps"
-  eval_steps: 40
+  # 40 (như exp3, data ~3.5k) sẽ eval ~200 lần trên 20k → quá dày. 200 →
+  # ~40 lần eval/save trên ~8k steps, granularity hợp lý, bớt overhead.
+  eval_steps: 200
   save_total_limit: 2
   logging_steps: 10
   fp16: false
   bf16: true
-  save_steps: 40
+  save_steps: 200
   seed: 3407
   gradient_checkpointing: true
   load_best_model_at_end: true
