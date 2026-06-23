@@ -1,0 +1,76 @@
+name: "unsloth/Qwen3-4B-Instruct-2507-0007"
+
+model:
+  # CPT-SFT pipeline: continue-train trên CPT adapter MỚI (push thẳng vào
+  # branch `main` của repo, xem CPT.py). "cpt" trong tên repo → main.py chọn
+  # pipeline CPT_SFT.
+  name: "huyennkai/Venera-CPT-TMModel"
+  revision: "main"
+  max_seq_length: 2048
+
+datasets:
+  # New-TradMedInstruct-qa_20k: QA tự luận ~20k rows (re-split 0.2 -> ~16k train / ~4k val).
+  - path: "configs/dataset/venera_qa_20k.yaml"
+    train_samples: -1
+    train_val_split: 0.2
+
+benchmark:
+  path: "configs/evals/minimal_mmlu.yaml"
+
+unsloth:
+  # A10 24GB cần 4-bit để fit Qwen3-4B + LoRA + grad_ckpt. exp0001 dùng
+  # false (A100 40GB) — 4-bit có thể kém hơn ~0.5-1%, nhưng cần để fit.
+  load_in_4bit: true
+  attn_implementation: "sdpa"
+
+training:
+  output_dir: "group_outputs/outputs"
+  # A10 batch 2; grad_accum 2 → effective batch = 4 (= exp0001), cùng
+  # số optimization steps → fair comparison.
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 2
+  per_device_eval_batch_size: 2
+  num_train_epochs: 3
+  # Giống exp0001/config_cpt.yaml — đã được tune cho CPT-SFT pipeline.
+  learning_rate: 5e-5
+  weight_decay: 0.01
+  warmup_steps: 100
+  lr_scheduler_type: "cosine"
+  optim: "adamw_8bit"
+  eval_strategy: "steps"
+  eval_steps: 40
+  save_total_limit: 2
+  logging_steps: 10
+  fp16: false
+  bf16: true
+  save_steps: 40
+  seed: 3407
+  gradient_checkpointing: true
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+
+  # === NEFTune: regularization mới ===
+  # Jain et al. 2023 (arXiv:2310.05914). Inject uniform noise vào input
+  # embedding trong train forward pass; inference KHÔNG inject.
+  # alpha=5 là khuyến nghị paper cho mọi model size. Try 10 nếu muốn
+  # noise nhiều hơn, hoặc 0 để disable.
+  neftune_noise_alpha: 5
+
+lora:
+  r: 32
+  lora_alpha: 32
+  lora_dropout: 0
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  use_rslora: true
+
+monitoring:
+  project: "VeneraMedicalM1"
+  tags: ["lora", "unsloth", "unsloth/Qwen3-4B-Instruct-2507", "exp0007", "qa-20k", "neftune", "cpt-sft"]

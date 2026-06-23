@@ -27,17 +27,25 @@ def convert_to_conversations(example):
     Convert dataset format -> conversations format
     Supports:
     - TradMedInstructData format with "messages" field
+    - New-TradMedInstruct-qa_20k format with singular "conversation" field
     - TradMedD format with "question" and "answer" fields
     - Direct "conversations" field
     """
 
     if "conversations" in example:
         return example
-    
+
     # TradMedInstructData format: messages -> conversations
     if "messages" in example:
         return {
             "conversations": example["messages"]
+        }
+
+    # New-TradMedInstruct-qa_20k: cột `conversation` (số ít) đã đúng format
+    # list[{role, content}] — chỉ cần map sang key `conversations`.
+    if "conversation" in example:
+        return {
+            "conversations": example["conversation"]
         }
 
     if "question" in example and "answer" in example:

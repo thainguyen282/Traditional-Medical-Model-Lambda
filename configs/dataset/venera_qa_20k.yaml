@@ -1,0 +1,11 @@
+name: "venera_qa_20k"
+# venera-ai/New-TradMedInstruct-qa_20k: QA TỰ LUẬN (free-form, không phải MCQ).
+# Split: train ~20k / test 986. Strategy chỉ dùng split `train` rồi tự re-split
+# 0.2 (split `test` bị bỏ qua — đúng behavior các dataset config khác).
+# Schema: cột `conversation` (SỐ ÍT, list[{role, content}] OpenAI chat) + extra
+# fields (id, path, page_number, page_id, qa_type). convert_to_conversations
+# đã thêm nhánh map `conversation` -> `conversations`.
+data: https://huggingface.co/datasets/venera-ai/New-TradMedInstruct-qa_20k
+
+metadata:
+  source: "huggingface"

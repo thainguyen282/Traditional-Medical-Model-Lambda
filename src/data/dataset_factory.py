@@ -24,6 +24,10 @@ class DatasetFactory:
         # New-TradMedInstruct-multiplechoice (exp0006). Same strategy.
         "venera_vm14k_mcq": VeneraMedDatasetStrategy,
         "venera_vm14k_mixed": VeneraMedDatasetStrategy,
+        # New-TradMedInstruct-qa_20k free-form QA (exp0007). Same strategy;
+        # schema dùng cột `conversation` (số ít) — đã handle trong
+        # convert_to_conversations.
+        "venera_qa_20k": VeneraMedDatasetStrategy,
     }
 
     @classmethod
