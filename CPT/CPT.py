@@ -95,7 +95,7 @@ training_args = UnslothTrainingArguments(
     # 1 epoch: data giờ lớn ~30–60× run cũ → một lượt là đủ; cày nhiều epoch
     # trên Instruct model dễ format collapse. Nâng lên 2 nếu eval_loss vẫn giảm
     # đều ở cuối epoch 1.
-    num_train_epochs=1,
+    num_train_epochs=3,
     # CPT trên model Instruct → LR thấp hơn SFT-from-base để giữ alignment.
     learning_rate=3e-5,
     # Inert khi target_modules không có embed_tokens/lm_head — giữ sẵn để
