@@ -33,7 +33,7 @@ training:
   # 20k rows (~16k train sau split) ở eff_batch 4 → ~4k steps/epoch. 1 epoch:
   # bản 2-epoch trước (exp0007 cũ) tụt benchmark do forgetting/interference khi
   # SFT trên QA sinh từ ~9% corpus → giảm còn 1 epoch để hạn chế drift khỏi CPT.
-  num_train_epochs: 1
+  num_train_epochs: 3
   # Giống exp0001/config_cpt.yaml — đã được tune cho CPT-SFT pipeline.
   learning_rate: 5e-5
   weight_decay: 0.01
