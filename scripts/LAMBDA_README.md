@@ -76,6 +76,11 @@ lambda_launch.py ──API──▶ [terminate instance]
 ```bash
 python scripts/lambda_launch.py --task sft --list-types
 ```
+> **Warning (Slurm / local VM timeout):** Keep `lambda_launch.py` alive until it
+> prints `terminating instance`. If Slurm kills the job or the local VM stops,
+> the remote GPU may keep running and billing. 
+> After any timeout, node failure, or forced kill, check the Lambda dashboard
+> and terminate the instance manually. Do not use `--keep-alive` unless intended.
 
 ### Run a single SFT experiment
 ```bash
