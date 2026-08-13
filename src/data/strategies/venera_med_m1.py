@@ -110,6 +110,8 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
         # Backward-compatible: existing string configs unchanged.
         # Phải biết source TRƯỚC khi tính cache key để không lẫn cache.
         data_source = config.get("data", "Maverfrick/TradMedInstruct-multiplechoice")
+        # ######################## VALIDATION SOURCE ########################
+        validation_source = config.get("validation_source")
         if isinstance(data_source, str):
             sources = [data_source]
         else:
@@ -119,10 +121,20 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
             return s.replace("https://huggingface.co/datasets/", "")
 
         sources = [_normalize(s) for s in sources]
+        if validation_source:
+            validation_source = _normalize(validation_source)
+            if validation_source not in sources:
+                raise ValueError(
+                    f"validation_source '{validation_source}' is not present in data: {sources}"
+                )
+        # ###################### END VALIDATION SOURCE ######################
 
-        # ---- Cache (key includes ALL sources + chat_mix_ratio) ----
+        # ---- Cache (key includes sources, validation source, and chat mix) ----
         safe_src = "__".join(s.replace("/", "_") for s in sources)
-        cache_key = f"{safe_src}_{train_samples}_{split_ratio}_mix{chat_mix_ratio}"
+        cache_key = (
+            f"{safe_src}_{train_samples}_{split_ratio}_mix{chat_mix_ratio}"
+            f"_valsrc{validation_source}"
+        )
         cache_file = os.path.join(
             self.cache_dir, f"tradmedd_cache_{hash(cache_key)}.pkl"
         )
@@ -133,8 +145,9 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
                 cached = pickle.load(f)
                 return cached["train"], cached["val"]
 
-        # ---- Load each source, split, then concat. Splitting BEFORE concat
-        # guarantees val contains rows from every source proportionally.
+        # Split every source by default. If validation_source is configured,
+        # only that source contributes validation rows; all other sources are
+        # used entirely for training.
         train_parts = []
         val_parts = []
         for src in sources:
@@ -152,14 +165,38 @@ class VeneraMedDatasetStrategy(BaseDatasetStrategy):
                 n = min(train_samples, len(ds))
                 ds = ds.shuffle(seed=42).select(range(n))
 
-            split = ds.train_test_split(test_size=split_ratio, seed=42)
-            train_parts.append(preformat(split["train"]))
-            val_parts.append(preformat(split["test"]))
+            # ################### VALIDATION-ONLY SPLIT ####################
+            if validation_source is None or src == validation_source:
+                split = ds.train_test_split(test_size=split_ratio, seed=42)
+                train_part = preformat(split["train"])
+                val_part = preformat(split["test"])
+                train_parts.append(train_part)
+                val_parts.append(val_part)
+                split_mode = "train + validation"
+                val_rows = len(val_part)
+            else:
+                train_part = preformat(ds)
+                train_parts.append(train_part)
+                split_mode = "training only"
+                val_rows = 0
+
+            # ####################### DEBUG OUTPUT ########################
+            print("#############################")
+            print("DATASET SPLIT DEBUG")
+            print(f"source: {src}")
+            print(f"mode: {split_mode}")
+            print(f"train rows: {len(train_part)}")
+            print(f"validation rows: {val_rows}")
+            print("#############################")
+            # ##################### END DEBUG OUTPUT ######################
+            # ################# END VALIDATION-ONLY SPLIT ################
 
         if len(train_parts) > 1:
             from datasets import concatenate_datasets
             train_set = concatenate_datasets(train_parts).shuffle(seed=42)
-            val_set = concatenate_datasets(val_parts)
+            val_set = (
+                concatenate_datasets(val_parts) if len(val_parts) > 1 else val_parts[0]
+            )
             print(f"🔀 Concatenated {len(sources)} sources: "
                   f"train={len(train_set)} val={len(val_set)}")
         else:

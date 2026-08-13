@@ -1,0 +1,13 @@
+name: "venera_vm14k_mixed_with_qa"
+# Mix: VM14K-MCQ-Instruct (535 rows) + New-TradMedInstruct-qa_20k
+# Schema: cột `conversation` (SỐ ÍT, list[{role, content}] OpenAI chat) + extra
+# Chỉ validate trên vm14k nên chỉ lấy ra split 0.1
+# Sau split 0.2: ~2986 train / ~746 val.
+data:
+  - https://huggingface.co/datasets/Maverfrick/VM14K-MCQ-Instruct
+  - https://huggingface.co/datasets/venera-ai/New-TradMedInstruct-qa_20k
+
+validation_source: "https://huggingface.co/datasets/Maverfrick/VM14K-MCQ-Instruct"
+
+metadata:
+  source: "huggingface"

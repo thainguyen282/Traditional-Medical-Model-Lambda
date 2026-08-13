@@ -28,6 +28,8 @@ class DatasetFactory:
         # schema dùng cột `conversation` (số ít) — đã handle trong
         # convert_to_conversations.
         "venera_qa_20k": VeneraMedDatasetStrategy,
+        "venera_vm14k_mixed_with_qa": VeneraMedDatasetStrategy,
+        
     }
 
     @classmethod
