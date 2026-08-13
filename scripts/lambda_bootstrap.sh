@@ -119,6 +119,16 @@ if [ -n "${GH_TOKEN:-}" ] && [ "${GHCR_LOGIN:-}" = "1" ]; then
 fi
 $DOCKER pull "$IMAGE" || fail "docker pull $IMAGE"
 
+# Fail before model downloads/training if Docker cannot expose the GPU or the
+# image does not contain a CUDA-enabled PyTorch build. The CUDA banner alone
+# only proves that CUDA userspace files exist in the image.
+echo "[bootstrap] ===== GPU container preflight ====="
+$DOCKER run --rm --gpus all "$IMAGE" nvidia-smi \
+    || fail "GPU is unavailable inside Docker (check NVIDIA Container Toolkit)"
+$DOCKER run --rm --gpus all "$IMAGE" python -c \
+    "import sys, torch; print('torch=' + torch.__version__); print('torch_cuda=' + str(torch.version.cuda)); print('cuda_available=' + str(torch.cuda.is_available())); print('device_count=' + str(torch.cuda.device_count())); sys.exit(0 if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 1)" \
+    || fail "PyTorch cannot initialize CUDA inside Docker"
+
 # ------------------------------------------------------------------
 # 5. Mirror .env in the repo so main.py/CPT.py see the same vars.
 #    ROOT=/workspace because that's the container-side bind mount path.

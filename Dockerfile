@@ -29,6 +29,9 @@ RUN pip install --upgrade pip wheel setuptools
 
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt \
+    && pip install --force-reinstall \
+        torch==2.10.0 torchvision==0.25.0 \
+        --index-url https://download.pytorch.org/whl/cu128 \
     && pip install "huggingface_hub[cli]" python-dotenv \
     && rm -f /tmp/requirements.txt
 
