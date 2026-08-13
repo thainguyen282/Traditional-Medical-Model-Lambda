@@ -22,9 +22,9 @@ unsloth:
 
 training:
   output_dir: "group_outputs/outputs"
-  per_device_train_batch_size: 2
-  gradient_accumulation_steps: 2
-  per_device_eval_batch_size: 2
+  per_device_train_batch_size: 8
+  gradient_accumulation_steps: 8
+  per_device_eval_batch_size: 4
   num_train_epochs: 3
   # lr 5e-5: CPT-SFT (thấp hơn SFT-from-base để giữ kiến thức CPT). Match exp0004.
   learning_rate: 5e-5
@@ -33,7 +33,7 @@ training:
   lr_scheduler_type: "cosine"
   optim: "adamw_8bit"
   eval_strategy: "steps"
-  eval_steps: 40
+  eval_steps: 100
   save_total_limit: 2
   logging_steps: 10
   fp16: false
