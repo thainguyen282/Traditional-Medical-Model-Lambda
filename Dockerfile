@@ -2,8 +2,8 @@
 #
 # Pre-baked training image for Lambda Cloud runs.
 # Contains CUDA 12.8 + cuDNN + Python 3.10 + all requirements.txt deps.
-# Repo source code is NOT baked in — it is bind-mounted at /workspace at run time
-# so we always use the latest main2 without rebuilding the image.
+# Repository source and configs are baked into /workspace so Lambda jobs do not
+# depend on a separate bind mount or clone being present in the container.
 #
 # Build & push (done automatically by .github/workflows/docker.yml):
 #   docker buildx build --platform linux/amd64 \
@@ -33,4 +33,6 @@ RUN pip install -r /tmp/requirements.txt \
     && rm -f /tmp/requirements.txt
 
 WORKDIR /workspace
+COPY . /workspace
+
 CMD ["bash"]
