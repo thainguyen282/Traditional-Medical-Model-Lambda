@@ -107,6 +107,15 @@ if [ -f "/home/ubuntu/lambda_push_to_hf.py" ]; then
         echo "[bootstrap] WARN: failed moving lambda_push_to_hf.py into repo"
 fi
 
+# Use the exact local VM14K test evaluator copied by lambda_launch.py rather
+# than relying on the selected Git branch to contain the latest version.
+if [ -f "/home/ubuntu/Unsloth_QA_CPT_SFT_VM14K_TEST.py" ]; then
+    mkdir -p "$REPO_DIR/EVAL"
+    mv "/home/ubuntu/Unsloth_QA_CPT_SFT_VM14K_TEST.py" \
+       "$REPO_DIR/EVAL/Unsloth_QA_CPT_SFT_VM14K_TEST.py" || \
+        fail "install VM14K test evaluator"
+fi
+
 # ------------------------------------------------------------------
 # 4. Docker pull the pre-baked image.
 #    Public ghcr.io images need no login. If you flip the package to
@@ -277,8 +286,10 @@ print('yes' if 'cpt' in cfg.get('model', {}).get('name', '').lower() else 'no')
 
 # Sync with inference.py / README.md "🎯 Model output". Format per row:
 #   <display_name>|<hf_repo>|<hf_revision>|<variant>
-# variant ∈ {goc, cpt, sft, cpt_sft}: picks the matching Unsloth_QA_<variant>_*
-# notebooks and the right HF_REPO/HF_REVISION env vars.
+# variant ∈ {goc, cpt, sft, cpt_sft}: picks the matching
+# Unsloth_QA_<variant>_* notebooks. cpt_sft_test instead runs only
+# Unsloth_QA_CPT_SFT_VM14K_TEST.py against the official 29-row test split.
+# All variants also select the right HF_REPO/HF_REVISION env vars.
 EVAL_README_MODELS=(
     "Goc|unsloth/Qwen3-4B-Instruct-2507||goc"
     "CPT-only|huyennkai/Venera-CPT-TMModel|main|cpt"
@@ -311,27 +322,29 @@ run_eval() {
         echo "[bootstrap] ===== EVAL $display ($variant) ====="
         echo "[bootstrap] repo=$repo revision=${revision:-<none>}"
 
-        # Pick notebook pair for this variant.
-        local nb_new nb_vm14k env_export
+        # Pick the evaluation files for this variant. Most variants run a
+        # notebook pair; cpt_sft_test runs one checked-in Python script.
+        local env_export
+        local eval_files=()
         case "$variant" in
             goc)
-                nb_new="Unsloth_QA_goc_new.ipynb"
-                nb_vm14k="Unsloth_QA_goc_VM14K.ipynb"
+                eval_files=("Unsloth_QA_goc_new.ipynb" "Unsloth_QA_goc_VM14K.ipynb")
                 env_export=""    # Goc loads base model directly, no env override
                 ;;
             cpt)
-                nb_new="Unsloth_QA_CPT_new.ipynb"
-                nb_vm14k="Unsloth_QA_CPT_VM14K.ipynb"
+                eval_files=("Unsloth_QA_CPT_new.ipynb" "Unsloth_QA_CPT_VM14K.ipynb")
                 env_export="export CPT_HF_REPO='$repo' && export CPT_HF_REVISION='$revision' &&"
                 ;;
             sft)
-                nb_new="Unsloth_QA_SFT_new.ipynb"
-                nb_vm14k="Unsloth_QA_SFT_VM14K.ipynb"
+                eval_files=("Unsloth_QA_SFT_new.ipynb" "Unsloth_QA_SFT_VM14K.ipynb")
                 env_export="export SFT_HF_REPO='$repo' && export SFT_HF_REVISION='$revision' &&"
                 ;;
             cpt_sft)
-                nb_new="Unsloth_QA_CPT_SFT_new.ipynb"
-                nb_vm14k="Unsloth_QA_CPT_SFT_VM14K.ipynb"
+                eval_files=("Unsloth_QA_CPT_SFT_new.ipynb" "Unsloth_QA_CPT_SFT_VM14K.ipynb")
+                env_export="export SFT_HF_REPO='$repo' && export SFT_HF_REVISION='$revision' &&"
+                ;;
+            cpt_sft_test)
+                eval_files=("Unsloth_QA_CPT_SFT_VM14K_TEST.py")
                 env_export="export SFT_HF_REPO='$repo' && export SFT_HF_REVISION='$revision' &&"
                 ;;
             *)
@@ -348,12 +361,16 @@ run_eval() {
             || { echo "[bootstrap] WARN: clear outputs failed for $display"; ((fail_count++)); continue; }
 
         local nb_failed=0
-        for nb in "$nb_new" "$nb_vm14k"; do
-            local stem="${nb%.ipynb}"
-            in_docker "cd /workspace/EVAL && jupyter nbconvert --to script --output '$stem' '$nb'" \
-                || { echo "[bootstrap] WARN: nbconvert failed for $nb"; nb_failed=1; continue; }
-            in_docker "cd /workspace/EVAL && $env_export python '$stem.py'" \
-                || { echo "[bootstrap] WARN: $nb exit non-zero — continuing"; nb_failed=1; }
+        for eval_file in "${eval_files[@]}"; do
+            local script_file="$eval_file"
+            if [[ "$eval_file" = *.ipynb ]]; then
+                local stem="${eval_file%.ipynb}"
+                in_docker "cd /workspace/EVAL && jupyter nbconvert --to script --output '$stem' '$eval_file'" \
+                    || { echo "[bootstrap] WARN: nbconvert failed for $eval_file"; nb_failed=1; continue; }
+                script_file="$stem.py"
+            fi
+            in_docker "cd /workspace/EVAL && $env_export python '$script_file'" \
+                || { echo "[bootstrap] WARN: $eval_file exit non-zero — continuing"; nb_failed=1; }
         done
 
         # Push to HF: existing branch for trained models, fresh branch for Goc.

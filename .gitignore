@@ -11,6 +11,7 @@ final_model
 outputs/**
 EVAL/outputs/
 EVAL/Unsloth_QA_*.py
+!EVAL/Unsloth_QA_CPT_SFT_VM14K_TEST.py
 # HF repo clones used for local debug
 Venera-CPT-TMModel/
 Venera-Traditional-Model/

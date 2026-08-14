@@ -18,16 +18,10 @@
 # 
 # 
 
-# In[ ]:
-
 
 # !pip install "unsloth[colab-notebook] @ git+https://github.com/unslothai/unsloth.git"
 # !pip install bitsandbytes
 # !pip install unsloth_zoo
-
-
-# In[ ]:
-
 
 import os
 import sys
@@ -77,10 +71,6 @@ try:
     shutil.rmtree("/tmp/triton_cache")
 except:
     pass
-
-
-# In[ ]:
-
 
 import os
 
