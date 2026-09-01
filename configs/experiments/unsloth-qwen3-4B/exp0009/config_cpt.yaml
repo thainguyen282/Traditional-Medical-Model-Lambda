@@ -17,6 +17,11 @@ datasets:
 benchmark:
   path: "configs/evals/minimal_mmlu.yaml"
 
+# After the adapter is pushed and its revision is known, run the same
+# untouched 29-row official VM14K test used by the eval-only workflow.
+evaluation:
+  official_vm14k_test: true
+
 unsloth:
   load_in_4bit: true
   attn_implementation: "sdpa"
@@ -25,8 +30,8 @@ training:
   output_dir: "group_outputs/outputs"
   # Preserve Exp0007's effective batch of 4 while using a larger microbatch
   # to reduce gradient-accumulation overhead on the A100 40 GB.
-  per_device_train_batch_size: 4
-  gradient_accumulation_steps: 1
+  per_device_train_batch_size: 64
+  gradient_accumulation_steps: 2
   per_device_eval_batch_size: 8
   num_train_epochs: 3
   # Low LR reduces forgetting while specializing the existing Exp0007

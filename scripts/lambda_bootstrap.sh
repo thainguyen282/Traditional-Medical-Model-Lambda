@@ -248,28 +248,45 @@ cfg = yaml.safe_load(open('$config'))
 print('yes' if 'cpt' in cfg.get('model', {}).get('name', '').lower() else 'no')
 \"" | tr -d '\r' | tail -n1)
 
-    local notebooks
-    if [ "$is_cpt_sft" = "yes" ]; then
-        notebooks="Unsloth_QA_CPT_SFT_new.ipynb Unsloth_QA_CPT_SFT_VM14K.ipynb"
-    else
-        notebooks="Unsloth_QA_SFT_new.ipynb Unsloth_QA_SFT_VM14K.ipynb"
-    fi
+    local official_vm14k_test
+    official_vm14k_test=$(in_docker "python -c \"
+import yaml
+cfg = yaml.safe_load(open('$config'))
+print('yes' if cfg.get('evaluation', {}).get('official_vm14k_test', False) else 'no')
+\"" | tr -d '\r' | tail -n1)
 
     # Step 4: run each notebook in its OWN docker run — fresh CUDA context,
     # avoids the fork-after-training NVML breakage.
     echo "[bootstrap] ===== SFT eval (fresh containers, model from HF) ====="
-    for nb in $notebooks; do
-        local stem="${nb%.ipynb}"
-        echo "[bootstrap] -- eval: $nb"
-        in_docker "cd /workspace/EVAL && \
-            jupyter nbconvert --to script --output '$stem' '$nb'" \
-            || { echo "[bootstrap] WARN: nbconvert failed for $nb"; continue; }
+    if [ "$official_vm14k_test" = "yes" ]; then
+        echo "[bootstrap] -- eval: official VM14K test split (29 rows)"
+        in_docker "rm -rf /workspace/EVAL/outputs && mkdir -p /workspace/EVAL/outputs" \
+            || { echo "[bootstrap] WARN: clear eval outputs failed"; return 1; }
         in_docker "cd /workspace/EVAL && \
             export SFT_HF_REPO='$HF_SFT_REPO' && \
             export SFT_HF_REVISION='$HF_REVISION' && \
-            python '$stem.py'" \
-            || echo "[bootstrap] WARN: eval $nb exited non-zero, continuing"
-    done
+            python 'Unsloth_QA_CPT_SFT_VM14K_TEST.py'" \
+            || echo "[bootstrap] WARN: official VM14K test exited non-zero, continuing"
+    else
+        local notebooks
+        if [ "$is_cpt_sft" = "yes" ]; then
+            notebooks="Unsloth_QA_CPT_SFT_new.ipynb Unsloth_QA_CPT_SFT_VM14K.ipynb"
+        else
+            notebooks="Unsloth_QA_SFT_new.ipynb Unsloth_QA_SFT_VM14K.ipynb"
+        fi
+        for nb in $notebooks; do
+            local stem="${nb%.ipynb}"
+            echo "[bootstrap] -- eval: $nb"
+            in_docker "cd /workspace/EVAL && \
+                jupyter nbconvert --to script --output '$stem' '$nb'" \
+                || { echo "[bootstrap] WARN: nbconvert failed for $nb"; continue; }
+            in_docker "cd /workspace/EVAL && \
+                export SFT_HF_REPO='$HF_SFT_REPO' && \
+                export SFT_HF_REVISION='$HF_REVISION' && \
+                python '$stem.py'" \
+                || echo "[bootstrap] WARN: eval $nb exited non-zero, continuing"
+        done
+    fi
 
     # Step 5: push eval outputs + train.log to the same revision.
     echo "[bootstrap] ===== SFT push eval + log ====="
@@ -286,7 +303,7 @@ print('yes' if 'cpt' in cfg.get('model', {}).get('name', '').lower() else 'no')
 
 # Sync with inference.py / README.md "🎯 Model output". Format per row:
 #   <display_name>|<hf_repo>|<hf_revision>|<variant>
-# variant ∈ {goc, cpt, sft, cpt_sft}: picks the matching
+# variant ∈ {goc, goc_test, cpt, sft, cpt_sft}: picks the matching
 # Unsloth_QA_<variant>_* notebooks. cpt_sft_test instead runs only
 # Unsloth_QA_CPT_SFT_VM14K_TEST.py against the official 29-row test split.
 # All variants also select the right HF_REPO/HF_REVISION env vars.
@@ -306,9 +323,11 @@ run_eval() {
     # documented in run_cpt — same root cause; load+infer in one container,
     # then exit so the next notebook gets a clean CUDA init).
     #
-    # If EVAL_ONLY env var is set ("name|repo|revision|variant"), override
+    # If EVAL_ONLY env var is set
+    # ("name|source_repo|revision|variant[|output_repo]"), override
     # the README list with just that single entry. Used to re-eval one model
-    # after an extract_answer fix, without re-running all 6.
+    # after an extract_answer fix, without re-running all 6. output_repo is
+    # optional; when present, load from source_repo and upload results there.
     local models_to_run=()
     if [ -n "${EVAL_ONLY:-}" ]; then
         echo "[bootstrap] EVAL_ONLY set — overriding 6-model loop"
@@ -318,7 +337,7 @@ run_eval() {
     fi
     local fail_count=0
     for entry in "${models_to_run[@]}"; do
-        IFS='|' read -r display repo revision variant <<< "$entry"
+        IFS='|' read -r display repo revision variant output_repo <<< "$entry"
         echo "[bootstrap] ===== EVAL $display ($variant) ====="
         echo "[bootstrap] repo=$repo revision=${revision:-<none>}"
 
@@ -330,6 +349,13 @@ run_eval() {
             goc)
                 eval_files=("Unsloth_QA_goc_new.ipynb" "Unsloth_QA_goc_VM14K.ipynb")
                 env_export=""    # Goc loads base model directly, no env override
+                ;;
+            goc_test)
+                eval_files=("Unsloth_QA_CPT_SFT_VM14K_TEST.py")
+                # The test script uses FastLanguageModel.from_pretrained, so
+                # passing the clean base repo (without a PEFT revision) loads
+                # the unadapted model through the same inference path.
+                env_export="export SFT_HF_REPO='$repo' && unset SFT_HF_REVISION && export EVAL_OUTPUT_SUBDIR='GOC_VM14K_TEST' && export EVAL_MODEL_NAME='qwen3-4b-instruct-2507-clean' &&"
                 ;;
             cpt)
                 eval_files=("Unsloth_QA_CPT_new.ipynb" "Unsloth_QA_CPT_VM14K.ipynb")
@@ -375,9 +401,15 @@ run_eval() {
 
         # Push to HF: existing branch for trained models, fresh branch for Goc.
         local target_repo target_revision
-        if [ "$variant" = "goc" ]; then
+        if [ -n "$output_repo" ] && [ "$variant" = "goc_test" ]; then
+            target_repo="$output_repo"
+            target_revision="eval-goc-test-$JOB_TAG"
+        elif [ -n "$output_repo" ]; then
+            target_repo="$output_repo"
+            target_revision="$revision"
+        elif [ "$variant" = "goc" ] || [ "$variant" = "goc_test" ]; then
             target_repo="$HF_SFT_REPO"
-            target_revision="eval-goc-$JOB_TAG"
+            target_revision="eval-$variant-$JOB_TAG"
         else
             target_repo="$repo"
             target_revision="$revision"

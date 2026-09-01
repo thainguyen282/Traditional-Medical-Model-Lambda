@@ -89,7 +89,10 @@ BASE_DIR = os.environ.get("EVAL_BASE_DIR", BASE_DIR)
 base_output_dir = os.path.join(BASE_DIR, "outputs")
 
 english_output_dir = os.path.join(base_output_dir, "CPT_SFT_MedQA")
-vietnamese_output_dir = os.path.join(base_output_dir, "CPT_SFT_VM14K_TEST")
+vietnamese_output_dir = os.path.join(
+    base_output_dir,
+    os.environ.get("EVAL_OUTPUT_SUBDIR", "CPT_SFT_VM14K_TEST"),
+)
 
 for dir_path in [english_output_dir, vietnamese_output_dir]:
     os.makedirs(dir_path, exist_ok=True)
@@ -130,7 +133,7 @@ language_factors_file = os.path.join(output_dir, "language_adjustment_factors.tx
 # =========================
 
 # Tên model để hiển thị trong log
-model_name = "qwen3-4b-cpt-sft-lora"
+model_name = os.environ.get("EVAL_MODEL_NAME", "qwen3-4b-cpt-sft-lora")
 
 # Path tới checkpoint CPT+SFT đã train
 SFT_HF_REPO = os.environ.get("SFT_HF_REPO")
@@ -2049,4 +2052,3 @@ if topic_results and difficulty_results:
     plt.savefig(os.path.join(output_dir, "performance_dashboard.png"), dpi=300, bbox_inches='tight')
     plt.show()
     plt.close()
-

@@ -1,0 +1,11 @@
+name: "venera_yhct_mcq_reasoning_10k"
+# Maverfrick/YHCT-MCQ-Reasoning-10K (train 10,174 / test 535).
+# Schema: `messages` (role/content, OpenAI chat format) + extra fields
+# (id, source_id, page_id, qa_type, answer_letter). The VeneraMed strategy
+# converts `messages` to `conversations`; no custom formatter is required.
+# The strategy trains from the upstream train split and leaves the official
+# test split untouched.
+data: https://huggingface.co/datasets/Maverfrick/YHCT-MCQ-Reasoning-10K
+
+metadata:
+  source: "huggingface"
