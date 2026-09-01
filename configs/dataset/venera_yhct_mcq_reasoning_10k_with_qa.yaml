@@ -1,0 +1,13 @@
+name: "venera_yhct_mcq_reasoning_10k_with_qa"
+# Mix YHCT-MCQ-Reasoning-10K reasoning MCQs with open-ended traditional
+# medicine QA. Both sources use chat schemas supported by VeneraMedStrategy.
+data:
+  - https://huggingface.co/datasets/Maverfrick/YHCT-MCQ-Reasoning-10K
+  - https://huggingface.co/datasets/venera-ai/New-TradMedInstruct-qa_20k
+
+# Hold out validation examples only from YHCT. QA-20K remains training-only.
+validation_source: "https://huggingface.co/datasets/Maverfrick/YHCT-MCQ-Reasoning-10K"
+
+metadata:
+  source: "huggingface"
+
