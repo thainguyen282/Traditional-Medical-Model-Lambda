@@ -29,7 +29,7 @@ class DatasetFactory:
         # convert_to_conversations.
         "venera_qa_20k": VeneraMedDatasetStrategy,
         "venera_vm14k_mixed_with_qa": VeneraMedDatasetStrategy,
-        
+        "venera_yhct_mcq_reasoning_10k": VeneraMedDatasetStrategy
     }
 
     @classmethod
