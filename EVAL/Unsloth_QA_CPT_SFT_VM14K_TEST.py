@@ -174,11 +174,10 @@ generation_config = {
     "do_sample": False,
 }
 
-system_prompt = """You are an expert medical assistant. Your task is to answer the following multiple-choice medical question.
-Provide a single correct option letter (The single correct letter, e.g., A, B, C, etc.). Your response MUST follow this format exactly:
-Final Answer: X
-Where X is the letter of your chosen option (e.g., A, B, C, etc.).
-"""
+mcq_format_instruction = (
+    "Hãy giải thích lập luận, sau đó kết thúc câu trả lời bằng định dạng \"### X\", "
+    "trong đó X là chữ cái của phương án đúng (ví dụ: A, B, C hoặc D)."
+)
 
 
 # In[ ]:
@@ -649,7 +648,7 @@ def batch_inference(batch_messages: list):
 
     return generated_texts
 
-def batch_inference_unsloth(samples, system_prompt):
+def batch_inference_unsloth(samples, mcq_format_instruction):
     """Batch inference with Unsloth optimization"""
     outputs = []
     current_batch_size = 100 # Small batches to avoid OOM problem
@@ -658,7 +657,7 @@ def batch_inference_unsloth(samples, system_prompt):
     all_messages = []
     for sample in samples:
         options_list = [{'key': k, 'value': v} for k, v in sample['options'].items()]
-        prompt = f"{system_prompt}\nQuestion: {sample['question']}\nOptions:\n" + \
+        prompt = f"{mcq_format_instruction}\n\nQuestion: {sample['question']}\nOptions:\n" + \
                  "\n".join([f"{opt['key']}) {opt['value']}" for opt in options_list]) + "\n"
         messages = [{"role": "user", "content": prompt}]
         all_messages.append(messages)
@@ -702,7 +701,7 @@ def batch_inference_unsloth(samples, system_prompt):
     progress_bar.close()
     return outputs
 
-def batch_inference_chunked(samples, system_prompt, max_chunk_size=2000):
+def batch_inference_chunked(samples, mcq_format_instruction, max_chunk_size=2000):
     """Batch inference with chunking for large datasets"""
     all_outputs = []
     total_samples = len(samples)
@@ -711,7 +710,7 @@ def batch_inference_chunked(samples, system_prompt, max_chunk_size=2000):
         chunk_end = min(chunk_start + max_chunk_size, total_samples)
         chunk_samples = samples[chunk_start:chunk_end]
 
-        chunk_outputs = batch_inference_unsloth(chunk_samples, system_prompt)
+        chunk_outputs = batch_inference_unsloth(chunk_samples, mcq_format_instruction)
         all_outputs.extend(chunk_outputs)
 
         torch.cuda.empty_cache()
@@ -725,7 +724,7 @@ def batch_inference_chunked(samples, system_prompt, max_chunk_size=2000):
 
 
 # Stratified Batch Analysis Function
-def calculate_stratified_batch_tps(dataset_subset, system_prompt):
+def calculate_stratified_batch_tps(dataset_subset, mcq_format_instruction):
     """Calculate stratified batch tokens per second"""
     topic_groups = defaultdict(list)
     difficulty_groups = defaultdict(list)
@@ -754,7 +753,7 @@ def calculate_stratified_batch_tps(dataset_subset, system_prompt):
                 topic_messages = []
                 for sample in topic_samples:
                     options_list = [{'key': k, 'value': v} for k, v in sample['options'].items()]
-                    prompt = f"{system_prompt}\nQuestion: {sample['question']}\nOptions:\n" + \
+                    prompt = f"{mcq_format_instruction}\n\nQuestion: {sample['question']}\nOptions:\n" + \
                              "\n".join([f"{opt['key']}) {opt['value']}" for opt in options_list]) + "\n"
                     messages = [{"role": "user", "content": prompt}]
                     topic_messages.append(messages)
@@ -819,7 +818,7 @@ def calculate_stratified_batch_tps(dataset_subset, system_prompt):
                 difficulty_messages = []
                 for sample in difficulty_samples:
                     options_list = [{'key': k, 'value': v} for k, v in sample['options'].items()]
-                    prompt = f"{system_prompt}\nQuestion: {sample['question']}\nOptions:\n" + \
+                    prompt = f"{mcq_format_instruction}\n\nQuestion: {sample['question']}\nOptions:\n" + \
                              "\n".join([f"{opt['key']}) {opt['value']}" for opt in options_list]) + "\n"
                     messages = [{"role": "user", "content": prompt}]
                     difficulty_messages.append(messages)
@@ -1040,7 +1039,7 @@ gc.collect()
 
 # Calculate stratified batch performance
 topic_tps_results, difficulty_tps_results = calculate_stratified_batch_tps(
-    full_dataset[:subset_size], system_prompt
+    full_dataset[:subset_size], mcq_format_instruction
 )
 
 if ENABLE_TOPIC_BATCH_ANALYSIS:
@@ -1066,7 +1065,7 @@ torch.cuda.empty_cache()
 gc.collect()
 
 start_time = time.time()
-outputs = batch_inference_chunked(dataset_subset, system_prompt, max_chunk_size=2000)
+outputs = batch_inference_chunked(dataset_subset, mcq_format_instruction, max_chunk_size=2000)
 end_time = time.time()
 total_inference_time = end_time - start_time
 

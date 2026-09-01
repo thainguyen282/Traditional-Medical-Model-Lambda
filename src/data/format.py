@@ -1,5 +1,10 @@
 from typing import List, Dict
 
+MCQ_FORMAT_INSTRUCTION = (
+    "Hãy giải thích lập luận, sau đó kết thúc câu trả lời bằng định dạng \"### X\", "
+    "trong đó X là chữ cái của phương án đúng (ví dụ: A, B, C hoặc D)."
+)
+
 
 def conversations_to_prompt_completion(example: Dict) -> Dict:
     """
@@ -8,7 +13,7 @@ def conversations_to_prompt_completion(example: Dict) -> Dict:
 
     Split at the last assistant turn:
     - prompt: all messages before the last assistant message
-    - completion: the last assistant message (as a list for conversational format)
+    - completion: the final assistant message content as a string
     """
     convs = example.get("conversations") or example.get("messages") or []
 
@@ -23,10 +28,20 @@ def conversations_to_prompt_completion(example: Dict) -> Dict:
         # No assistant message — use all as prompt, empty completion
         return {
             "prompt": [{"role": m["role"], "content": m["content"]} for m in convs],
-            "completion": [{"role": "assistant", "content": ""}],
+            "completion": "",
         }
 
     prompt_msgs = [{"role": m["role"], "content": m["content"]} for m in convs[:last_assistant_idx]]
-    completion_msgs = [{"role": m["role"], "content": m["content"]} for m in convs[last_assistant_idx:]]
+    if example.get("answer_letter"):
+        for index in range(len(prompt_msgs) - 1, -1, -1):
+            if prompt_msgs[index].get("role") == "user":
+                prompt_msgs[index] = {
+                    **prompt_msgs[index],
+                    "content": prompt_msgs[index]["content"].rstrip()
+                    + "\n\n" + MCQ_FORMAT_INSTRUCTION,
+                }
+                break
+    completion = convs[last_assistant_idx]["content"]
 
-    return {"prompt": prompt_msgs, "completion": completion_msgs}
+
+    return {"prompt": prompt_msgs, "completion": completion}
