@@ -78,11 +78,13 @@ class TrainCommand:
             # Convert conversations → prompt/completion for Unsloth completion masking
             train_dataset = train_dataset.map(
                 conversations_to_prompt_completion,
+                fn_kwargs={"tokenizer": tokenizer},
                 remove_columns=["conversations"],
                 desc="Converting train to prompt/completion",
             )
             val_dataset = val_dataset.map(
                 conversations_to_prompt_completion,
+                fn_kwargs={"tokenizer": tokenizer},
                 remove_columns=["conversations"],
                 desc="Converting val to prompt/completion",
             )
