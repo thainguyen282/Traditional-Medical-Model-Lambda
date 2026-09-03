@@ -6,7 +6,7 @@ MCQ_FORMAT_INSTRUCTION = (
 )
 
 
-def conversations_to_prompt_completion(example: Dict) -> Dict:
+def conversations_to_prompt_completion(example: Dict, tokenizer) -> Dict:
     """
     Convert a conversations-format example into prompt/completion format
     for Unsloth's completion_only_loss path.
@@ -27,7 +27,12 @@ def conversations_to_prompt_completion(example: Dict) -> Dict:
     if last_assistant_idx is None:
         # No assistant message — use all as prompt, empty completion
         return {
-            "prompt": [{"role": m["role"], "content": m["content"]} for m in convs],
+            "prompt": tokenizer.apply_chat_template(
+                convs,
+                tokenize=False,
+                add_generation_prompt=True,
+                enable_thinking=False,
+            ),
             "completion": "",
         }
 
@@ -41,7 +46,12 @@ def conversations_to_prompt_completion(example: Dict) -> Dict:
                     + "\n\n" + MCQ_FORMAT_INSTRUCTION,
                 }
                 break
+    prompt = tokenizer.apply_chat_template(
+        prompt_msgs,
+        tokenize=False,
+        add_generation_prompt=True,
+        enable_thinking=False,
+    )
     completion = convs[last_assistant_idx]["content"]
 
-
-    return {"prompt": prompt_msgs, "completion": completion}
+    return {"prompt": prompt, "completion": completion}
