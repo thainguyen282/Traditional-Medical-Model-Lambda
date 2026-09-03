@@ -17,6 +17,17 @@ def conversations_to_prompt_completion(example: Dict, tokenizer) -> Dict:
     """
     convs = example.get("conversations") or example.get("messages") or []
 
+    if not isinstance(convs, list) or not convs:
+        raise ValueError("Expected a non-empty list in `conversations` or `messages`")
+
+    for index, message in enumerate(convs):
+        if not isinstance(message, dict):
+            raise ValueError(f"Message {index} must be a dict, got {type(message).__name__}")
+        if "role" not in message or "content" not in message:
+            raise ValueError(f"Message {index} is missing `role` or `content`: {message!r}")
+        if not isinstance(message["role"], str) or not isinstance(message["content"], str):
+            raise ValueError(f"Message {index} must have string `role` and `content`")
+
     # Find last assistant message index
     last_assistant_idx = None
     for i in range(len(convs) - 1, -1, -1):

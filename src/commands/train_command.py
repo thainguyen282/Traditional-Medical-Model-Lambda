@@ -79,13 +79,13 @@ class TrainCommand:
             train_dataset = train_dataset.map(
                 conversations_to_prompt_completion,
                 fn_kwargs={"tokenizer": tokenizer},
-                remove_columns=["conversations"],
+                remove_columns=train_dataset.column_names,
                 desc="Converting train to prompt/completion",
             )
             val_dataset = val_dataset.map(
                 conversations_to_prompt_completion,
                 fn_kwargs={"tokenizer": tokenizer},
-                remove_columns=["conversations"],
+                remove_columns=val_dataset.column_names,
                 desc="Converting val to prompt/completion",
             )
 
