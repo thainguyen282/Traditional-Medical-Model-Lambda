@@ -1,0 +1,62 @@
+name: "unsloth/Qwen3-4B-Instruct-2507-0011"
+
+model:
+  # SFT-only from the base Instruct model (no prior CPT training).
+  name: "unsloth/Qwen3-4B-Instruct-2507"
+  max_seq_length: 2048
+
+datasets:
+  # YHCT reasoning MCQs + open-ended QA; validate on 5% of YHCT only.
+  - path: "configs/dataset/venera_yhct_mcq_reasoning_10k_with_qa.yaml"
+    train_samples: -1
+    train_val_split: 0.05
+
+benchmark:
+  path: "configs/evals/minimal_mmlu.yaml"
+
+unsloth:
+  load_in_4bit: true
+  attn_implementation: "sdpa"
+
+training:
+  output_dir: "group_outputs/outputs"
+  per_device_train_batch_size: 8
+  gradient_accumulation_steps: 8
+  per_device_eval_batch_size: 4
+  num_train_epochs: 1
+  learning_rate: 2e-4
+  weight_decay: 0.01
+  warmup_steps: 100
+  lr_scheduler_type: "cosine"
+  optim: "adamw_8bit"
+  eval_strategy: "steps"
+  eval_steps: 100
+  save_total_limit: 2
+  logging_steps: 10
+  fp16: false
+  bf16: true
+  save_steps: 100
+  seed: 3407
+  gradient_checkpointing: true
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  neftune_noise_alpha: 5
+
+lora:
+  r: 32
+  lora_alpha: 32
+  lora_dropout: 0
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  use_rslora: true
+
+monitoring:
+  project: "VeneraMedicalM1"
+  tags: ["lora", "unsloth", "unsloth/Qwen3-4B-Instruct-2507", "exp0011", "yhct-mcq-reasoning-10k", "qa20k", "mixed-sft", "sft-only", "neftune"]
