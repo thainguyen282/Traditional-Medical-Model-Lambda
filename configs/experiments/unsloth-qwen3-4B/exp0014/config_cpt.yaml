@@ -1,0 +1,63 @@
+name: "unsloth/Qwen3-4B-Instruct-2507-0014"
+
+model:
+  # Stage 2: continue the QA-20K adapter saved by stage1_qa20k/config_cpt.yaml.
+  # Run both stages in order using configs.txt on the same Lambda instance.
+  name: "group_outputs/exp0014/qa20k/CPT_SFT/model"
+  max_seq_length: 2048
+
+datasets:
+  # Experiment 13: merged YHCT MCQs, EVAL prompt, and Final Answer: X targets.
+  - path: "configs/dataset/venera_yhct_mcq.yaml"
+    train_samples: -1
+    train_val_split: 0.05
+
+benchmark:
+  path: "configs/evals/minimal_mmlu.yaml"
+
+unsloth:
+  load_in_4bit: true
+  attn_implementation: "sdpa"
+
+training:
+  output_dir: "group_outputs/exp0014/yhct"
+  per_device_train_batch_size: 8
+  gradient_accumulation_steps: 8
+  per_device_eval_batch_size: 4
+  num_train_epochs: 3
+  learning_rate: 5e-5
+  weight_decay: 0.01
+  warmup_steps: 100
+  lr_scheduler_type: "cosine"
+  optim: "adamw_8bit"
+  eval_strategy: "steps"
+  eval_steps: 100
+  save_total_limit: 2
+  logging_steps: 10
+  fp16: false
+  bf16: true
+  save_steps: 100
+  seed: 3407
+  gradient_checkpointing: true
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  neftune_noise_alpha: 5
+
+lora:
+  r: 32
+  lora_alpha: 32
+  lora_dropout: 0
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  use_rslora: true
+
+monitoring:
+  project: "VeneraMedicalM1"
+  tags: ["lora", "unsloth", "unsloth/Qwen3-4B-Instruct-2507", "exp0014", "stage2-yhct", "qa20k-then-yhct", "venera_yhct_mcq", "cpt-sft", "neftune"]

@@ -1,0 +1,64 @@
+name: "unsloth/Qwen3-4B-Instruct-2507-0014-qa20k"
+
+model:
+  # Stage 1: experiment 7's CPT checkpoint and QA-20K training settings.
+  name: "huyennkai/Venera-CPT-TMModel"
+  revision: "main"
+  max_seq_length: 2048
+
+datasets:
+  # Train on QA-20K first; stage 2 continues from this stage's saved adapter.
+  - path: "configs/dataset/venera_qa_20k.yaml"
+    train_samples: -1
+    train_val_split: 0.2
+
+benchmark:
+  path: "configs/evals/minimal_mmlu.yaml"
+
+unsloth:
+  load_in_4bit: true
+  attn_implementation: "sdpa"
+
+training:
+  output_dir: "group_outputs/exp0014/qa20k"
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 2
+  per_device_eval_batch_size: 2
+  num_train_epochs: 3
+  learning_rate: 5e-5
+  weight_decay: 0.01
+  warmup_steps: 100
+  lr_scheduler_type: "cosine"
+  optim: "adamw_8bit"
+  eval_strategy: "steps"
+  eval_steps: 200
+  save_total_limit: 2
+  logging_steps: 10
+  fp16: false
+  bf16: true
+  save_steps: 200
+  seed: 3407
+  gradient_checkpointing: true
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+
+  neftune_noise_alpha: 5
+
+lora:
+  r: 32
+  lora_alpha: 32
+  lora_dropout: 0
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  use_rslora: true
+
+monitoring:
+  project: "VeneraMedicalM1"
+  tags: ["lora", "unsloth", "unsloth/Qwen3-4B-Instruct-2507", "exp0014", "stage1-qa20k", "qa-20k", "neftune", "cpt-sft"]
