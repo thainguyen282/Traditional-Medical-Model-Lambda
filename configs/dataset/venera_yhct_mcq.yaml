@@ -1,0 +1,5 @@
+name: "venera_yhct_mcq"
+data: https://huggingface.co/datasets/Maverfrick/yhct-merged
+
+metadata:
+  source: "huggingface"

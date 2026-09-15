@@ -31,6 +31,7 @@ class DatasetFactory:
         "venera_vm14k_mixed_with_qa": VeneraMedDatasetStrategy,
         "venera_yhct_mcq_reasoning_10k": VeneraMedDatasetStrategy,
         "venera_yhct_mcq_reasoning_10k_with_qa": VeneraMedDatasetStrategy,
+        "venera_yhct_mcq": VeneraMedDatasetStrategy,
     }
 
     @classmethod

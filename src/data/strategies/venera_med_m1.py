@@ -22,6 +22,14 @@ from src.data.strategies.base import BaseDatasetStrategy
 # Utils
 # =========================
 
+# Same instruction and user-message layout as EVAL/Unsloth_QA_*.ipynb.
+MCQ_SYSTEM_PROMPT = """You are an expert medical assistant. Your task is to answer the following multiple-choice medical question.
+Provide a single correct option letter (The single correct letter, e.g., A, B, C, etc.). Your response MUST follow this format exactly:
+Final Answer: X
+Where X is the letter of your chosen option (e.g., A, B, C, etc.).
+"""
+
+
 def convert_to_conversations(example):
     """
     Convert dataset format -> conversations format
@@ -49,6 +57,19 @@ def convert_to_conversations(example):
         }
 
     if "question" in example and "answer" in example:
+        # yhct-merged stores options separately from the question.
+        if isinstance(example.get("options"), list):
+            options = example["options"]
+            letters = [chr(65 + i) for i in range(len(options))]
+            answer = example["answer"]
+            if answer not in letters or example.get("answer_index", letters.index(answer)) != letters.index(answer):
+                raise ValueError("MCQ answer does not match the options/answer_index")
+            prompt = f"{MCQ_SYSTEM_PROMPT}\nQuestion: {example['question']}\nOptions:\n"
+            prompt += "\n".join(f"{key}) {value}" for key, value in zip(letters, options)) + "\n"
+            return {"conversations": [
+                {"role": "user", "content": prompt},
+                {"role": "assistant", "content": f"Final Answer: {answer}"},
+            ]}
         return {
             "conversations": [
                 {"role": "user", "content": example["question"]},
