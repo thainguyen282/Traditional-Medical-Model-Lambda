@@ -1,0 +1,3 @@
+# Sequential SFT on one instance: clean Instruct model -> QA-20K -> YHCT MCQ.
+configs/experiments/unsloth-qwen3-4B/exp0014/stage1_qa20k/config.yaml
+configs/experiments/unsloth-qwen3-4B/exp0014/config.yaml

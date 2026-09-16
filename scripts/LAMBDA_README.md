@@ -112,6 +112,27 @@ Then:
 python scripts/lambda_launch.py --task sft --config-list scripts/lambda_batch.txt
 ```
 
+### Exp0013 and Exp0014: SFT only from the clean model
+
+Both start from `unsloth/Qwen3-4B-Instruct-2507` without a CPT checkpoint
+and retain the datasets and training hyperparameters of their CPT-SFT counterparts.
+
+Exp0013 trains directly on the merged YHCT MCQs:
+```bash
+python scripts/lambda_launch.py --task sft \
+    --config configs/experiments/unsloth-qwen3-4B/exp0013/config.yaml
+```
+
+Exp0014 first trains on QA-20K, then continues that SFT adapter on YHCT MCQs.
+Run both stages in order on the same instance:
+```bash
+python scripts/lambda_launch.py --task sft \
+    --config-list configs/experiments/unsloth-qwen3-4B/exp0014/configs_sft.txt
+```
+Stage 2 loads `group_outputs/exp0014/qa20k/SFT/model` from stage 1;
+its final adapter is saved to `group_outputs/exp0014/yhct/SFT/model`.
+The existing `config_cpt.yaml` files and `exp0014/configs.txt` remain the CPT-SFT variants.
+
 ### Debug / inspect after finish
 ```bash
 python scripts/lambda_launch.py --task sft --config ... --keep-alive
