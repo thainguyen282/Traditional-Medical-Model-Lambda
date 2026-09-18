@@ -11,6 +11,7 @@ class ArgumentBuilder:
             output_dir=output_dir,
             per_device_train_batch_size=train_config.get("per_device_train_batch_size", 2),
             gradient_accumulation_steps=train_config.get("gradient_accumulation_steps", 4),
+            per_device_eval_batch_size=train_config.get("per_device_eval_batch_size", 8),
             num_train_epochs=train_config.get("num_train_epochs", 3),
             learning_rate=float(train_config.get("learning_rate", 2e-4)),
             embedding_learning_rate=float(train_config.get("embedding_learning_rate", 2e-5)),
@@ -23,6 +24,7 @@ class ArgumentBuilder:
 
             save_strategy=train_config.get("save_strategy", "steps"),
             save_steps=train_config.get("save_steps", 50),
+            save_total_limit=train_config.get("save_total_limit", None),
 
             eval_strategy=train_config.get("eval_strategy", "steps"),
             eval_steps=train_config.get("eval_steps", 50),

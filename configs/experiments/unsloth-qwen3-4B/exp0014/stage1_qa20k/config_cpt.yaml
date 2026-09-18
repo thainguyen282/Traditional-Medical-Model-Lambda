@@ -1,7 +1,7 @@
 name: "unsloth/Qwen3-4B-Instruct-2507-0014-qa20k"
 
 model:
-  # Stage 1: experiment 7's CPT checkpoint and QA-20K training settings.
+  # Stage 1: experiment 7's CPT checkpoint with larger QA-20K batches.
   name: "huyennkai/Venera-CPT-TMModel"
   revision: "main"
   max_seq_length: 2048
@@ -21,22 +21,24 @@ unsloth:
 
 training:
   output_dir: "group_outputs/exp0014/qa20k"
-  per_device_train_batch_size: 2
-  gradient_accumulation_steps: 2
-  per_device_eval_batch_size: 2
+  # Throughput starting point for a 40 GB GPU; effective batch = 16 on one GPU.
+  per_device_train_batch_size: 16
+  gradient_accumulation_steps: 1
+  per_device_eval_batch_size: 8
   num_train_epochs: 3
   learning_rate: 5e-5
   weight_decay: 0.01
-  warmup_steps: 100
+  # Batch/update grew 4x: keep warmup and eval/save cadence in examples.
+  warmup_steps: 25
   lr_scheduler_type: "cosine"
   optim: "adamw_8bit"
   eval_strategy: "steps"
-  eval_steps: 200
+  eval_steps: 50
   save_total_limit: 2
   logging_steps: 10
   fp16: false
   bf16: true
-  save_steps: 200
+  save_steps: 50
   seed: 3407
   gradient_checkpointing: true
   load_best_model_at_end: true
