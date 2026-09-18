@@ -7,7 +7,7 @@ model:
   max_seq_length: 2048
 
 datasets:
-  # Experiment 13: merged YHCT MCQs, EVAL prompt, and Final Answer: X targets.
+  # VM14K-clean YHCT MCQs, EVAL prompt, and Final Answer: X targets.
   - path: "configs/dataset/venera_yhct_mcq.yaml"
     train_samples: -1
     train_val_split: 0.05
@@ -60,4 +60,4 @@ lora:
 
 monitoring:
   project: "VeneraMedicalM1"
-  tags: ["lora", "unsloth", "unsloth/Qwen3-4B-Instruct-2507", "exp0014", "stage2-yhct", "qa20k-then-yhct", "venera_yhct_mcq", "cpt-sft", "neftune"]
+  tags: ["lora", "unsloth", "unsloth/Qwen3-4B-Instruct-2507", "exp0014", "stage2-yhct", "qa20k-then-yhct", "venera_yhct_mcq", "vm14k-clean", "cpt-sft", "neftune"]

@@ -1,5 +1,7 @@
 name: "venera_yhct_mcq"
-data: https://huggingface.co/datasets/Maverfrick/yhct-merged
+# Private dataset: authenticate with an HF token that can read this repository.
+# 10,344 rows after removing 366 VM14K question/ID matches.
+data: https://huggingface.co/datasets/Maverfrick/yhct-merged-vm14k-clean
 
 metadata:
   source: "huggingface"

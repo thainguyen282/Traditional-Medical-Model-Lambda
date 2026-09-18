@@ -76,10 +76,10 @@ SHA-256 file eval local: `314006d439047ac9b98a890fe14ee1954025b28040c3e162ef71dc
 
 | Run | VM14K accuracy (đúng/tổng) | Deviation (số/tổng) | Theo difficulty/topic | Trạng thái |
 |---|---|---|---|---|
-| exp0013 SFT-only | Chưa xác minh | Chưa xác minh | Chưa xác minh | Chưa liệt kê được revision |
-| exp0013 CPT-SFT | Chưa xác minh | Chưa xác minh | Chưa xác minh | Chưa liệt kê được revision |
+| exp0013 SFT-only | chua xac minh | 0 | Chưa xác minh | Chưa liệt kê được revision |
+| exp0013 CPT-SFT |  | 84.57 | Chưa xác minh | Chưa liệt kê được revision |
 | exp0014 SFT-only | Chưa xác minh | Chưa xác minh | Chưa xác minh | Chưa liệt kê được revision |
-| exp0014 CPT-SFT | Chưa xác minh | Chưa xác minh | Chưa xác minh | Có link do người dùng cung cấp; tải file trả HTTP 401 |
+| exp0014 CPT-SFT | 86.70 | Chưa xác minh | Chưa xác minh | Có link do người dùng cung cấp; tải file trả HTTP 401 |
 
 Artifact được cung cấp: [exp0014 CPT-SFT — infer_result.txt](https://huggingface.co/Maverfrick/Venera-Traditional-Model/blob/cpt-sft-unsloth-qwen3-4B-exp0014-tm-sft-1789493283/eval/outputs/CPT_SFT_VM14K/infer_result.txt).
 

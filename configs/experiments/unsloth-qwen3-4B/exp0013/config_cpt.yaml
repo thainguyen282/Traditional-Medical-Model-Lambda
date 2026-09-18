@@ -7,8 +7,8 @@ model:
   max_seq_length: 2048
 
 datasets:
-  # Merged YHCT MCQs with the EVAL prompt and Final Answer: X targets.
-  # Reserve 5% of the merged train split for validation.
+  # VM14K-clean YHCT MCQs with the EVAL prompt and Final Answer: X targets.
+  # Reserve 5% of the cleaned train split for validation.
   - path: "configs/dataset/venera_yhct_mcq.yaml"
     train_samples: -1
     train_val_split: 0.05
@@ -62,4 +62,4 @@ lora:
 
 monitoring:
   project: "VeneraMedicalM1"
-  tags: ["lora", "unsloth", "unsloth/Qwen3-4B-Instruct-2507", "exp0013", "venera_yhct_mcq", "cpt-sft", "neftune"]
+  tags: ["lora", "unsloth", "unsloth/Qwen3-4B-Instruct-2507", "exp0013", "venera_yhct_mcq", "vm14k-clean", "cpt-sft", "neftune"]
