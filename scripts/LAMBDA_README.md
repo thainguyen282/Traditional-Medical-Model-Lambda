@@ -147,6 +147,10 @@ python scripts/lambda_launch.py --task eval \
 Select just `huatuo` or `medgemma` to evaluate one model. Add `--eval-limit 4`
 for a smoke run (four questions from each dataset); omit it for a full run.
 `--eval-batch-size 4` is the default, with automatic reduction down to one on OOM.
+`--eval-generation-mode direct` is now the default: generate only `Final Answer: X`,
+without a reasoning section. Existing launch commands use it automatically.
+Use `--eval-generation-mode notebook` to reproduce the previous free-generation protocol.
+For direct GPU execution, the corresponding flag is `--generation-mode direct|notebook`.
 
 Models: `google/medgemma-1.5-4b-it` and
 `FreedomIntelligence/HuatuoGPT-o1-8B`. The HF account used by `HF_TOKEN` must
@@ -158,16 +162,26 @@ Protocol:
 - `new`: all 105 rows of `EVAL/Data/tcm_mcq.jsonl`.
 - `vm14k`: all 564 rows of `EVAL/Data/eastern_medicine_VM14K.jsonl`.
   This is the historical benchmark, not the separate 29-row official test split.
-- The existing baseline notebooks supply data normalization, the MCQ prompt,
-  answer extraction, and correctness rules. Greedy decoding uses 250 new tokens
-  and a 2048-token input limit, with each model's own chat template.
+- The existing baseline notebooks supply data normalization, the base MCQ prompt,
+  answer extraction, and correctness rules. Both modes use each model's own chat
+  template and a 2048-token input limit.
+- `direct` adds a no-explanation instruction and prefills the assistant's response
+  with `Final Answer:`. Greedy decoding is constrained to the question's valid
+  option labels followed by EOS, with a 16-token cap. Reasoning text is never
+  generated and then stripped. Long inputs are truncated from the left to retain
+  the assistant prefix.
+- `notebook` preserves the original prompt and unrestricted greedy generation
+  with a 250-token cap. Both models can emit reasoning in this mode; neither
+  model's current chat template implements `enable_thinking=False`.
 - Transformers loads both models in NF4 with BF16 compute. MedGemma uses
   `Gemma3ForConditionalGeneration` for text-only questions; Huatuo uses
   `AutoModelForCausalLM`. No training or model-weight upload is performed.
-- Huatuo may spend the shared 250-token budget on reasoning. Results include
-  `token_limit_rate`; this experiment measures performance under the existing
-  budget, not an unrestricted reasoning benchmark. The existing parser's
-  fallback rules are preserved, including letter extraction from free text.
+- Results record `generation_mode`, the effective prompt and generation settings,
+  `assistant_prefix`, and `constrained_to_options`. Direct mode is a different
+  benchmark protocol: valid formatting is enforced, so its format deviation rate
+  is zero by construction and is not comparable to the old free-generation rate.
+  Accuracy can also change. These constraints control output, not model weights
+  or an internal reasoning switch. The existing answer parser remains unchanged.
 
 The launcher copies the local evaluator, notebooks, and data to the instance,
 so this setup can run before the new files are pushed to GitHub. Each model and

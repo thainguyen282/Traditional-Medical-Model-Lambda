@@ -23,6 +23,9 @@ DATASETS = {
     "new": ("tcm_mcq.jsonl", "Unsloth_QA_goc_new.ipynb"),
     "vm14k": ("eastern_medicine_VM14K.jsonl", "Unsloth_QA_goc_VM14K.ipynb"),
 }
+ANSWER_PREFIX = "Final Answer:"
+DIRECT_INSTRUCTION = "\nAnswer directly. Do not include thinking, reasoning, or an explanation.\n"
+
 PROTOCOL_NAMES = {
     "generation_config", "system_prompt", "subset_size", "load_dataset",
     "process_medical_topics", "extract_answer", "evaluate_answer",
@@ -55,11 +58,21 @@ def load_protocol(notebook: Path) -> dict:
     return namespace
 
 
-def prepare_dataset(key: str, limit: int = 0) -> tuple[list[dict], dict, dict]:
+def prepare_dataset(key: str, limit: int = 0, generation_mode: str = "direct") -> tuple[list[dict], dict, dict]:
     filename, notebook_name = DATASETS[key]
     data_path = ROOT / "EVAL" / "Data" / filename
     notebook = ROOT / "EVAL" / notebook_name
     protocol = load_protocol(notebook)
+    if generation_mode not in {"direct", "notebook"}:
+        raise ValueError(f"Unknown generation mode: {generation_mode}")
+    protocol["generation_mode"] = generation_mode
+    if generation_mode == "direct":
+        protocol["system_prompt"] += DIRECT_INSTRUCTION
+        protocol["generation_config"] = {
+            "max_new_tokens": 16, "do_sample": False,
+            "num_beams": 1, "num_return_sequences": 1,
+            "min_length": 0,
+        }
     samples = list(protocol["load_dataset"](data_path))[:protocol["subset_size"]]
     if limit:
         samples = samples[:limit]
@@ -77,6 +90,9 @@ def prepare_dataset(key: str, limit: int = 0) -> tuple[list[dict], dict, dict]:
         "system_prompt": protocol["system_prompt"],
         "generation_config": protocol["generation_config"],
         "max_input_tokens": 2048,
+        "generation_mode": generation_mode,
+        "assistant_prefix": ANSWER_PREFIX if generation_mode == "direct" else "",
+        "constrained_to_options": generation_mode == "direct",
     }
     return samples, protocol, metadata
 
@@ -141,30 +157,74 @@ def load_model(key: str, revision: str, token: str | None):
     return model, tokenizer
 
 
+def answer_constraint(tokenizer, samples, input_length, eos_ids, max_new_tokens):
+    """Allow only an option label followed by EOS, including multi-token labels."""
+    if not eos_ids:
+        raise ValueError("Answer-only generation requires an EOS token")
+    tries = []
+    for sample in samples:
+        root = {}
+        for label in sample["options"]:
+            tokens = tokenizer.encode(" " + label, add_special_tokens=False)
+            if not tokens or len(tokens) + 1 > max_new_tokens or set(tokens) & set(eos_ids):
+                raise ValueError(f"Cannot constrain option label: {label!r}")
+            node = root
+            for token in tokens:
+                node = node.setdefault(token, {})
+            for eos in eos_ids:
+                node[eos] = {}
+        tries.append(root)
+
+    def allowed_tokens(batch_id, input_ids):
+        node = tries[batch_id]
+        for token in input_ids[input_length:].tolist():
+            # Finished rows can remain in a batch until the longest row ends.
+            if token in eos_ids:
+                return list(eos_ids)
+            node = node[token]
+        return list(node)
+
+    return allowed_tokens
+
+
 def generate_batch(model, tokenizer, samples: list[dict], protocol: dict) -> list[dict]:
     import torch
 
+    direct = protocol["generation_mode"] == "direct"
     texts = [tokenizer.apply_chat_template(
         [{"role": "user", "content": build_prompt(sample, protocol["system_prompt"])}],
-        tokenize=False, add_generation_prompt=True, enable_thinking=False,
-    ) for sample in samples]
+        tokenize=False, add_generation_prompt=True,
+    ) + (ANSWER_PREFIX if direct else "") for sample in samples]
+    if direct:
+        # Preserve the assistant prefill if a question exceeds the input budget.
+        tokenizer.truncation_side = "left"
     inputs = tokenizer(
         texts, return_tensors="pt", padding=True, truncation=True,
         max_length=2048, add_special_tokens=False,
     ).to("cuda")
+    eos_ids = model.generation_config.eos_token_id
+    eos_ids = [token for token in (eos_ids if isinstance(eos_ids, list) else [eos_ids])
+               if token is not None]
+    constraints = {}
+    if direct:
+        constraints["prefix_allowed_tokens_fn"] = answer_constraint(
+            tokenizer, samples, inputs.input_ids.shape[1], eos_ids,
+            protocol["generation_config"]["max_new_tokens"],
+        )
     with torch.inference_mode():
         outputs = model.generate(
-            **inputs, **protocol["generation_config"],
+            **inputs, **protocol["generation_config"], **constraints,
             pad_token_id=tokenizer.pad_token_id,
         )
     generated = outputs[:, inputs.input_ids.shape[1]:]
-    eos_ids = model.generation_config.eos_token_id
-    eos_ids = set(eos_ids if isinstance(eos_ids, list) else [eos_ids])
     results = []
     for tokens in generated.tolist():
         stopped = any(token in eos_ids for token in tokens)
+        response = tokenizer.decode(tokens, skip_special_tokens=True)
+        if direct:
+            response = ANSWER_PREFIX + " " + response.strip()
         results.append({
-            "response": tokenizer.decode(tokens, skip_special_tokens=True),
+            "response": response,
             "hit_token_limit": not stopped and len(tokens) >= protocol["generation_config"]["max_new_tokens"],
         })
     return results
@@ -209,7 +269,7 @@ def summarize(rows: list[dict]) -> dict:
 def evaluate(key: str, dataset: str, revision: str, args) -> None:
     import torch
 
-    samples, protocol, metadata = prepare_dataset(dataset, args.limit)
+    samples, protocol, metadata = prepare_dataset(dataset, args.limit, args.generation_mode)
     output = args.output_dir / key / dataset
     output.mkdir(parents=True, exist_ok=False)
     metadata.update(model=MODELS[key], revision=revision, seed=3407,
@@ -252,6 +312,7 @@ def evaluate(key: str, dataset: str, revision: str, args) -> None:
         (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
         (output / "infer_result.txt").write_text(
             f"Model: {MODELS[key]}\nDataset: {dataset}\n"
+            f"Generation Mode: {args.generation_mode}\n"
             f"Total Questions Processed: {len(rows)}\n"
             f"Overall Accuracy: {summary['accuracy']:.2%}\n"
             f"Deviation Rate: {summary['deviation_rate']:.2%}\n"
@@ -278,6 +339,8 @@ def main() -> int:
     parser.add_argument("--dataset", choices=[*DATASETS, "all"], default="all")
     parser.add_argument("--limit", type=int, default=0, help="0 uses the full notebook evaluation subset")
     parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--generation-mode", choices=["direct", "notebook"], default="direct",
+                        help="direct: answer-only decoding; notebook: original free generation (may reason)")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "EVAL/outputs/medical_baselines")
     parser.add_argument("--dry-run", action="store_true", help="Validate datasets/protocol without GPU or network")
     parser.add_argument("--check-access", action="store_true", help="Validate model access without loading weights")
@@ -287,7 +350,7 @@ def main() -> int:
     models = list(MODELS) if args.model == "all" else [args.model]
     datasets = list(DATASETS) if args.dataset == "all" else [args.dataset]
     for dataset in datasets:
-        _, _, metadata = prepare_dataset(dataset, args.limit)
+        _, _, metadata = prepare_dataset(dataset, args.limit, args.generation_mode)
         print(json.dumps(metadata, indent=2))
     if args.dry_run:
         return 0

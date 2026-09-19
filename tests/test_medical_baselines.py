@@ -15,7 +15,7 @@ import lambda_launch as launcher
 class MedicalEvaluationTests(unittest.TestCase):
     def test_existing_datasets_and_answer_rules(self):
         for dataset, count in [("new", 105), ("vm14k", 564)]:
-            samples, protocol, metadata = evaluator.prepare_dataset(dataset)
+            samples, protocol, metadata = evaluator.prepare_dataset(dataset, generation_mode="notebook")
             self.assertEqual(len(samples), count)
             self.assertEqual(metadata["generation_config"]["max_new_tokens"], 250)
             self.assertFalse(metadata["generation_config"]["do_sample"])
@@ -32,6 +32,72 @@ class MedicalEvaluationTests(unittest.TestCase):
             self.assertEqual(summary["correct"], 1)
             self.assertEqual(summary["deviations"], 1)
             self.assertAlmostEqual(summary["accuracy"], 1 / 3)
+
+    def test_direct_protocol_is_distinct_from_notebook(self):
+        _, direct, metadata = evaluator.prepare_dataset("new", limit=1)
+        _, notebook, original = evaluator.prepare_dataset("new", limit=1, generation_mode="notebook")
+        self.assertEqual(direct["generation_config"]["max_new_tokens"], 16)
+        self.assertEqual(notebook["generation_config"]["max_new_tokens"], 250)
+        self.assertTrue(metadata["constrained_to_options"])
+        self.assertFalse(original["constrained_to_options"])
+        self.assertEqual(metadata["assistant_prefix"], "Final Answer:")
+        self.assertIn("Do not include thinking", direct["system_prompt"])
+        self.assertNotIn("Do not include thinking", notebook["system_prompt"])
+
+    def test_real_generation_blocks_preferred_thinking_token(self):
+        # A tiny random CPU model strongly prefers a 'thinking' token. Direct
+        # decoding must block it while notebook decoding must remain unrestricted.
+        import torch
+        from transformers import GPT2Config, GPT2LMHeadModel
+
+        class ThinkingModel(GPT2LMHeadModel):
+            def forward(self, input_ids=None, attention_mask=None, **kwargs):
+                output = super().forward(input_ids=input_ids, attention_mask=attention_mask, **kwargs)
+                output.logits = torch.zeros_like(output.logits)
+                output.logits[..., 7] = 100  # "thinking" is always the first choice
+                output.logits[..., 3] = 10   # otherwise prefer B over A
+                return output
+
+        class Inputs(dict):
+            @property
+            def input_ids(self):
+                return self["input_ids"]
+
+            def to(self, device):
+                return self  # keep this integration test on CPU
+
+        class Tokenizer:
+            pad_token_id = 0
+            truncation_side = "right"
+            def apply_chat_template(self, messages, **kwargs):
+                return messages[0]["content"] + "assistant:"
+            def __call__(self, texts, **kwargs):
+                self.texts = texts
+                return Inputs(input_ids=torch.tensor([[0, 8], [8, 8]]),
+                              attention_mask=torch.tensor([[0, 1], [1, 1]]))
+            def encode(self, text, **kwargs):
+                return {" A": [1, 2], " B": [1, 3], " CC": [1, 4, 4]}[text]
+            def decode(self, tokens, **kwargs):
+                return "".join({0: "", 1: " ", 2: "A", 3: "B", 4: "C",
+                                5: "", 6: "", 7: "thinking"}[token] for token in tokens)
+
+        model = ThinkingModel(GPT2Config(vocab_size=10, n_positions=64,
+                              n_embd=8, n_layer=1, n_head=1,
+                              bos_token_id=8, eos_token_id=[5, 6], pad_token_id=0)).eval()
+        tokenizer = Tokenizer()
+        samples = [{"question": "first", "options": {"A": "a", "B": "b"}},
+                   {"question": "second", "options": {"CC": "c"}}]
+        _, protocol, _ = evaluator.prepare_dataset("new", limit=1)
+        rows = evaluator.generate_batch(model, tokenizer, samples, protocol)
+        self.assertEqual([r["response"] for r in rows], ["Final Answer: B", "Final Answer: CC"])
+        self.assertTrue(all(not r["hit_token_limit"] for r in rows))
+        self.assertTrue(all(t.endswith("Final Answer:") for t in tokenizer.texts))
+
+        _, protocol, _ = evaluator.prepare_dataset("new", limit=1, generation_mode="notebook")
+        protocol["generation_config"] = {"max_new_tokens": 2, "do_sample": False}
+        rows = evaluator.generate_batch(model, Tokenizer(), samples, protocol)
+        self.assertEqual([r["response"] for r in rows], ["thinkingthinking"] * 2)
+        self.assertTrue(all(r["hit_token_limit"] for r in rows))
 
     def test_access_resolves_redirect_commit_and_rejects_gated_model(self):
         response = SimpleNamespace(ok=True, headers={}, history=[
@@ -61,11 +127,13 @@ class MedicalEvaluationTests(unittest.TestCase):
             "transformers": SimpleNamespace(set_seed=Mock()),
         }), patch.object(evaluator, "load_model", return_value=(Mock(), Mock())), \
                 patch.object(evaluator, "generate_batch", side_effect=generate):
-            args = SimpleNamespace(output_dir=Path(directory), limit=3, batch_size=4)
+            args = SimpleNamespace(output_dir=Path(directory), limit=3, batch_size=4, generation_mode="direct")
             evaluator.evaluate("huatuo", "new", "test-revision", args)
             output = Path(directory) / "huatuo/new"
             summary = json.loads((output / "summary.json").read_text())
             self.assertEqual(summary["status"], "complete")
+            self.assertEqual(summary["generation_mode"], "direct")
+            self.assertTrue(summary["constrained_to_options"])
             self.assertEqual(summary["accuracy"], 1.0)
             self.assertEqual(summary["samples"], 3)
             self.assertEqual(batch_sizes, [3, 2, 1, 1, 1])
@@ -80,7 +148,7 @@ class MedicalEvaluationTests(unittest.TestCase):
             "transformers": SimpleNamespace(set_seed=Mock()),
         }), patch.object(evaluator, "load_model", return_value=(Mock(), Mock())), \
                 patch.object(evaluator, "generate_batch", side_effect=ValueError("bad template")):
-            args = SimpleNamespace(output_dir=Path(directory), limit=1, batch_size=1)
+            args = SimpleNamespace(output_dir=Path(directory), limit=1, batch_size=1, generation_mode="direct")
             with self.assertRaisesRegex(ValueError, "bad template"):
                 evaluator.evaluate("huatuo", "new", "test-revision", args)
             output = Path(directory) / "huatuo/new"
@@ -111,6 +179,7 @@ in_docker() {
             for dataset in ["new", "vm14k"]:
                 self.assertIn(f"--model '{model}' --dataset '{dataset}'", result.stdout)
         self.assertIn("--revision 'eval-medical-test-job'", result.stdout)
+        self.assertIn("--generation-mode 'direct'", result.stdout)
 
     def run_mock_job(self, backup_error=None, sentinel="DONE_SUCCESS"):
         api = Mock()
@@ -147,6 +216,20 @@ in_docker() {
         code, api, _ = self.run_mock_job(backup_error=RuntimeError("scp failed"))
         self.assertEqual(code, 2)
         api.terminate.assert_not_called()
+
+    def test_launcher_forwards_generation_mode(self):
+        env = {"LAMBDA_API_KEY": "test", "LAMBDA_SSH_KEY_NAME": "test",
+               "LAMBDA_SSH_PRIVATE_KEY": __file__, "HF_TOKEN": "test"}
+        for mode in ("direct", "notebook"):
+            args = ["lambda_launch.py", "--task", "eval", "--medical-baselines", "huatuo"]
+            if mode == "notebook":
+                args += ["--eval-generation-mode", mode]
+            with patch.object(sys, "argv", args), patch.dict("os.environ", env), \
+                    patch.object(launcher, "load_dotenv"), \
+                    patch.object(evaluator, "check_access"), \
+                    patch.object(launcher, "run_job", return_value=0) as run:
+                self.assertEqual(launcher.main(), 0)
+                self.assertEqual(run.call_args.kwargs["env_vars"]["EVAL_GENERATION_MODE"], mode)
 
     def test_preflight_denial_never_launches_gpu(self):
         args = ["lambda_launch.py", "--task", "eval", "--medical-baselines", "medgemma"]

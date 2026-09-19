@@ -334,6 +334,7 @@ run_medical_eval() {
             in_docker "python /workspace/scripts/eval_medical_baselines.py \
                 --model '$model' --dataset '$dataset' \
                 --limit '${EVAL_LIMIT:-0}' --batch-size '${EVAL_BATCH_SIZE:-4}' \
+                --generation-mode '${EVAL_GENERATION_MODE:-direct}' \
                 --output-dir '$output_dir'" \
                 || { echo "[bootstrap] ERROR: evaluation failed: $model/$dataset"; failed=1; }
         done

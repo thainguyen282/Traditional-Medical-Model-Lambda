@@ -472,6 +472,8 @@ def main() -> int:
                         help="(medical baselines) Questions per dataset; 0 uses the full dataset")
     parser.add_argument("--eval-batch-size", type=int, default=4,
                         help="(medical baselines) Initial batch size, reduced on GPU OOM")
+    parser.add_argument("--eval-generation-mode", choices=["direct", "notebook"], default="direct",
+                        help="(medical baselines) direct: answer only; notebook: original free generation")
     parser.add_argument("--config-list",
                         help="Path to a text file with one config path per line")
     parser.add_argument("--instance-type", default=DEFAULT_INSTANCE_TYPE,
@@ -525,7 +527,7 @@ def main() -> int:
         from eval_medical_baselines import DATASETS, check_access, prepare_dataset
         try:
             for dataset in DATASETS:
-                prepare_dataset(dataset, args.eval_limit)
+                prepare_dataset(dataset, args.eval_limit, args.eval_generation_mode)
             check_access(args.medical_baselines, hf_token)
         except Exception as error:
             die(f"medical evaluation preflight failed before launching a GPU: {error}")
@@ -547,6 +549,7 @@ def main() -> int:
         "EVAL_MEDICAL_MODELS": " ".join(dict.fromkeys(args.medical_baselines or [])),
         "EVAL_LIMIT": str(args.eval_limit),
         "EVAL_BATCH_SIZE": str(args.eval_batch_size),
+        "EVAL_GENERATION_MODE": args.eval_generation_mode,
         # Optional override: run a custom inference script instead of
         # the default `inference.py` inside the container.
         "INFERENCE_SCRIPT": args.inference_script or os.environ.get("INFERENCE_SCRIPT", ""),
