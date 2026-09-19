@@ -76,19 +76,20 @@ SHA-256 file eval local: `314006d439047ac9b98a890fe14ee1954025b28040c3e162ef71dc
 
 | Run | VM14K accuracy (đúng/tổng) | Deviation (số/tổng) |
 |---|---|---|
-| exp0013 SFT-only | chua xac minh | 0 | 
-| exp0013 CPT-SFT |  | 84.57 |
-| exp0014 SFT-only | Chưa xác minh | Chưa xác minh | 
-| exp0014 CPT-SFT | 86.70 | Chưa xác minh | 
+| exp007 QA data | 57.23 | 0 |
+| exp0013 SFT-only | 60.64 | 0 | 
+| exp0013 CPT-SFT | 64.32 | 0 |
+| exp0014 2 stage SFT-only | 62.54 | 0 | 
+| exp0014 2 stage CPT-SFT |70.21 | 0 | 
 | GPT‑6 Astra     | Chưa đánh giá |       Chưa đánh giá |
 | Claude Opus 5   | Chưa đánh giá |       Chưa đánh giá |
 | Gemini 3.1 Pro  | Chưa đánh giá |       Chưa đánh giá |
 | Qwen3.8‑27B     | Chưa đánh giá |       Chưa đánh giá |
 | Qwen3.5‑4B      | Chưa đánh giá |       Chưa đánh giá |
 | Gemma‑4‑E4B     | Chưa đánh giá |       Chưa đánh giá |
-| MedGemma‑1.5‑4B | Chưa đánh giá |       Chưa đánh giá |
-| HuatuoGPT‑o1‑8B | Chưa đánh giá |       Chưa đánh giá |
-| Qwen3‑4B base   | Chưa đánh giá |       Chưa đánh giá |
+| MedGemma‑1.5‑4B | 52.45 |       0 |
+| HuatuoGPT‑o1‑8B | 56.12 |       0 |
+| Qwen3‑4B base   | 48.05 |       0 |
 
 
 Artifact được cung cấp: [exp0014 CPT-SFT — infer_result.txt](https://huggingface.co/Maverfrick/Venera-Traditional-Model/blob/cpt-sft-unsloth-qwen3-4B-exp0014-tm-sft-1789493283/eval/outputs/CPT_SFT_VM14K/infer_result.txt).
