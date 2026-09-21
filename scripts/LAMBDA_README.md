@@ -148,7 +148,15 @@ If you want to pin a specific image (e.g. a prior build after the Dockerfile cha
 ```dotenv
 DOCKER_IMAGE=ghcr.io/venera-ai/traditional-medical-model:sha-abc1234
 ```
-`lambda_launch.py` forwards all env vars; bootstrap picks this up instead of the branch default.
+`lambda_launch.py` forwards `DOCKER_IMAGE`; bootstrap picks this up instead of the branch default.
+
+To run `thai-dev` with the working `main` environment, set `DOCKER_IMAGE` to
+exactly the same image tag or digest used by the successful `main` run, and
+pass `--git-branch thai-dev` (plus `--git-repo` for the fork). The image supplies
+dependencies; the selected Git branch supplies training and evaluation code
+through the `/workspace` bind mount. Commit and push code changes to that remote
+branch before launching. Restoring the Dockerfile locally does not change an
+already-published `thai-dev` image.
 
 ## How it works (flow)
 
@@ -173,27 +181,8 @@ lambda_launch.py
 
 ## Failure modes & what to do
 
-Before pulling the image, bootstrap checks whether Docker has a registered
-`nvidia` runtime. If missing, it runs `sudo nvidia-ctk runtime configure
---runtime=docker`, restarts Docker on the fresh instance, and verifies the
-registration. If `nvidia-ctk` is absent, install the NVIDIA Container Toolkit on
-the host using the [NVIDIA installation guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
-
-The GPU preflight uses the NVIDIA runtime with `compute,utility` capabilities
-for both the check and subsequent jobs. It runs `nvidia-smi` and a synchronized
-PyTorch GPU operation in the same container. A CUDA-enabled wheel (such as
-`torch=2.10.0+cu128`) alone does not prove that the host GPU is usable.
-On failure, the log includes the actual CUDA initialization traceback plus
-host driver, device, and Docker runtime diagnostics. Keep that section of the
-log to distinguish driver failures from container runtime or image problems.
-The launcher copies the local bootstrap on each launch, so these checks do not
-require rebuilding the training image.
-
 | Symptom | What to check |
 |---|---|
-| Host `nvidia-smi` fails | The host NVIDIA driver must work before Docker can use the GPU. Inspect the host error. |
-| `unknown or invalid runtime name: nvidia` | Register the NVIDIA runtime on the host following the [NVIDIA Container Toolkit installation guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#configuring-docker). |
-| Container `nvidia-smi` works but PyTorch CUDA initialization fails | Read the CUDA traceback and host diagnostics in the preflight log; NVML visibility alone does not verify CUDA compute. |
 | "no region has capacity for gpu_2x_a100" | Lambda is out of stock for that type. Retry later or use `--instance-type gpu_1x_a100_sxm4`. |
 | SSH never comes up | `lambda_launch.py` waits 5 min. Check the Lambda dashboard — instance may be stuck provisioning. |
 | Training hangs, you Ctrl+C locally | The remote job keeps running in tmux. The script proceeds to terminate anyway. Pass `--keep-alive` if you want to inspect. |

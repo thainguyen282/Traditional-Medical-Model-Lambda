@@ -240,19 +240,6 @@ def run_job(
         scp_to(ssh_private_key, ip, str(scripts_dir / "lambda_push_to_hf.py"),
                "/home/ubuntu/lambda_push_to_hf.py")
 
-        # The dedicated VM14K test evaluator may contain local changes that
-        # are not on GIT_BRANCH yet. Copy it explicitly so eval-only
-        # cpt_sft_test always runs the same file as this launcher checkout.
-        eval_test_script = scripts_dir.parent / "EVAL" / "Unsloth_QA_CPT_SFT_VM14K_TEST.py"
-        eval_only_parts = env_vars.get("EVAL_ONLY", "").split("|")
-        if len(eval_only_parts) >= 4 and eval_only_parts[3] in {
-            "cpt_sft_test", "goc_test"
-        }:
-            if not eval_test_script.exists():
-                die(f"eval test script not found: {eval_test_script}")
-            scp_to(ssh_private_key, ip, str(eval_test_script),
-                   "/home/ubuntu/Unsloth_QA_CPT_SFT_VM14K_TEST.py")
-
         # Optionally scp a custom inference script (basename copied).
         inf_script = env_vars.get("INFERENCE_SCRIPT", "")
         if inf_script:
@@ -389,16 +376,8 @@ def main() -> int:
                              "models, push to each model's HF branch")
     parser.add_argument("--eval-only",
                         help="(eval task only) Override the 6-model loop with a "
-                             "single model. Format: "
-                             "'name|source_repo|revision|variant[|output_repo]' "
-                             "where variant ∈ "
-                             "{goc,goc_test,cpt,sft,cpt_sft,cpt_sft_test}. "
-                             "output_repo is optional and lets evaluation load "
-                             "a model from a read-only repo but upload results "
-                             "to a writable repo. "
-                             "Use cpt_sft_test for an adapter or goc_test for "
-                             "a clean base model on the official 29-row VM14K "
-                             "test split. Example: "
+                             "single model. Format: 'name|repo|revision|variant' "
+                             "where variant ∈ {goc,cpt,sft,cpt_sft}. Example: "
                              "'SFT-exp0002|huyennkai/Venera-Traditional-Model|"
                              "sft-unsloth-qwen3-4B-exp0002-tm-sft-1777957925|sft'")
     parser.add_argument("--config", help="Path to a single SFT config yaml")

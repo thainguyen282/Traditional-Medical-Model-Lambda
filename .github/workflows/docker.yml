@@ -2,7 +2,11 @@ name: Build & push training image
 
 on:
   push:
-    branches: [main, main2, thai-dev]
+    branches: [main, main2]
+    paths:
+      - Dockerfile
+      - requirements.txt
+      - .github/workflows/docker.yml
   workflow_dispatch:
 
 concurrency:

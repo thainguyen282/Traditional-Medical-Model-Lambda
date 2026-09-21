@@ -2,8 +2,8 @@
 #
 # Pre-baked training image for Lambda Cloud runs.
 # Contains CUDA 12.8 + cuDNN + Python 3.10 + all requirements.txt deps.
-# Repository source and configs are baked into /workspace so Lambda jobs do not
-# depend on a separate bind mount or clone being present in the container.
+# Repo source code is NOT baked in — it is bind-mounted at /workspace at run time
+# so we always use the latest main2 without rebuilding the image.
 #
 # Build & push (done automatically by .github/workflows/docker.yml):
 #   docker buildx build --platform linux/amd64 \
@@ -29,13 +29,8 @@ RUN pip install --upgrade pip wheel setuptools
 
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt \
-    && pip install --force-reinstall \
-        torch==2.10.0 torchvision==0.25.0 \
-        --index-url https://download.pytorch.org/whl/cu128 \
     && pip install "huggingface_hub[cli]" python-dotenv \
     && rm -f /tmp/requirements.txt
 
 WORKDIR /workspace
-COPY . /workspace
-
 CMD ["bash"]
