@@ -466,8 +466,10 @@ def main() -> int:
                              "'SFT-exp0002|huyennkai/Venera-Traditional-Model|"
                              "sft-unsloth-qwen3-4B-exp0002-tm-sft-1777957925|sft'")
     parser.add_argument("--config", help="Path to a single SFT config yaml")
-    parser.add_argument("--medical-baselines", nargs="+", choices=["medgemma", "huatuo"],
-                        help="(eval task) Evaluate selected medical models on new + VM14K MCQs")
+    from eval_medical_baselines import MODELS
+    parser.add_argument("--baselines", "--medical-baselines", dest="medical_baselines",
+                        nargs="+", choices=list(MODELS),
+                        help="(eval task) Evaluate selected open-weight models on new + VM14K MCQs")
     parser.add_argument("--eval-limit", type=int, default=0,
                         help="(medical baselines) Questions per dataset; 0 uses the full dataset")
     parser.add_argument("--eval-batch-size", type=int, default=4,

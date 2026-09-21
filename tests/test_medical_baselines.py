@@ -161,7 +161,7 @@ class LambdaMedicalTests(unittest.TestCase):
         source = (evaluator.ROOT / "scripts/lambda_bootstrap.sh").read_text()
         function = source.split("run_medical_eval() {", 1)[1].split("\nrun_eval() {", 1)[0]
         stub = '''
-EVAL_MEDICAL_MODELS='medgemma huatuo'
+EVAL_MEDICAL_MODELS='medgemma huatuo qwen3-4b qwen2.5-7b mistral-7b'
 JOB_TAG=test-job
 HF_SFT_REPO=test/results
 in_docker() {
@@ -175,7 +175,7 @@ in_docker() {
             text=True, capture_output=True,
         )
         self.assertEqual(result.returncode, 1)
-        for model in ["medgemma", "huatuo"]:
+        for model in evaluator.MODELS:
             for dataset in ["new", "vm14k"]:
                 self.assertIn(f"--model '{model}' --dataset '{dataset}'", result.stdout)
         self.assertIn("--revision 'eval-medical-test-job'", result.stdout)
@@ -230,6 +230,24 @@ in_docker() {
                     patch.object(launcher, "run_job", return_value=0) as run:
                 self.assertEqual(launcher.main(), 0)
                 self.assertEqual(run.call_args.kwargs["env_vars"]["EVAL_GENERATION_MODE"], mode)
+
+    def test_additional_baselines_reach_lambda_with_both_flags(self):
+        models = ["qwen3-4b", "qwen2.5-7b", "mistral-7b"]
+        env = {"LAMBDA_API_KEY": "test", "LAMBDA_SSH_KEY_NAME": "test",
+               "LAMBDA_SSH_PRIVATE_KEY": __file__, "HF_TOKEN": "test"}
+        for flag in ("--baselines", "--medical-baselines"):
+            args = ["lambda_launch.py", "--task", "eval", flag, *models,
+                    "--eval-limit", "4", "--instance-type", "gpu_1x_a100_sxm4"]
+            with patch.object(sys, "argv", args), patch.dict("os.environ", env), \
+                    patch.object(launcher, "load_dotenv"), \
+                    patch.object(evaluator, "check_access") as access, \
+                    patch.object(launcher, "run_job", return_value=0) as run:
+                self.assertEqual(launcher.main(), 0)
+                access.assert_called_once_with(models, "test")
+                forwarded = run.call_args.kwargs
+                self.assertEqual(forwarded["env_vars"]["EVAL_MEDICAL_MODELS"], " ".join(models))
+                self.assertEqual(forwarded["env_vars"]["EVAL_LIMIT"], "4")
+                self.assertEqual(forwarded["instance_type"], "gpu_1x_a100_sxm4")
 
     def test_preflight_denial_never_launches_gpu(self):
         args = ["lambda_launch.py", "--task", "eval", "--medical-baselines", "medgemma"]

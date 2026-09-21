@@ -213,6 +213,50 @@ For direct GPU execution, use `python scripts/eval_medical_baselines.py
 overwrite an existing model/dataset directory; choose a new output directory
 for a repeat evaluation. Direct execution does not upload results.
 
+### Additional open-source baselines
+
+The same evaluator also supports these Apache-2.0 instruct checkpoints:
+
+| Alias | Checkpoint |
+|---|---|
+| `qwen3-4b` | [Qwen/Qwen3-4B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507) |
+| `qwen2.5-7b` | [Qwen/Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct) |
+| `mistral-7b` | [mistralai/Mistral-7B-Instruct-v0.3](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3) |
+
+These compare the clean Qwen3 Instruct checkpoint with two 7B general-purpose
+baselines. All use `AutoModelForCausalLM`, their own chat templates, and the
+existing NF4/direct-answer protocol. Qwen3-4B-Instruct-2507 is a non-thinking
+checkpoint. This is evaluation only: there are no training epochs.
+
+Run a smoke experiment (4 questions per dataset, 24 predictions total):
+
+```bash
+python scripts/lambda_launch.py --task eval \
+    --baselines qwen3-4b qwen2.5-7b mistral-7b \
+    --eval-limit 4 --instance-type gpu_1x_a100_sxm4
+```
+
+For the full experiment, omit `--eval-limit 4`: 105 + 564 questions per model,
+2,007 predictions across the three models. `--baselines` and the original
+`--medical-baselines` flag are aliases; either accepts all five model names.
+The evaluator's `--model all` now includes all five baselines. Use an explicit
+model selection when reproducing the original two-model run.
+
+Validate data locally without allocating a GPU:
+
+```bash
+python scripts/eval_medical_baselines.py --model qwen3-4b --dry-run
+python -m unittest discover -s tests -p 'test_medical_baselines.py'
+```
+
+Outputs, Hub uploads, local backup, and instance cleanup follow the medical
+baseline workflow above. The three models run sequentially on a single GPU;
+no Docker dependency changes are needed for the pinned Transformers 4.57.6.
+Compare results only against runs with the same generation mode and dataset
+hashes. The historical VM14K set has substantial overlap with local training
+data (see `REPORT_EXP0013_0014.md`); it is not an independent held-out benchmark
+for the fine-tuned models.
+
 ### Debug / inspect after finish
 ```bash
 python scripts/lambda_launch.py --task sft --config ... --keep-alive

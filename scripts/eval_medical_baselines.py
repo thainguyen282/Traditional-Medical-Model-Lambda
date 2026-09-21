@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate medical baselines using the existing Vietnamese MCQ protocol."""
+"""Evaluate open-weight baselines using the existing Vietnamese MCQ protocol."""
 from __future__ import annotations
 
 import argparse
@@ -18,6 +18,9 @@ ROOT = Path(__file__).resolve().parent.parent
 MODELS = {
     "medgemma": "google/medgemma-1.5-4b-it",
     "huatuo": "FreedomIntelligence/HuatuoGPT-o1-8B",
+    "qwen3-4b": "Qwen/Qwen3-4B-Instruct-2507",
+    "qwen2.5-7b": "Qwen/Qwen2.5-7B-Instruct",
+    "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.3",
 }
 DATASETS = {
     "new": ("tcm_mcq.jsonl", "Unsloth_QA_goc_new.ipynb"),
