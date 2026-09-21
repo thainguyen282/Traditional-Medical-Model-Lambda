@@ -49,20 +49,49 @@ echo "[bootstrap] job=$JOB_TAG task=$TASK_TYPE  start=$(date -u +%FT%TZ)"
 echo "[bootstrap] host=$(hostname)"
 echo "[bootstrap] image=$IMAGE"
 echo "----- nvidia-smi (host) -----"
-nvidia-smi || true
+nvidia-smi || fail "Host NVIDIA driver is unavailable (nvidia-smi failed)"
 echo "----- kernel/driver -----"
 uname -r || true
 modinfo nvidia 2>/dev/null | grep -E '^version:' || true
 echo "=========================================================="
 
 # ------------------------------------------------------------------
-# 1. Sanity: docker + nvidia runtime (preinstalled on Lambda images).
+# 1. Check Docker and register the NVIDIA runtime if needed.
 #    Lambda ships docker but 'ubuntu' user isn't in the 'docker' group,
 #    so we invoke docker via sudo throughout. Passwordless sudo is on.
 # ------------------------------------------------------------------
 command -v docker >/dev/null 2>&1 || fail "docker not found on host"
 DOCKER="sudo docker"
 $DOCKER info >/dev/null 2>&1 || fail "docker daemon not reachable even via sudo"
+
+ensure_nvidia_runtime() {
+    local runtime_names
+    runtime_names=$($DOCKER info --format '{{range $name, $_ := .Runtimes}}{{$name}} {{end}}') \
+        || fail "Cannot read Docker runtimes"
+    if [[ " $runtime_names " == *" nvidia "* ]]; then
+        return 0
+    fi
+
+    echo "[bootstrap] NVIDIA runtime is not registered; configuring Docker"
+    command -v nvidia-ctk >/dev/null 2>&1 \
+        || fail "nvidia-ctk not found; install NVIDIA Container Toolkit on the host"
+    sudo nvidia-ctk runtime configure --runtime=docker \
+        || fail "NVIDIA runtime registration failed"
+    # Bootstrap runs on a fresh, dedicated Lambda instance, before job containers.
+    sudo systemctl restart docker || fail "Docker restart after runtime registration failed"
+    runtime_names=$($DOCKER info --format '{{range $name, $_ := .Runtimes}}{{$name}} {{end}}') \
+        || fail "Docker unavailable after runtime registration"
+    [[ " $runtime_names " == *" nvidia "* ]] \
+        || fail "NVIDIA runtime is still missing after Docker restart"
+    echo "[bootstrap] NVIDIA runtime registered"
+}
+ensure_nvidia_runtime
+
+# Use the same explicit runtime and driver capabilities for preflight and jobs.
+# NVML/nvidia-smi needs utility; CUDA also needs compute.
+GPU_DOCKER_ARGS=(--runtime=nvidia --gpus all
+    -e NVIDIA_VISIBLE_DEVICES=all
+    -e NVIDIA_DRIVER_CAPABILITIES=compute,utility)
 
 # ------------------------------------------------------------------
 # 2. System deps needed OUTSIDE the container (just git for cloning).
@@ -132,11 +161,44 @@ $DOCKER pull "$IMAGE" || fail "docker pull $IMAGE"
 # image does not contain a CUDA-enabled PyTorch build. The CUDA banner alone
 # only proves that CUDA userspace files exist in the image.
 echo "[bootstrap] ===== GPU container preflight ====="
-$DOCKER run --rm --gpus all "$IMAGE" nvidia-smi \
-    || fail "GPU is unavailable inside Docker (check NVIDIA Container Toolkit)"
-$DOCKER run --rm --gpus all "$IMAGE" python -c \
-    "import sys, torch; print('torch=' + torch.__version__); print('torch_cuda=' + str(torch.version.cuda)); print('cuda_available=' + str(torch.cuda.is_available())); print('device_count=' + str(torch.cuda.device_count())); sys.exit(0 if torch.cuda.is_available() and torch.cuda.device_count() > 0 else 1)" \
-    || fail "PyTorch cannot initialize CUDA inside Docker"
+if ! $DOCKER run --rm -i "${GPU_DOCKER_ARGS[@]}" "$IMAGE" bash -c '
+    echo "----- nvidia-smi (container) -----"
+    nvidia-smi || exit 1
+    echo "----- GPU devices (container) -----"
+    ls -l /dev/nvidia* 2>/dev/null || true
+    python -u -
+' <<'PY'
+import os
+import torch
+
+print('torch=' + torch.__version__)
+print('torch_cuda=' + str(torch.version.cuda))
+for key in ('CUDA_VISIBLE_DEVICES', 'NVIDIA_VISIBLE_DEVICES',
+            'NVIDIA_DRIVER_CAPABILITIES', 'LD_LIBRARY_PATH'):
+    print(f'{key}={os.environ.get(key, "<unset>")}')
+if torch.version.cuda is None:
+    raise RuntimeError('The image contains a CPU-only PyTorch build')
+# is_available() can hide the driver error behind a False result. init() raises
+# the actual CUDA error, and a synchronized operation checks usable compute.
+torch.cuda.init()
+print('device_count=' + str(torch.cuda.device_count()))
+for index in range(torch.cuda.device_count()):
+    value = torch.ones(1, device=f'cuda:{index}') + 1
+    torch.cuda.synchronize(index)
+    assert value.item() == 2
+    print(f'cuda:{index}=' + torch.cuda.get_device_name(index))
+if torch.cuda.device_count() == 0:
+    raise RuntimeError('CUDA initialized but exposed no devices')
+print('CUDA compute preflight passed')
+PY
+then
+    echo "----- host GPU/runtime diagnostics after failure -----"
+    nvidia-smi || true
+    cat /proc/driver/nvidia/version 2>/dev/null || true
+    ls -l /dev/nvidia* 2>/dev/null || true
+    $DOCKER info --format 'runtimes={{range $name, $_ := .Runtimes}}{{$name}} {{end}}default={{.DefaultRuntime}} cgroups={{.CgroupDriver}}' || true
+    fail "GPU container preflight failed; see the CUDA/driver error above"
+fi
 
 # ------------------------------------------------------------------
 # 5. Mirror .env in the repo so main.py/CPT.py see the same vars.
@@ -155,7 +217,7 @@ EOF
 #    - --shm-size : dataloader workers need large /dev/shm
 # ------------------------------------------------------------------
 in_docker() {
-    $DOCKER run --rm --gpus all \
+    $DOCKER run --rm "${GPU_DOCKER_ARGS[@]}" \
         --shm-size=32g \
         --ipc=host \
         -v "$REPO_DIR":/workspace \
