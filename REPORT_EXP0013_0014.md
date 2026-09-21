@@ -87,8 +87,8 @@ SHA-256 file eval local: `314006d439047ac9b98a890fe14ee1954025b28040c3e162ef71dc
 | Qwen3.8‑27B     | Chưa đánh giá |       Chưa đánh giá |
 | Qwen3.5‑4B      | Chưa đánh giá |       Chưa đánh giá |
 | Gemma‑4‑E4B     | Chưa đánh giá |       Chưa đánh giá |
-| MedGemma‑1.5‑4B | 52.45 |       0 |
-| HuatuoGPT‑o1‑8B | 56.12 |       0 |
+| MedGemma‑1.5‑4B | 38.48 |       0 |
+| HuatuoGPT‑o1‑8B | 41.13 |       0 |
 | Qwen3‑4B base   | 48.05 |       0 |
 
 
