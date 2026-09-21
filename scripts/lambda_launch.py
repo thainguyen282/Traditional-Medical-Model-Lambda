@@ -29,8 +29,6 @@ import os
 import shlex
 import subprocess
 import sys
-import tarfile
-import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -202,42 +200,6 @@ def wait_for_ssh(key: str, ip: str, timeout: int = 300,
     die(f"SSH did not come up on {ip} within {timeout}s")
 
 
-def copy_medical_eval_bundle(key: str, ip: str) -> None:
-    root = Path(__file__).resolve().parent.parent
-    files = [
-        "scripts/eval_medical_baselines.py",
-        "EVAL/Unsloth_QA_goc_new.ipynb", "EVAL/Unsloth_QA_goc_VM14K.ipynb",
-        "EVAL/Data/tcm_mcq.jsonl", "EVAL/Data/eastern_medicine_VM14K.jsonl",
-        "EVAL/Data/Sampled-VM14K.jsonl",
-    ]
-    with tempfile.TemporaryDirectory(prefix="medical-eval-") as directory:
-        bundle = Path(directory) / "medical_eval_bundle.tar.gz"
-        with tarfile.open(bundle, "w:gz") as archive:
-            for name in files:
-                archive.add(root / name, arcname=name)
-        scp_to(key, ip, str(bundle), "/home/ubuntu/medical_eval_bundle.tar.gz")
-
-
-def download_medical_eval(key: str, ip: str, job_tag: str) -> Path:
-    remote_archive = f"/home/ubuntu/{job_tag}-medical-eval.tar.gz"
-    remote_outputs = f"/home/ubuntu/{REMOTE_REPO_DIR}/EVAL/outputs/medical_baselines/{job_tag}"
-    ssh_cmd(key, ip, f"sudo tar -czf {shlex.quote(remote_archive)} "
-            f"-C {shlex.quote(remote_outputs)} . && sudo chmod 644 {shlex.quote(remote_archive)}")
-    destination = Path("logs") / job_tag
-    destination.mkdir(parents=True, exist_ok=True)
-    local_archive = destination / "medical-eval.tar.gz"
-    subprocess.run([
-        "scp", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null",
-        "-o", "ConnectTimeout=15", "-i", key,
-        f"{REMOTE_USER}@{ip}:{remote_archive}", str(local_archive),
-    ], check=True)
-    with tarfile.open(local_archive) as archive:
-        if not archive.getmembers():
-            raise RuntimeError("Downloaded evaluation archive is empty")
-    log(f"evaluation backup saved locally: {local_archive.resolve()}")
-    return local_archive
-
-
 def render_env_file(env_vars: dict[str, str]) -> str:
     lines = []
     for k, v in env_vars.items():
@@ -266,9 +228,6 @@ def run_job(
     log(f"instance_id={instance_id}")
 
     exit_code = 1
-    ip = None
-    job_started = False
-    job_finished = False
     try:
         inst = wait_for_active(api, instance_id)
         ip = inst["ip"]
@@ -280,8 +239,6 @@ def run_job(
                "/home/ubuntu/lambda_bootstrap.sh")
         scp_to(ssh_private_key, ip, str(scripts_dir / "lambda_push_to_hf.py"),
                "/home/ubuntu/lambda_push_to_hf.py")
-        if env_vars.get("EVAL_MEDICAL_MODELS"):
-            copy_medical_eval_bundle(ssh_private_key, ip)
 
         # The dedicated VM14K test evaluator may contain local changes that
         # are not on GIT_BRANCH yet. Copy it explicitly so eval-only
@@ -335,15 +292,11 @@ def run_job(
             "tmux new-session -d -s train "
             "'bash /home/ubuntu/lambda_bootstrap.sh 2>&1 | tee /home/ubuntu/train.log'",
         )
-        job_started = True
 
         # Follow logs until sentinel file appears. We use a non-fatal tail:
         # if it disconnects, we reconnect and keep polling status.
-        if env_vars.get("EVAL_MEDICAL_MODELS"):
-            log("streaming logs (Ctrl+C leaves the evaluation instance running and billable)")
-        else:
-            log("streaming logs (Ctrl+C to stop streaming — the remote job will "
-                "keep running; the instance will still auto-terminate)")
+        log("streaming logs (Ctrl+C to stop streaming — the remote job will "
+            "keep running; the instance will still auto-terminate)")
         last_size = 0
         while True:
             # Check sentinels.
@@ -375,12 +328,10 @@ def run_job(
                 last_size = new_size
 
             if "DONE_SUCCESS" in sentinel:
-                job_finished = True
                 log("job finished: SUCCESS")
                 exit_code = 0
                 break
             if "DONE_FAILED" in sentinel:
-                job_finished = True
                 log("job finished: FAILED")
                 exit_code = 2
                 break
@@ -388,26 +339,10 @@ def run_job(
             time.sleep(POLL_INTERVAL_TRAIN)
 
     except KeyboardInterrupt:
-        if env_vars.get("EVAL_MEDICAL_MODELS"):
-            log("interrupted locally; preserving the remote evaluation instance")
-        else:
-            log("interrupted locally — remote job continues; proceeding to terminate.")
+        log("interrupted locally — remote job continues; proceeding to terminate.")
     finally:
-        if env_vars.get("EVAL_MEDICAL_MODELS") and ip and job_started:
-            if not job_finished:
-                keep_alive = True
-                log("Medical evaluation has not finished; leaving it running. GPU billing continues.")
-            try:
-                download_medical_eval(ssh_private_key, ip, job_tag)
-            except Exception as error:
-                # Retain results even if the Hub upload or local backup fails.
-                keep_alive = True
-                exit_code = 2
-                log(f"evaluation backup failed: {error}")
-                log("Leaving instance running to preserve results; GPU billing continues. "
-                    "Download EVAL/outputs/medical_baselines, then terminate it manually.")
         if keep_alive:
-            log(f"leaving instance {instance_id} running")
+            log(f"--keep-alive set; leaving instance {instance_id} running")
             log(f"  ssh -i {ssh_private_key} ubuntu@{ip}  # if still reachable")
         else:
             log(f"terminating instance {instance_id}")
@@ -467,19 +402,6 @@ def main() -> int:
                              "'SFT-exp0002|huyennkai/Venera-Traditional-Model|"
                              "sft-unsloth-qwen3-4B-exp0002-tm-sft-1777957925|sft'")
     parser.add_argument("--config", help="Path to a single SFT config yaml")
-    from eval_medical_baselines import MODELS, DATASETS, DEFAULT_DATASETS
-    parser.add_argument("--baselines", "--medical-baselines", dest="medical_baselines",
-                        nargs="+", choices=list(MODELS),
-                        help="(eval task) Evaluate selected open-weight models on new + VM14K MCQs")
-    parser.add_argument("--eval-datasets", nargs="+", choices=list(DATASETS),
-                        default=DEFAULT_DATASETS,
-                        help="Baseline datasets (default: new vm14k-full); full VM14K exports the 564-row subset")
-    parser.add_argument("--eval-limit", type=int, default=0,
-                        help="(medical baselines) Questions per dataset; 0 uses the full dataset")
-    parser.add_argument("--eval-batch-size", type=int, default=4,
-                        help="(medical baselines) Initial batch size, reduced on GPU OOM")
-    parser.add_argument("--eval-generation-mode", choices=["direct", "notebook"], default="direct",
-                        help="(medical baselines) direct: answer only; notebook: original free generation")
     parser.add_argument("--config-list",
                         help="Path to a text file with one config path per line")
     parser.add_argument("--instance-type", default=DEFAULT_INSTANCE_TYPE,
@@ -496,10 +418,6 @@ def main() -> int:
     parser.add_argument("--inference-revision", default=None,
                         help="(inference task) HF revision to pass as --revision to the inference script")
     args = parser.parse_args()
-    if args.medical_baselines and (args.task != "eval" or args.eval_only):
-        parser.error("--medical-baselines requires --task eval and cannot use --eval-only")
-    if args.eval_limit < 0 or args.eval_batch_size < 1:
-        parser.error("--eval-limit must be nonnegative and --eval-batch-size must be positive")
 
     lambda_key = os.environ.get("LAMBDA_API_KEY")
     if not lambda_key:
@@ -529,14 +447,6 @@ def main() -> int:
     hf_token = os.environ.get("HF_TOKEN")
     if not hf_token:
         die("HF_TOKEN missing (set in .env)")
-    if args.medical_baselines:
-        from eval_medical_baselines import check_access, prepare_dataset
-        try:
-            for dataset in dict.fromkeys(args.eval_datasets):
-                prepare_dataset(dataset, args.eval_limit, args.eval_generation_mode)
-            check_access(args.medical_baselines, hf_token)
-        except Exception as error:
-            die(f"medical evaluation preflight failed before launching a GPU: {error}")
 
     env_vars = {
         "HF_TOKEN": hf_token,
@@ -552,11 +462,6 @@ def main() -> int:
         # eval task: when set, run_eval() loops over JUST this one entry
         # instead of the hard-coded 6-model README list.
         "EVAL_ONLY":    args.eval_only or "",
-        "EVAL_MEDICAL_MODELS": " ".join(dict.fromkeys(args.medical_baselines or [])),
-        "EVAL_DATASETS": " ".join(dict.fromkeys(args.eval_datasets)),
-        "EVAL_LIMIT": str(args.eval_limit),
-        "EVAL_BATCH_SIZE": str(args.eval_batch_size),
-        "EVAL_GENERATION_MODE": args.eval_generation_mode,
         # Optional override: run a custom inference script instead of
         # the default `inference.py` inside the container.
         "INFERENCE_SCRIPT": args.inference_script or os.environ.get("INFERENCE_SCRIPT", ""),
