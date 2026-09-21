@@ -141,6 +141,7 @@ Run both models sequentially on the usual Vietnamese MCQ benchmarks:
 HF_SFT_REPO=Maverfrick/Venera-Traditional-Model \
 python scripts/lambda_launch.py --task eval \
     --medical-baselines medgemma huatuo \
+    --eval-datasets new vm14k \
     --instance-type gpu_1x_a100_sxm4
 ```
 
@@ -158,7 +159,7 @@ first accept the terms at <https://huggingface.co/google/medgemma-1.5-4b-it>.
 The launcher checks access before allocating a GPU. Existing Lambda/SSH and
 Docker configuration from the setup above still applies.
 
-Protocol:
+Protocol (the command above explicitly selects the historical datasets):
 - `new`: all 105 rows of `EVAL/Data/tcm_mcq.jsonl`.
 - `vm14k`: all 564 rows of `EVAL/Data/eastern_medicine_VM14K.jsonl`.
   This is the historical benchmark, not the separate 29-row official test split.
@@ -233,13 +234,14 @@ Run a smoke experiment (4 questions per dataset, 24 predictions total):
 ```bash
 python scripts/lambda_launch.py --task eval \
     --baselines qwen3-4b qwen2.5-7b mistral-7b \
+    --eval-datasets new vm14k \
     --eval-limit 4 --instance-type gpu_1x_a100_sxm4
 ```
 
 For the full experiment, omit `--eval-limit 4`: 105 + 564 questions per model,
 2,007 predictions across the three models. `--baselines` and the original
-`--medical-baselines` flag are aliases; either accepts all five model names.
-The evaluator's `--model all` now includes all five baselines. Use an explicit
+`--medical-baselines` flag are aliases; either accepts all seven model names.
+The evaluator's `--model all` now includes all seven baselines. Use an explicit
 model selection when reproducing the original two-model run.
 
 Validate data locally without allocating a GPU:
@@ -256,6 +258,82 @@ Compare results only against runs with the same generation mode and dataset
 hashes. The historical VM14K set has substantial overlap with local training
 data (see `REPORT_EXP0013_0014.md`); it is not an independent held-out benchmark
 for the fine-tuned models.
+
+### MedReason, MedGemma, Baichuan-M2: full VM14K + traditional subset
+
+Supported medical checkpoints:
+
+| Alias | Checkpoint |
+|---|---|
+| `medreason` | [UCSC-VLAA/MedReason-8B](https://huggingface.co/UCSC-VLAA/MedReason-8B) |
+| `medgemma` | [google/medgemma-1.5-4b-it](https://huggingface.co/google/medgemma-1.5-4b-it) (existing baseline) |
+| `baichuan-m2-32b` | [baichuan-inc/Baichuan-M2-32B](https://huggingface.co/baichuan-inc/Baichuan-M2-32B) |
+
+`vm14k-full` evaluates **every row** of local `EVAL/Data/Sampled-VM14K.jsonl`:
+currently **10,000 rows**, not the complete upstream VM14K corpus or its official
+test split. It ignores the notebook sampling cap. `--eval-limit` is the only
+row limit. The runner verifies that the Eastern Medicine rows exactly match
+`eastern_medicine_VM14K.jsonl` (564 rows, including duplicates and option orders)
+before any GPU is allocated.
+
+Run all three models on the full local file:
+
+```bash
+.venv/bin/python scripts/lambda_launch.py --task eval \
+    --baselines medreason medgemma baichuan-m2-32b \
+    --eval-datasets vm14k-full \
+    --eval-batch-size 1 \
+    --instance-type gpu_1x_a100_sxm4
+```
+
+Models load sequentially in NF4 on one GPU. Batch size 1 reduces activation
+memory for the 32B model; GPU weight loading has not been validated locally.
+A smoke run adds `--eval-limit 4`, but only evaluates the first four full-file
+rows: it may include fewer than 564 traditional questions, including zero.
+Use a new run/output directory for the subsequent full evaluation.
+
+Baseline Lambda commands now default to `--eval-datasets new vm14k-full`;
+local evaluator `--dataset all` means the same. The standalone `vm14k` selection
+still runs only the historical 564 questions, and `new` runs the 105 generated
+TCM questions. For full VM14K alone, explicitly select `vm14k-full` as above.
+
+Each model saves these files beneath its run directory:
+
+```text
+<model>/vm14k-full/
+  responses.jsonl
+  summary.json
+  infer_result.txt
+  run_config.json
+  traditional_medicine_564/
+    responses.jsonl
+    summary.json
+    infer_result.txt
+    run_config.json
+```
+
+The subset reuses the parent run's predictions and preserves its `q_idx` row
+indices. No second inference pass or question deduplication occurs. Its manifest
+records parent/source hashes, model revision, evaluated count, and
+`complete_subset`; a full run exports 564 rows. Empty smoke subsets have null
+accuracy rather than a fabricated score. Upload and local backup include both
+sets of results. If inference fails, the parent responses and failed manifest
+are retained; subset summaries are written only after inference completes.
+
+MedReason and Baichuan use the native Llama/Qwen2 Transformers loaders;
+MedGemma uses the Gemma3 loader. The same default direct-answer constraints
+apply to all models, including reasoning models. This evaluates constrained
+MCQ accuracy, not each model's published long-reasoning protocol.
+
+Validate without allocating a GPU:
+
+```bash
+.venv/bin/python scripts/eval_medical_baselines.py \
+    --model medreason --dataset vm14k-full --dry-run
+.venv/bin/python scripts/eval_medical_baselines.py \
+    --model baichuan-m2-32b --dataset vm14k-full --check-access
+.venv/bin/python -m unittest discover -s tests -p 'test_medical_baselines.py'
+```
 
 ### Debug / inspect after finish
 ```bash

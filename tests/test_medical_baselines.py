@@ -3,6 +3,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import tarfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -32,6 +33,73 @@ class MedicalEvaluationTests(unittest.TestCase):
             self.assertEqual(summary["correct"], 1)
             self.assertEqual(summary["deviations"], 1)
             self.assertAlmostEqual(summary["accuracy"], 1 / 3)
+
+    def test_full_dataset_retains_every_row_and_exact_traditional_subset(self):
+        protocol = evaluator.load_protocol(evaluator.ROOT / "EVAL/Unsloth_QA_goc_VM14K.ipynb")
+        protocol["subset_size"] = 1  # full runs must ignore notebook sampling caps
+        with patch.object(evaluator, "load_protocol", return_value=protocol):
+            samples, _, metadata = evaluator.prepare_dataset("vm14k-full")
+        self.assertEqual(len(samples), 10000)
+        self.assertEqual(sum(s["is_traditional_medicine"] for s in samples), 564)
+        self.assertEqual(metadata["traditional_subset_total"], 564)
+        limited, _, metadata = evaluator.prepare_dataset("vm14k-full", limit=4)
+        self.assertEqual(len(limited), 4)
+        self.assertEqual(metadata["total_dataset_samples"], 10000)
+
+    def test_mismatched_traditional_reference_fails_before_inference(self):
+        protocol = evaluator.load_protocol(evaluator.ROOT / "EVAL/Unsloth_QA_goc_VM14K.ipynb")
+        original = protocol["load_dataset"]
+        def changed_loader(path):
+            rows = list(original(path))
+            if path.name == "eastern_medicine_VM14K.jsonl":
+                rows[0]["answer"] = "CHANGED"
+            return rows
+        protocol["load_dataset"] = changed_loader
+        with patch.object(evaluator, "load_protocol", return_value=protocol):
+            with self.assertRaisesRegex(ValueError, "does not match"):
+                evaluator.prepare_dataset("vm14k-full", limit=1)
+
+    def test_full_run_exports_same_564_predictions_without_second_inference(self):
+        def predictions(model, tokenizer, samples, protocol):
+            return [{"response": "Final Answer: " + (
+                s["answer"] if s["is_traditional_medicine"] else
+                next((label for label in s["options"] if label != s["answer"]), "Z")),
+                "hit_token_limit": False} for s in samples]
+        with tempfile.TemporaryDirectory() as directory, patch.dict(sys.modules, {
+            "torch": SimpleNamespace(cuda=SimpleNamespace(
+                OutOfMemoryError=MemoryError, empty_cache=Mock())),
+            "transformers": SimpleNamespace(set_seed=Mock()),
+        }), patch.object(evaluator, "load_model", return_value=(Mock(), Mock())) as loader, \
+                patch.object(evaluator, "generate_batch", side_effect=predictions) as generate, \
+                patch("builtins.print"):
+            args = SimpleNamespace(output_dir=Path(directory), limit=0, batch_size=256, generation_mode="direct")
+            evaluator.evaluate("medreason", "vm14k-full", "test-revision", args)
+            output = Path(directory) / "medreason/vm14k-full"
+            full = [json.loads(line) for line in (output / "responses.jsonl").read_text().splitlines()]
+            subset = output / evaluator.TRADITIONAL_SUBSET
+            selected = [json.loads(line) for line in (subset / "responses.jsonl").read_text().splitlines()]
+            self.assertEqual(selected, [r for r in full if r["is_traditional_medicine"]])
+            self.assertEqual(len(full), 10000)
+            self.assertEqual(len(selected), 564)
+            summary = json.loads((subset / "summary.json").read_text())
+            self.assertEqual(summary["accuracy"], 1.0)
+            self.assertTrue(summary["complete_subset"])
+            self.assertEqual(summary["revision"], "test-revision")
+            self.assertEqual(json.loads((output / "summary.json").read_text())["correct"], 564)
+            self.assertEqual(sum(len(c.args[2]) for c in generate.call_args_list), 10000)
+            loader.assert_called_once()
+
+    def test_empty_smoke_subset_has_no_fabricated_accuracy(self):
+        _, _, metadata = evaluator.prepare_dataset("vm14k-full", limit=1)
+        metadata.update(model="test/model", revision="test-revision")
+        with tempfile.TemporaryDirectory() as directory:
+            evaluator.save_traditional_subset(Path(directory), [], metadata)
+            output = Path(directory) / evaluator.TRADITIONAL_SUBSET
+            summary = json.loads((output / "summary.json").read_text())
+            self.assertEqual(summary["samples"], 0)
+            self.assertIsNone(summary["accuracy"])
+            self.assertFalse(summary["complete_subset"])
+            self.assertEqual((output / "responses.jsonl").read_text(), "")
 
     def test_direct_protocol_is_distinct_from_notebook(self):
         _, direct, metadata = evaluator.prepare_dataset("new", limit=1)
@@ -161,7 +229,7 @@ class LambdaMedicalTests(unittest.TestCase):
         source = (evaluator.ROOT / "scripts/lambda_bootstrap.sh").read_text()
         function = source.split("run_medical_eval() {", 1)[1].split("\nrun_eval() {", 1)[0]
         stub = '''
-EVAL_MEDICAL_MODELS='medgemma huatuo qwen3-4b qwen2.5-7b mistral-7b'
+EVAL_MEDICAL_MODELS='medgemma huatuo qwen3-4b qwen2.5-7b mistral-7b medreason baichuan-m2-32b'
 JOB_TAG=test-job
 HF_SFT_REPO=test/results
 in_docker() {
@@ -176,10 +244,19 @@ in_docker() {
         )
         self.assertEqual(result.returncode, 1)
         for model in evaluator.MODELS:
-            for dataset in ["new", "vm14k"]:
+            for dataset in evaluator.DEFAULT_DATASETS:
                 self.assertIn(f"--model '{model}' --dataset '{dataset}'", result.stdout)
         self.assertIn("--revision 'eval-medical-test-job'", result.stdout)
         self.assertIn("--generation-mode 'direct'", result.stdout)
+
+    def test_full_dataset_is_bundled_for_unpushed_lambda_runs(self):
+        def inspect_bundle(key, ip, local_path, remote_path):
+            with tarfile.open(local_path) as archive:
+                self.assertIn("EVAL/Data/Sampled-VM14K.jsonl", archive.getnames())
+                self.assertIn("EVAL/Data/eastern_medicine_VM14K.jsonl", archive.getnames())
+        with patch.object(launcher, "scp_to", side_effect=inspect_bundle) as copy:
+            launcher.copy_medical_eval_bundle("key", "127.0.0.1")
+        copy.assert_called_once()
 
     def run_mock_job(self, backup_error=None, sentinel="DONE_SUCCESS"):
         api = Mock()
@@ -230,14 +307,16 @@ in_docker() {
                     patch.object(launcher, "run_job", return_value=0) as run:
                 self.assertEqual(launcher.main(), 0)
                 self.assertEqual(run.call_args.kwargs["env_vars"]["EVAL_GENERATION_MODE"], mode)
+                self.assertEqual(run.call_args.kwargs["env_vars"]["EVAL_DATASETS"], "new vm14k-full")
 
     def test_additional_baselines_reach_lambda_with_both_flags(self):
-        models = ["qwen3-4b", "qwen2.5-7b", "mistral-7b"]
+        models = ["qwen3-4b", "qwen2.5-7b", "mistral-7b", "medreason", "baichuan-m2-32b"]
         env = {"LAMBDA_API_KEY": "test", "LAMBDA_SSH_KEY_NAME": "test",
                "LAMBDA_SSH_PRIVATE_KEY": __file__, "HF_TOKEN": "test"}
         for flag in ("--baselines", "--medical-baselines"):
             args = ["lambda_launch.py", "--task", "eval", flag, *models,
-                    "--eval-limit", "4", "--instance-type", "gpu_1x_a100_sxm4"]
+                    "--eval-limit", "4", "--instance-type", "gpu_1x_a100_sxm4",
+                    "--eval-datasets", "vm14k-full"]
             with patch.object(sys, "argv", args), patch.dict("os.environ", env), \
                     patch.object(launcher, "load_dotenv"), \
                     patch.object(evaluator, "check_access") as access, \
@@ -247,6 +326,7 @@ in_docker() {
                 forwarded = run.call_args.kwargs
                 self.assertEqual(forwarded["env_vars"]["EVAL_MEDICAL_MODELS"], " ".join(models))
                 self.assertEqual(forwarded["env_vars"]["EVAL_LIMIT"], "4")
+                self.assertEqual(forwarded["env_vars"]["EVAL_DATASETS"], "vm14k-full")
                 self.assertEqual(forwarded["instance_type"], "gpu_1x_a100_sxm4")
 
     def test_preflight_denial_never_launches_gpu(self):

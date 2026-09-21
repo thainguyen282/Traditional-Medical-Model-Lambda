@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import ast
-from collections import defaultdict
+from collections import Counter, defaultdict
 import gc
 import hashlib
 import json
@@ -21,11 +21,16 @@ MODELS = {
     "qwen3-4b": "Qwen/Qwen3-4B-Instruct-2507",
     "qwen2.5-7b": "Qwen/Qwen2.5-7B-Instruct",
     "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.3",
+    "medreason": "UCSC-VLAA/MedReason-8B",
+    "baichuan-m2-32b": "baichuan-inc/Baichuan-M2-32B",
 }
 DATASETS = {
     "new": ("tcm_mcq.jsonl", "Unsloth_QA_goc_new.ipynb"),
     "vm14k": ("eastern_medicine_VM14K.jsonl", "Unsloth_QA_goc_VM14K.ipynb"),
+    "vm14k-full": ("Sampled-VM14K.jsonl", "Unsloth_QA_goc_VM14K.ipynb"),
 }
+DEFAULT_DATASETS = ["new", "vm14k-full"]
+TRADITIONAL_SUBSET = "traditional_medicine_564"
 ANSWER_PREFIX = "Final Answer:"
 DIRECT_INSTRUCTION = "\nAnswer directly. Do not include thinking, reasoning, or an explanation.\n"
 
@@ -76,7 +81,29 @@ def prepare_dataset(key: str, limit: int = 0, generation_mode: str = "direct") -
             "num_beams": 1, "num_return_sequences": 1,
             "min_length": 0,
         }
-    samples = list(protocol["load_dataset"](data_path))[:protocol["subset_size"]]
+    # Full evaluation must not silently inherit a notebook's sampling cap.
+    samples = list(protocol["load_dataset"](data_path))
+    total_samples = len(samples)
+    subset_metadata = {}
+    if key == "vm14k-full":
+        reference_path = ROOT / "EVAL" / "Data" / DATASETS["vm14k"][0]
+        reference = list(protocol["load_dataset"](reference_path))
+        traditional = [s for s in samples if "Eastern Medicine" in
+                       protocol["process_medical_topics"](s["medical_topic"])]
+
+        def canonical(rows):
+            # Preserve repeated questions and option permutations, not just IDs.
+            return Counter(json.dumps(s, sort_keys=True, ensure_ascii=False) for s in rows)
+
+        if len(reference) != 564 or canonical(traditional) != canonical(reference):
+            raise ValueError("Full VM14K traditional subset does not match the historical 564 rows")
+        for sample in samples:
+            sample["is_traditional_medicine"] = "Eastern Medicine" in protocol["process_medical_topics"](sample["medical_topic"])
+        subset_metadata = {
+            "traditional_subset_file": str(reference_path.relative_to(ROOT)),
+            "traditional_subset_sha256": hashlib.sha256(reference_path.read_bytes()).hexdigest(),
+            "traditional_subset_total": len(reference),
+        }
     if limit:
         samples = samples[:limit]
     if not samples:
@@ -89,7 +116,8 @@ def prepare_dataset(key: str, limit: int = 0, generation_mode: str = "direct") -
         "dataset_sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
         "protocol_notebook": str(notebook.relative_to(ROOT)),
         "protocol_sha256": hashlib.sha256(notebook.read_bytes()).hexdigest(),
-        "samples": len(samples), "limit": limit,
+        "samples": len(samples), "total_dataset_samples": total_samples, "limit": limit,
+        **subset_metadata,
         "system_prompt": protocol["system_prompt"],
         "generation_config": protocol["generation_config"],
         "max_input_tokens": 2048,
@@ -238,6 +266,7 @@ def score_response(sample: dict, prediction: dict, protocol: dict, index: int) -
     deviation = extracted not in sample["options"] and extracted not in ["NONE", ""]
     return {
         "q_idx": index, "question": sample["question"], "options": sample["options"],
+        "is_traditional_medicine": "Eastern Medicine" in protocol["process_medical_topics"](sample["medical_topic"]),
         "correct_answer": sample["answer"], "extracted_answer": extracted,
         "is_correct": not deviation and protocol["evaluate_answer"](extracted, sample["answer"]),
         "is_deviation": deviation,
@@ -253,9 +282,9 @@ def summarize(rows: list[dict]) -> dict:
         correct = sum(row["is_correct"] for row in items)
         deviations = sum(row["is_deviation"] for row in items)
         return {
-            "samples": count, "correct": correct, "accuracy": correct / count,
-            "deviations": deviations, "deviation_rate": deviations / count,
-            "token_limit_rate": sum(row["hit_token_limit"] for row in items) / count,
+            "samples": count, "correct": correct, "accuracy": correct / count if count else None,
+            "deviations": deviations, "deviation_rate": deviations / count if count else None,
+            "token_limit_rate": sum(row["hit_token_limit"] for row in items) / count if count else None,
         }
 
     groups = {"by_topic": defaultdict(list), "by_difficulty": defaultdict(list)}
@@ -267,6 +296,51 @@ def summarize(rows: list[dict]) -> dict:
         name: {key: metrics(items) for key, items in group.items()}
         for name, group in groups.items()
     }}
+
+
+def write_metrics(output: Path, summary: dict) -> None:
+    (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+
+    def percentage(name):
+        value = summary[name]
+        return "N/A (no evaluated rows)" if value is None else f"{value:.2%}"
+
+    (output / "infer_result.txt").write_text(
+        f"Model: {summary['model']}\nDataset: {summary['dataset']}\n"
+        f"Generation Mode: {summary['generation_mode']}\n"
+        f"Total Questions Processed: {summary['samples']}\n"
+        f"Overall Accuracy: {percentage('accuracy')}\n"
+        f"Deviation Rate: {percentage('deviation_rate')}\n"
+        f"Token Limit Rate: {percentage('token_limit_rate')}\n",
+        encoding="utf-8",
+    )
+
+
+def save_traditional_subset(output: Path, rows: list[dict], metadata: dict) -> None:
+    """Export the exact predictions from the parent run; never infer twice."""
+    selected = [row for row in rows if row["is_traditional_medicine"]]
+    subset_dir = output / TRADITIONAL_SUBSET
+    subset_dir.mkdir(exist_ok=False)
+    subset_metadata = {
+        **metadata,
+        "dataset": "vm14k",
+        "dataset_file": metadata["traditional_subset_file"],
+        "dataset_sha256": metadata["traditional_subset_sha256"],
+        "parent_dataset": "vm14k-full",
+        "parent_dataset_sha256": metadata["dataset_sha256"],
+        "parent_evaluated_samples": len(rows),
+        "total_dataset_samples": metadata["traditional_subset_total"],
+        "samples": len(selected),
+        "complete_subset": len(selected) == metadata["traditional_subset_total"],
+        "selection": "Eastern Medicine topic; validated against historical 564 rows",
+        "q_idx_scope": "1-based row index in parent dataset",
+        "status": "complete",
+    }
+    with (subset_dir / "responses.jsonl").open("w", encoding="utf-8") as handle:
+        for row in selected:
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    (subset_dir / "run_config.json").write_text(json.dumps(subset_metadata, indent=2) + "\n", encoding="utf-8")
+    write_metrics(subset_dir, {**subset_metadata, **summarize(selected)})
 
 
 def evaluate(key: str, dataset: str, revision: str, args) -> None:
@@ -312,16 +386,9 @@ def evaluate(key: str, dataset: str, revision: str, args) -> None:
                 print(f"[medical-eval] {key}/{dataset}: {len(rows)}/{len(samples)}", flush=True)
         summary = {**metadata, **summarize(rows), "status": "complete",
                    "inference_time_s": time.monotonic() - started}
-        (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
-        (output / "infer_result.txt").write_text(
-            f"Model: {MODELS[key]}\nDataset: {dataset}\n"
-            f"Generation Mode: {args.generation_mode}\n"
-            f"Total Questions Processed: {len(rows)}\n"
-            f"Overall Accuracy: {summary['accuracy']:.2%}\n"
-            f"Deviation Rate: {summary['deviation_rate']:.2%}\n"
-            f"Token Limit Rate: {summary['token_limit_rate']:.2%}\n",
-            encoding="utf-8",
-        )
+        if dataset == "vm14k-full":
+            save_traditional_subset(output, rows, metadata)
+        write_metrics(output, summary)
         metadata["status"] = "complete"
         manifest.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     except Exception as error:
@@ -339,8 +406,9 @@ def main() -> int:
     load_dotenv(ROOT / ".env")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", choices=[*MODELS, "all"], default="all")
-    parser.add_argument("--dataset", choices=[*DATASETS, "all"], default="all")
-    parser.add_argument("--limit", type=int, default=0, help="0 uses the full notebook evaluation subset")
+    parser.add_argument("--dataset", choices=[*DATASETS, "all"], default="all",
+                        help="all: new + vm14k-full (includes separate traditional subset export)")
+    parser.add_argument("--limit", type=int, default=0, help="0 uses every row in the selected dataset")
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--generation-mode", choices=["direct", "notebook"], default="direct",
                         help="direct: answer-only decoding; notebook: original free generation (may reason)")
@@ -351,7 +419,7 @@ def main() -> int:
     if args.limit < 0 or args.batch_size < 1:
         parser.error("--limit must be nonnegative and --batch-size must be positive")
     models = list(MODELS) if args.model == "all" else [args.model]
-    datasets = list(DATASETS) if args.dataset == "all" else [args.dataset]
+    datasets = DEFAULT_DATASETS if args.dataset == "all" else [args.dataset]
     for dataset in datasets:
         _, _, metadata = prepare_dataset(dataset, args.limit, args.generation_mode)
         print(json.dumps(metadata, indent=2))

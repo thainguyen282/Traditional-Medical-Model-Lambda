@@ -329,7 +329,7 @@ run_medical_eval() {
     local failed=0
     local output_dir="/workspace/EVAL/outputs/medical_baselines/$JOB_TAG"
     for model in $EVAL_MEDICAL_MODELS; do
-        for dataset in new vm14k; do
+        for dataset in ${EVAL_DATASETS:-new vm14k-full}; do
             echo "[bootstrap] ===== MEDICAL EVAL: $model / $dataset ====="
             in_docker "python /workspace/scripts/eval_medical_baselines.py \
                 --model '$model' --dataset '$dataset' \

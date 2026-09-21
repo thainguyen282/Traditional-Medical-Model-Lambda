@@ -208,6 +208,7 @@ def copy_medical_eval_bundle(key: str, ip: str) -> None:
         "scripts/eval_medical_baselines.py",
         "EVAL/Unsloth_QA_goc_new.ipynb", "EVAL/Unsloth_QA_goc_VM14K.ipynb",
         "EVAL/Data/tcm_mcq.jsonl", "EVAL/Data/eastern_medicine_VM14K.jsonl",
+        "EVAL/Data/Sampled-VM14K.jsonl",
     ]
     with tempfile.TemporaryDirectory(prefix="medical-eval-") as directory:
         bundle = Path(directory) / "medical_eval_bundle.tar.gz"
@@ -466,10 +467,13 @@ def main() -> int:
                              "'SFT-exp0002|huyennkai/Venera-Traditional-Model|"
                              "sft-unsloth-qwen3-4B-exp0002-tm-sft-1777957925|sft'")
     parser.add_argument("--config", help="Path to a single SFT config yaml")
-    from eval_medical_baselines import MODELS
+    from eval_medical_baselines import MODELS, DATASETS, DEFAULT_DATASETS
     parser.add_argument("--baselines", "--medical-baselines", dest="medical_baselines",
                         nargs="+", choices=list(MODELS),
                         help="(eval task) Evaluate selected open-weight models on new + VM14K MCQs")
+    parser.add_argument("--eval-datasets", nargs="+", choices=list(DATASETS),
+                        default=DEFAULT_DATASETS,
+                        help="Baseline datasets (default: new vm14k-full); full VM14K exports the 564-row subset")
     parser.add_argument("--eval-limit", type=int, default=0,
                         help="(medical baselines) Questions per dataset; 0 uses the full dataset")
     parser.add_argument("--eval-batch-size", type=int, default=4,
@@ -526,9 +530,9 @@ def main() -> int:
     if not hf_token:
         die("HF_TOKEN missing (set in .env)")
     if args.medical_baselines:
-        from eval_medical_baselines import DATASETS, check_access, prepare_dataset
+        from eval_medical_baselines import check_access, prepare_dataset
         try:
-            for dataset in DATASETS:
+            for dataset in dict.fromkeys(args.eval_datasets):
                 prepare_dataset(dataset, args.eval_limit, args.eval_generation_mode)
             check_access(args.medical_baselines, hf_token)
         except Exception as error:
@@ -549,6 +553,7 @@ def main() -> int:
         # instead of the hard-coded 6-model README list.
         "EVAL_ONLY":    args.eval_only or "",
         "EVAL_MEDICAL_MODELS": " ".join(dict.fromkeys(args.medical_baselines or [])),
+        "EVAL_DATASETS": " ".join(dict.fromkeys(args.eval_datasets)),
         "EVAL_LIMIT": str(args.eval_limit),
         "EVAL_BATCH_SIZE": str(args.eval_batch_size),
         "EVAL_GENERATION_MODE": args.eval_generation_mode,
