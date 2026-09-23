@@ -133,6 +133,43 @@ Stage 2 loads `group_outputs/exp0014/qa20k/SFT/model` from stage 1;
 its final adapter is saved to `group_outputs/exp0014/yhct/SFT/model`.
 The existing `config_cpt.yaml` files and `exp0014/configs.txt` remain the CPT-SFT variants.
 
+### Baseline evaluation (MedReason, 564 traditional medicine questions)
+
+```bash
+.venv/bin/python scripts/lambda_launch.py --task eval \
+    --baselines medreason \
+    --eval-datasets vm14k \
+    --eval-batch-size 4 \
+    --git-branch main2
+```
+
+`--baselines` (alias `--medical-baselines`) opts into the standalone baseline
+runner. It defaults to the 564-row `vm14k` subset, all rows (`--eval-limit 0`),
+and answer-only decoding (`--eval-generation-mode direct`). For a short smoke
+run, add `--eval-limit 4`. `--eval-generation-mode notebook` allows free generation
+with the notebook's token limit. Other datasets are `new` and `vm14k-full`;
+other model aliases are listed in `scripts/eval_medical_baselines.py`.
+These evaluation flags require `--baselines` and cannot be combined with
+`--eval-only` or training configs.
+
+The launcher validates local data and model access before provisioning. It uses
+the existing single A100 default, region selection, Docker image, Docker helper,
+SSH polling, and termination behavior. Models and datasets run sequentially.
+Only the selected local evaluator/data/notebooks are copied to the instance,
+so this baseline path needs no Git push or image rebuild. Keep your existing
+`DOCKER_IMAGE` setting when reusing a known working image.
+
+Results (`responses.jsonl`, `summary.json`, `infer_result.txt`, `run_config.json`)
+are uploaded to `$HF_SFT_REPO` on branch `eval-medical-<job-tag>` under
+`eval/<job-tag>/medreason/vm14k/`. The launcher also attempts a local backup to
+`logs/<job-tag>/medical-eval.tar.gz` before termination, including failed runs.
+A download failure returns a nonzero status and still follows the existing
+cleanup rule: terminate unless `--keep-alive` was explicitly passed. If both
+upload and download fail, remote results are lost on termination.
+
+Without `--baselines`, the existing training, inference, and notebook evaluation
+paths are unchanged. No extra dependency installs or GPU instances are added.
+
 ### Debug / inspect after finish
 ```bash
 python scripts/lambda_launch.py --task sft --config ... --keep-alive

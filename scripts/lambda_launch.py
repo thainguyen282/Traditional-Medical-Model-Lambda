@@ -29,6 +29,8 @@ import os
 import shlex
 import subprocess
 import sys
+import tarfile
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -200,6 +202,44 @@ def wait_for_ssh(key: str, ip: str, timeout: int = 300,
     die(f"SSH did not come up on {ip} within {timeout}s")
 
 
+def copy_medical_eval_bundle(key: str, ip: str, datasets: list[str]) -> None:
+    from eval_medical_baselines import DATASETS
+
+    root = Path(__file__).resolve().parent.parent
+    files = {"scripts/eval_medical_baselines.py"}
+    for dataset in datasets:
+        filename, notebook = DATASETS[dataset]
+        files.update({f"EVAL/Data/{filename}", f"EVAL/{notebook}"})
+    if "vm14k-full" in datasets:
+        files.add(f"EVAL/Data/{DATASETS['vm14k'][0]}")
+    with tempfile.TemporaryDirectory(prefix="medical-eval-") as directory:
+        bundle = Path(directory) / "medical_eval_bundle.tar.gz"
+        with tarfile.open(bundle, "w:gz") as archive:
+            for name in sorted(files):
+                archive.add(root / name, arcname=name)
+        scp_to(key, ip, str(bundle), "/home/ubuntu/medical_eval_bundle.tar.gz")
+
+
+def download_medical_eval(key: str, ip: str, job_tag: str) -> Path:
+    remote_archive = f"/home/ubuntu/{job_tag}-medical-eval.tar.gz"
+    remote_outputs = f"/home/ubuntu/{REMOTE_REPO_DIR}/EVAL/outputs/medical_baselines/{job_tag}"
+    ssh_cmd(key, ip, f"sudo tar -czf {shlex.quote(remote_archive)} "
+            f"-C {shlex.quote(remote_outputs)} . && sudo chmod 644 {shlex.quote(remote_archive)}")
+    destination = Path("logs") / job_tag
+    destination.mkdir(parents=True, exist_ok=True)
+    local_archive = destination / "medical-eval.tar.gz"
+    subprocess.run([
+        "scp", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "ConnectTimeout=15", "-i", key,
+        f"{REMOTE_USER}@{ip}:{remote_archive}", str(local_archive),
+    ], check=True, timeout=120)
+    with tarfile.open(local_archive) as archive:
+        if not archive.getmembers():
+            raise RuntimeError("Downloaded evaluation archive is empty")
+    log(f"evaluation backup saved locally: {local_archive.resolve()}")
+    return local_archive
+
+
 def render_env_file(env_vars: dict[str, str]) -> str:
     lines = []
     for k, v in env_vars.items():
@@ -228,6 +268,7 @@ def run_job(
     log(f"instance_id={instance_id}")
 
     exit_code = 1
+    baseline_started = False
     try:
         inst = wait_for_active(api, instance_id)
         ip = inst["ip"]
@@ -239,6 +280,8 @@ def run_job(
                "/home/ubuntu/lambda_bootstrap.sh")
         scp_to(ssh_private_key, ip, str(scripts_dir / "lambda_push_to_hf.py"),
                "/home/ubuntu/lambda_push_to_hf.py")
+        if env_vars.get("EVAL_MEDICAL_MODELS"):
+            copy_medical_eval_bundle(ssh_private_key, ip, env_vars["EVAL_DATASETS"].split())
 
         # Optionally scp a custom inference script (basename copied).
         inf_script = env_vars.get("INFERENCE_SCRIPT", "")
@@ -274,6 +317,7 @@ def run_job(
 
         # Kick off training in tmux so the session survives if our ssh drops.
         log("starting training in remote tmux session 'train'")
+        baseline_started = bool(env_vars.get("EVAL_MEDICAL_MODELS"))
         ssh_cmd(
             ssh_private_key, ip,
             "tmux new-session -d -s train "
@@ -328,6 +372,14 @@ def run_job(
     except KeyboardInterrupt:
         log("interrupted locally — remote job continues; proceeding to terminate.")
     finally:
+        if baseline_started:
+            try:
+                download_medical_eval(ssh_private_key, ip, job_tag)
+            except (Exception, KeyboardInterrupt) as error:
+                log(f"WARNING: baseline result download failed: {error}")
+                log("Check the Hugging Face upload in the job log. "
+                    "Instance cleanup still follows --keep-alive.")
+                exit_code = 2
         if keep_alive:
             log(f"--keep-alive set; leaving instance {instance_id} running")
             log(f"  ssh -i {ssh_private_key} ubuntu@{ip}  # if still reachable")
@@ -381,6 +433,16 @@ def main() -> int:
                              "'SFT-exp0002|huyennkai/Venera-Traditional-Model|"
                              "sft-unsloth-qwen3-4B-exp0002-tm-sft-1777957925|sft'")
     parser.add_argument("--config", help="Path to a single SFT config yaml")
+    parser.add_argument("--baselines", "--medical-baselines", nargs="+",
+                        help="(eval only) Baseline aliases, e.g. medreason; skips the README model loop")
+    parser.add_argument("--eval-datasets", nargs="+", default=None,
+                        help="Baseline datasets: vm14k (default, 564 rows), new, vm14k-full")
+    parser.add_argument("--eval-limit", type=int, default=None,
+                        help="Baseline questions per dataset; 0 uses every row")
+    parser.add_argument("--eval-batch-size", type=int, default=None,
+                        help="Baseline batch size; automatically reduced on GPU OOM")
+    parser.add_argument("--eval-generation-mode", choices=["direct", "notebook"], default=None,
+                        help="Baseline decoding: answer-only or notebook free generation")
     parser.add_argument("--config-list",
                         help="Path to a text file with one config path per line")
     parser.add_argument("--instance-type", default=DEFAULT_INSTANCE_TYPE,
@@ -397,6 +459,24 @@ def main() -> int:
     parser.add_argument("--inference-revision", default=None,
                         help="(inference task) HF revision to pass as --revision to the inference script")
     args = parser.parse_args()
+    if not args.baselines and any(value is not None for value in (
+            args.eval_datasets, args.eval_limit, args.eval_batch_size, args.eval_generation_mode)):
+        parser.error("--eval-datasets/limit/batch-size/generation-mode require --baselines")
+    args.eval_datasets = args.eval_datasets or ["vm14k"]
+    args.eval_limit = 0 if args.eval_limit is None else args.eval_limit
+    args.eval_batch_size = 4 if args.eval_batch_size is None else args.eval_batch_size
+    args.eval_generation_mode = args.eval_generation_mode or "direct"
+    if args.eval_limit < 0 or args.eval_batch_size < 1:
+        parser.error("--eval-limit must be nonnegative and --eval-batch-size must be positive")
+    if args.baselines:
+        if args.task != "eval" or args.eval_only or args.config or args.config_list:
+            parser.error("--baselines requires --task eval without --eval-only or training configs")
+        # Ordinary training and notebook runs do not import the baseline evaluator.
+        from eval_medical_baselines import MODELS, DATASETS, check_access, prepare_dataset
+        if any(model not in MODELS for model in args.baselines):
+            parser.error(f"Unknown baseline; choose from: {', '.join(MODELS)}")
+        if any(dataset not in DATASETS for dataset in args.eval_datasets):
+            parser.error(f"Unknown dataset; choose from: {', '.join(DATASETS)}")
 
     lambda_key = os.environ.get("LAMBDA_API_KEY")
     if not lambda_key:
@@ -427,6 +507,14 @@ def main() -> int:
     if not hf_token:
         die("HF_TOKEN missing (set in .env)")
 
+    if args.baselines:
+        try:
+            for dataset in dict.fromkeys(args.eval_datasets):
+                prepare_dataset(dataset, args.eval_limit, args.eval_generation_mode)
+            check_access(list(dict.fromkeys(args.baselines)), hf_token)
+        except Exception as error:
+            die(f"baseline preflight failed before launching a GPU: {error}")
+
     env_vars = {
         "HF_TOKEN": hf_token,
         "WANDB_KEY": os.environ.get("WANDB_KEY", ""),
@@ -447,6 +535,15 @@ def main() -> int:
         # Optional: pass a HF revision string to the inference script.
         "INFERENCE_REVISION": args.inference_revision or os.environ.get("INFERENCE_REVISION", ""),
     }
+
+    if args.baselines:
+        env_vars.update({
+            "EVAL_MEDICAL_MODELS": " ".join(dict.fromkeys(args.baselines)),
+            "EVAL_DATASETS": " ".join(dict.fromkeys(args.eval_datasets)),
+            "EVAL_LIMIT": str(args.eval_limit),
+            "EVAL_BATCH_SIZE": str(args.eval_batch_size),
+            "EVAL_GENERATION_MODE": args.eval_generation_mode,
+        })
 
     return run_job(
         api=api,

@@ -88,6 +88,14 @@ if [ ! -d "$REPO_DIR/.git" ]; then
 fi
 cd "$REPO_DIR" || fail "cd repo"
 
+# Baseline runs use the exact evaluator, protocol and data from the launcher.
+if [ -n "${EVAL_MEDICAL_MODELS:-}" ]; then
+    tar -xzf /home/ubuntu/medical_eval_bundle.tar.gz -C "$REPO_DIR" \
+        || fail "install baseline evaluation bundle"
+    mkdir -p "$REPO_DIR/EVAL/outputs/medical_baselines/$JOB_TAG" \
+        || fail "create baseline output directory"
+fi
+
 # If a custom inference script was scp'd to /home/ubuntu, move it into the
 # cloned repo so subsequent steps can run it from /workspace/scripts/.
 if [ -n "${INFERENCE_SCRIPT:-}" ]; then
@@ -297,7 +305,33 @@ EVAL_README_MODELS=(
     "CPT-SFT-2topics|huyennkai/Venera-Traditional-Model|cpt-sft-unsloth-qwen3-4B-exp0001-tm-sft-1776784126|cpt_sft"
 )
 
+run_medical_eval() {
+    local model dataset
+    local failed=0
+    local output_dir="/workspace/EVAL/outputs/medical_baselines/$JOB_TAG"
+    for model in $EVAL_MEDICAL_MODELS; do
+        for dataset in ${EVAL_DATASETS:-vm14k}; do
+            echo "[bootstrap] ===== MEDICAL EVAL: $model / $dataset ====="
+            in_docker "python /workspace/scripts/eval_medical_baselines.py \
+                --model '$model' --dataset '$dataset' \
+                --limit '${EVAL_LIMIT:-0}' --batch-size '${EVAL_BATCH_SIZE:-4}' \
+                --generation-mode '${EVAL_GENERATION_MODE:-direct}' \
+                --output-dir '$output_dir'" \
+                || { echo "[bootstrap] ERROR: evaluation failed: $model/$dataset"; failed=1; }
+        done
+    done
+    in_docker "python /workspace/scripts/lambda_push_to_hf.py \
+        --task eval --repo '$HF_SFT_REPO' --revision 'eval-medical-$JOB_TAG' \
+        --eval-src '$output_dir' --log-file /host/train.log" \
+        || { echo "[bootstrap] ERROR: medical evaluation upload failed; launcher will download outputs"; failed=1; }
+    return "$failed"
+}
+
 run_eval() {
+    if [ -n "${EVAL_MEDICAL_MODELS:-}" ]; then
+        run_medical_eval
+        return $?
+    fi
     # Re-run Unsloth_QA notebooks for each README model, push outputs to that
     # model's existing HF branch (Goc has no branch → eval-goc-<JOB_TAG>).
     # Each notebook runs in a fresh `docker run` (CUDA-fork-after-train issue
