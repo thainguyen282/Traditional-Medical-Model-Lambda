@@ -25,6 +25,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import base64
 import os
 import shlex
 import subprocess
@@ -34,6 +35,7 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import requests
 from dotenv import load_dotenv
@@ -103,13 +105,19 @@ class LambdaAPI:
                   json={"instance_ids": [instance_id]})
 
 
-def find_region_for(api: LambdaAPI, instance_type: str) -> str:
+def find_region_for(api: LambdaAPI, instance_type: str, region: str | None = None) -> str:
     types = api.instance_types()
     entry = types.get(instance_type)
     if not entry:
         available = ", ".join(sorted(types.keys()))
         die(f"instance type {instance_type} not found. Available: {available}")
     regions = entry.get("regions_with_capacity_available", [])
+    if region is not None:
+        if any(item["name"] == region for item in regions):
+            return region
+        available = ", ".join(item["name"] for item in regions) or "none"
+        die(f"{instance_type} has no available capacity in requested region {region}. "
+            f"Available regions: {available}. No instance was launched.")
     if not regions:
         die(f"no region has capacity for {instance_type} right now. "
             f"Retry later or pick another type.")
@@ -202,6 +210,31 @@ def wait_for_ssh(key: str, ip: str, timeout: int = 300,
     die(f"SSH did not come up on {ip} within {timeout}s")
 
 
+def check_git_access(repo: str, branch: str, token: str | None) -> None:
+    """Check HTTPS clone access without prompts or credentials in command arguments."""
+    env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+    url = urlsplit(repo)
+    if token and url.scheme == "https" and url.hostname == "github.com":
+        index = int(env.get("GIT_CONFIG_COUNT", "0"))
+        env["GIT_CONFIG_COUNT"] = str(index + 1)
+        env[f"GIT_CONFIG_KEY_{index}"] = "http.https://github.com/.extraheader"
+        auth = base64.b64encode(f"x-access-token:{token}".encode()).decode()
+        env[f"GIT_CONFIG_VALUE_{index}"] = f"Authorization: Basic {auth}"
+    try:
+        result = subprocess.run(
+            ["git", "-c", "credential.helper=", "ls-remote", "--exit-code", "--heads",
+             "--", repo, f"refs/heads/{branch}"],
+            env=env, capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        raise RuntimeError("Git repository preflight could not complete; check connectivity and Git installation") from None
+    if result.returncode or not any(
+            line.split()[-1:] == [f"refs/heads/{branch}"] for line in result.stdout.splitlines()):
+        # Do not echo git stderr: it can include credential-bearing URLs.
+        raise RuntimeError("Git repository/branch is inaccessible. Check --git-repo, --git-branch, "
+                           "and GH_TOKEN access before retrying.")
+
+
 def copy_medical_eval_bundle(key: str, ip: str, datasets: list[str]) -> None:
     from eval_medical_baselines import DATASETS
 
@@ -220,9 +253,14 @@ def copy_medical_eval_bundle(key: str, ip: str, datasets: list[str]) -> None:
         scp_to(key, ip, str(bundle), "/home/ubuntu/medical_eval_bundle.tar.gz")
 
 
-def download_medical_eval(key: str, ip: str, job_tag: str) -> Path:
+def download_medical_eval(key: str, ip: str, job_tag: str) -> Path | None:
     remote_archive = f"/home/ubuntu/{job_tag}-medical-eval.tar.gz"
     remote_outputs = f"/home/ubuntu/{REMOTE_REPO_DIR}/EVAL/outputs/medical_baselines/{job_tag}"
+    exists = ssh_cmd(key, ip, f"test -d {shlex.quote(remote_outputs)}", check=False, capture=True)
+    if exists.returncode == 1:
+        log("No baseline output directory: setup failed before evaluation; skipping result download.")
+        return None
+    exists.check_returncode()
     ssh_cmd(key, ip, f"sudo tar -czf {shlex.quote(remote_archive)} "
             f"-C {shlex.quote(remote_outputs)} . && sudo chmod 644 {shlex.quote(remote_archive)}")
     destination = Path("logs") / job_tag
@@ -260,8 +298,9 @@ def run_job(
     git_repo: str,
     git_branch: str,
     keep_alive: bool,
+    region: str | None = None,
 ) -> int:
-    region = find_region_for(api, instance_type)
+    region = find_region_for(api, instance_type, region)
     log(f"launching {instance_type} in region {region}")
     job_tag = f"tm-{task}-{int(time.time())}"
     instance_id = api.launch(region, instance_type, [ssh_key_name], name=job_tag)
@@ -447,6 +486,8 @@ def main() -> int:
                         help="Path to a text file with one config path per line")
     parser.add_argument("--instance-type", default=DEFAULT_INSTANCE_TYPE,
                         help=f"Lambda instance type (default: {DEFAULT_INSTANCE_TYPE})")
+    parser.add_argument("--region", default=None,
+                        help="Require a region, e.g. us-east-1 (Virginia); default: first available")
     parser.add_argument("--git-repo",
                         default="https://github.com/Venera-AI/Traditional-Medical-Model.git")
     parser.add_argument("--git-branch", default="main2")
@@ -509,6 +550,7 @@ def main() -> int:
 
     if args.baselines:
         try:
+            check_git_access(args.git_repo, args.git_branch, os.environ.get("GH_TOKEN"))
             for dataset in dict.fromkeys(args.eval_datasets):
                 prepare_dataset(dataset, args.eval_limit, args.eval_generation_mode)
             check_access(list(dict.fromkeys(args.baselines)), hf_token)
@@ -556,6 +598,7 @@ def main() -> int:
         git_repo=args.git_repo,
         git_branch=args.git_branch,
         keep_alive=args.keep_alive,
+        region=args.region,
     )
 
 

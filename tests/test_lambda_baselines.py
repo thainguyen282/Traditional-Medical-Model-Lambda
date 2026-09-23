@@ -23,6 +23,7 @@ class BaselineCLITests(unittest.TestCase):
                'LAMBDA_SSH_PRIVATE_KEY': str(Path(__file__).resolve()), 'HF_TOKEN': 'test'}
         with patch.dict(os.environ, env, clear=True), patch.object(launcher, 'load_dotenv'), \
                 patch.object(launcher, 'LambdaAPI'), \
+                patch.object(launcher, 'check_git_access'), \
                 patch.object(launcher, 'run_job', return_value=0) as run, \
                 patch.object(evaluator, 'check_access', side_effect=access_error) as access, \
                 patch.object(sys, 'argv', ['lambda_launch.py', *argv]), \
@@ -47,6 +48,14 @@ class BaselineCLITests(unittest.TestCase):
         rows, _, metadata = evaluator.prepare_dataset('vm14k')
         self.assertEqual(len(rows), 564)
         self.assertEqual(metadata['samples'], 564)
+
+    def test_region_is_forwarded_without_changing_gpu_or_image_defaults(self):
+        args, _ = self.invoke(['--task', 'eval', '--baselines', 'medreason',
+                               '--region', 'us-east-1', '--git-branch', 'thai-dev'])
+        self.assertEqual(args['region'], 'us-east-1')
+        self.assertEqual(args['git_branch'], 'thai-dev')
+        self.assertEqual(args['instance_type'], launcher.DEFAULT_INSTANCE_TYPE)
+        self.assertEqual(args['env_vars']['DOCKER_IMAGE'], '')
 
     def test_explicit_options_and_duplicates(self):
         args, access = self.invoke(['--task', 'eval', '--medical-baselines', 'medreason', 'medreason',
@@ -103,6 +112,78 @@ class BaselineCLITests(unittest.TestCase):
         with patch.object(launcher, 'scp_to', side_effect=inspect_bundle) as scp:
             launcher.copy_medical_eval_bundle('key', 'ip', ['vm14k'])
         scp.assert_called_once()
+
+
+class GitPreflightTests(unittest.TestCase):
+    def test_private_github_auth_stays_out_of_arguments(self):
+        result = subprocess.CompletedProcess([], 0, stdout='abc\trefs/heads/thai-dev\n')
+        with patch.object(launcher.subprocess, 'run', return_value=result) as run:
+            launcher.check_git_access('https://github.com/example/private.git', 'thai-dev', 'secret-token')
+        args, kwargs = run.call_args
+        self.assertNotIn('secret-token', repr(args))
+        self.assertEqual(kwargs['env']['GIT_TERMINAL_PROMPT'], '0')
+        self.assertIn('refs/heads/thai-dev', args[0])
+
+    def test_git_failure_stops_before_provisioning_without_echoing_secrets(self):
+        env = {'LAMBDA_API_KEY': 'test', 'LAMBDA_SSH_KEY_NAME': 'test',
+               'LAMBDA_SSH_PRIVATE_KEY': str(Path(__file__).resolve()), 'HF_TOKEN': 'test'}
+        result = subprocess.CompletedProcess([], 128, stdout='', stderr='secret-token')
+        errors = io.StringIO()
+        with patch.dict(os.environ, env, clear=True), patch.object(launcher, 'load_dotenv'), \
+                patch.object(launcher, 'LambdaAPI'), patch.object(launcher, 'run_job') as run, \
+                patch.object(launcher.subprocess, 'run', return_value=result), \
+                patch.object(sys, 'argv', ['lambda_launch.py', '--task', 'eval', '--baselines', 'medreason']), \
+                contextlib.redirect_stderr(errors):
+            with self.assertRaises(SystemExit):
+                launcher.main()
+        run.assert_not_called()
+        self.assertIn('repository/branch is inaccessible', errors.getvalue())
+        self.assertNotIn('secret-token', errors.getvalue())
+
+    def test_missing_branch_is_rejected(self):
+        result = subprocess.CompletedProcess([], 0, stdout='abc\trefs/heads/main\n')
+        with patch.object(launcher.subprocess, 'run', return_value=result):
+            with self.assertRaises(RuntimeError):
+                launcher.check_git_access('https://github.com/example/repo.git', 'thai-dev', None)
+
+    def test_no_output_directory_skips_archive_and_download(self):
+        result = subprocess.CompletedProcess([], 1, stdout='')
+        with patch.object(launcher, 'ssh_cmd', return_value=result) as ssh, \
+                patch.object(launcher.subprocess, 'run') as scp, \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertIsNone(launcher.download_medical_eval('key', 'ip', 'job'))
+        ssh.assert_called_once()
+        scp.assert_not_called()
+
+
+class RegionSelectionTests(unittest.TestCase):
+    def api(self, regions):
+        api = Mock()
+        api.instance_types.return_value = {
+            launcher.DEFAULT_INSTANCE_TYPE: {
+                'regions_with_capacity_available': [{'name': name} for name in regions]
+            }
+        }
+        return api
+
+    def test_explicit_virginia_overrides_first_available(self):
+        api = self.api(['asia-south-1', 'us-east-1'])
+        self.assertEqual(launcher.find_region_for(api, launcher.DEFAULT_INSTANCE_TYPE, 'us-east-1'),
+                         'us-east-1')
+
+    def test_omitted_region_preserves_first_available_selection(self):
+        api = self.api(['asia-south-1', 'us-east-1'])
+        self.assertEqual(launcher.find_region_for(api, launcher.DEFAULT_INSTANCE_TYPE), 'asia-south-1')
+
+    def test_unavailable_virginia_stops_before_launch_without_fallback(self):
+        for regions in [['asia-south-1'], []]:
+            api = self.api(regions)
+            with self.subTest(regions=regions), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit):
+                    launcher.run_job(api, 'eval', [], launcher.DEFAULT_INSTANCE_TYPE,
+                                     'key', 'keyfile', {}, 'repo', 'thai-dev', False,
+                                     region='us-east-1')
+            api.launch.assert_not_called()
 
 
 class LifecycleTests(unittest.TestCase):

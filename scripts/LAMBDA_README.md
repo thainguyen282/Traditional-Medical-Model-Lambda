@@ -140,8 +140,15 @@ The existing `config_cpt.yaml` files and `exp0014/configs.txt` remain the CPT-SF
     --baselines medreason \
     --eval-datasets vm14k \
     --eval-batch-size 4 \
-    --git-branch main2
+    --git-repo https://github.com/thainguyen282/Traditional-Medical-Model-Lambda.git \
+    --git-branch thai-dev \
+    --region us-east-1
 ```
+
+`--region us-east-1` selects Virginia, USA. The launcher checks capacity for the
+requested GPU and stops before launching if that region is unavailable; it does
+not fall back to another region. Omitting `--region` keeps the existing first
+available region behavior.
 
 `--baselines` (alias `--medical-baselines`) opts into the standalone baseline
 runner. It defaults to the 564-row `vm14k` subset, all rows (`--eval-limit 0`),
@@ -152,7 +159,8 @@ other model aliases are listed in `scripts/eval_medical_baselines.py`.
 These evaluation flags require `--baselines` and cannot be combined with
 `--eval-only` or training configs.
 
-The launcher validates local data and model access before provisioning. It uses
+The launcher validates Git repository/branch access, local data, and model access
+before provisioning. It uses
 the existing single A100 default, region selection, Docker image, Docker helper,
 SSH polling, and termination behavior. Models and datasets run sequentially.
 Only the selected local evaluator/data/notebooks are copied to the instance,
@@ -162,8 +170,8 @@ so this baseline path needs no Git push or image rebuild. Keep your existing
 Results (`responses.jsonl`, `summary.json`, `infer_result.txt`, `run_config.json`)
 are uploaded to `$HF_SFT_REPO` on branch `eval-medical-<job-tag>` under
 `eval/<job-tag>/medreason/vm14k/`. The launcher also attempts a local backup to
-`logs/<job-tag>/medical-eval.tar.gz` before termination, including failed runs.
-A download failure returns a nonzero status and still follows the existing
+`logs/<job-tag>/medical-eval.tar.gz` before termination, including failed runs. If setup failed before creating an output directory,
+the downloader skips the missing results. A download failure returns a nonzero status and still follows the existing
 cleanup rule: terminate unless `--keep-alive` was explicitly passed. If both
 upload and download fail, remote results are lost on termination.
 
