@@ -90,6 +90,10 @@ SHA-256 file eval local: `314006d439047ac9b98a890fe14ee1954025b28040c3e162ef71dc
 | MedGemma‑1.5‑4B | 38.48 |       0 |
 | HuatuoGPT‑o1‑8B | 41.13 |       0 |
 | Qwen3‑4B base   | 48.05 |       0 |
+| MedReason-8B    | 42.1  |       0 |
+| Llama-3.1-8B0UltraMedical | 62 |     0 |
+| BaiChuan-M2-32B | 62.5  |       0 |
+
 
 
 Artifact được cung cấp: [exp0014 CPT-SFT — infer_result.txt](https://huggingface.co/Maverfrick/Venera-Traditional-Model/blob/cpt-sft-unsloth-qwen3-4B-exp0014-tm-sft-1789493283/eval/outputs/CPT_SFT_VM14K/infer_result.txt).
