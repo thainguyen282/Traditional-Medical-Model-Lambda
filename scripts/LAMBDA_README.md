@@ -135,6 +135,10 @@ The existing `config_cpt.yaml` files and `exp0014/configs.txt` remain the CPT-SF
 
 ### Baseline evaluation (MedReason, 564 traditional medicine questions)
 
+For the Qwen3-4B / Gemma-4-E2B comparison without thinking, see
+[VM14K baseline experiment](VM14K_BASELINES.md). It uses an isolated evaluation
+environment and gates full evaluation on a four-question smoke run of both models.
+
 ```bash
 .venv/bin/python scripts/lambda_launch.py --task eval \
     --baselines medreason \
@@ -149,6 +153,11 @@ The existing `config_cpt.yaml` files and `exp0014/configs.txt` remain the CPT-SF
 requested GPU and stops before launching if that region is unavailable; it does
 not fall back to another region. Omitting `--region` keeps the existing first
 available region behavior.
+
+If provisioning is slow, add `--boot-timeout 1200` to allow up to 20 minutes
+for Lambda to report `active`. The default remains 600 seconds. An assigned IP
+while status is still `booting` does not bypass this check. Timeout still follows
+the normal cleanup rule, terminating unless `--keep-alive` was passed.
 
 `--baselines` (alias `--medical-baselines`) opts into the standalone baseline
 runner. It defaults to the 564-row `vm14k` subset, all rows (`--eval-limit 0`),

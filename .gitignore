@@ -2,6 +2,7 @@ model.pkl
 unsloth_compiled_cache
 unsloth_training_checkpoints
 .venv
+.venv-baselines/
 __pycache__
 wandb
 .env

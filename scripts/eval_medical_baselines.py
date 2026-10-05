@@ -5,8 +5,11 @@ from __future__ import annotations
 import argparse
 import ast
 from collections import Counter, defaultdict
+import csv
+import copy
 import gc
 import hashlib
+from importlib.metadata import version
 import json
 import os
 from pathlib import Path
@@ -19,6 +22,7 @@ MODELS = {
     "medgemma": "google/medgemma-1.5-4b-it",
     "huatuo": "FreedomIntelligence/HuatuoGPT-o1-8B",
     "qwen3-4b": "Qwen/Qwen3-4B-Instruct-2507",
+    "gemma4-e2b": "google/gemma-4-E2B-it",
     "qwen2.5-7b": "Qwen/Qwen2.5-7B-Instruct",
     "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.3",
     "medreason": "UCSC-VLAA/MedReason-8B",
@@ -33,6 +37,8 @@ DEFAULT_DATASETS = ["new", "vm14k-full"]
 TRADITIONAL_SUBSET = "traditional_medicine_564"
 ANSWER_PREFIX = "Final Answer:"
 DIRECT_INSTRUCTION = "\nAnswer directly. Do not include thinking, reasoning, or an explanation.\n"
+VM14K_SHA256 = "314006d439047ac9b98a890fe14ee1954025b28040c3e162ef71dc771af56574"
+VM14K_BASELINES = ("qwen3-4b", "gemma4-e2b")
 
 PROTOCOL_NAMES = {
     "generation_config", "system_prompt", "subset_size", "load_dataset",
@@ -84,6 +90,9 @@ def prepare_dataset(key: str, limit: int = 0, generation_mode: str = "direct") -
     # Full evaluation must not silently inherit a notebook's sampling cap.
     samples = list(protocol["load_dataset"](data_path))
     total_samples = len(samples)
+    if key == "vm14k" and (total_samples != 564 or
+            hashlib.sha256(data_path.read_bytes()).hexdigest() != VM14K_SHA256):
+        raise ValueError("VM14K must match the frozen 564-row traditional medicine subset")
     subset_metadata = {}
     if key == "vm14k-full":
         reference_path = ROOT / "EVAL" / "Data" / DATASETS["vm14k"][0]
@@ -160,6 +169,25 @@ def build_prompt(sample: dict, system_prompt: str) -> str:
     return f"{system_prompt}\nQuestion: {sample['question']}\nOptions:\n{options}\n"
 
 
+def check_runtime(models: list[str]) -> dict:
+    """Import inference dependencies before downloading weights or evaluating."""
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+    import bitsandbytes
+    import accelerate
+
+    if "gemma4-e2b" in models:
+        try:
+            from transformers import AutoProcessor, Gemma4ForConditionalGeneration
+        except ImportError as error:
+            raise RuntimeError(
+                "Gemma 4 requires the isolated environment: "
+                "bash scripts/setup_baseline_env.sh"
+            ) from error
+    return {name: version(name) for name in
+            ("torch", "transformers", "accelerate", "bitsandbytes", "tokenizers", "huggingface-hub")}
+
+
 def load_model(key: str, revision: str, token: str | None):
     import torch
     from transformers import (
@@ -171,6 +199,11 @@ def load_model(key: str, revision: str, token: str | None):
         raise RuntimeError("A CUDA GPU is required for the 4-bit baseline evaluation")
     repo = MODELS[key]
     loader = Gemma3ForConditionalGeneration if key == "medgemma" else AutoModelForCausalLM
+    processor = None
+    if key == "gemma4-e2b":
+        from transformers import AutoProcessor, Gemma4ForConditionalGeneration
+        loader = Gemma4ForConditionalGeneration
+        processor = AutoProcessor.from_pretrained(repo, revision=revision, token=token)
     model = loader.from_pretrained(
         repo, revision=revision, token=token,
         torch_dtype=torch.bfloat16, device_map={"": 0},
@@ -180,12 +213,13 @@ def load_model(key: str, revision: str, token: str | None):
             bnb_4bit_use_double_quant=True, bnb_4bit_compute_dtype=torch.bfloat16,
         ),
     )
-    tokenizer = AutoTokenizer.from_pretrained(repo, revision=revision, token=token)
+    tokenizer = (processor.tokenizer if processor is not None else
+                 AutoTokenizer.from_pretrained(repo, revision=revision, token=token))
     tokenizer.padding_side = "left"
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
     model.eval()
-    return model, tokenizer
+    return model, tokenizer, processor
 
 
 def answer_constraint(tokenizer, samples, input_length, eos_ids, max_new_tokens):
@@ -218,19 +252,21 @@ def answer_constraint(tokenizer, samples, input_length, eos_ids, max_new_tokens)
     return allowed_tokens
 
 
-def generate_batch(model, tokenizer, samples: list[dict], protocol: dict) -> list[dict]:
+def generate_batch(model, tokenizer, samples: list[dict], protocol: dict, processor=None) -> list[dict]:
     import torch
 
     direct = protocol["generation_mode"] == "direct"
-    texts = [tokenizer.apply_chat_template(
+    formatter = processor if processor is not None else tokenizer
+    texts = [formatter.apply_chat_template(
         [{"role": "user", "content": build_prompt(sample, protocol["system_prompt"])}],
         tokenize=False, add_generation_prompt=True,
+        **({"enable_thinking": False} if direct else {}),
     ) + (ANSWER_PREFIX if direct else "") for sample in samples]
     if direct:
         # Preserve the assistant prefill if a question exceeds the input budget.
         tokenizer.truncation_side = "left"
-    inputs = tokenizer(
-        texts, return_tensors="pt", padding=True, truncation=True,
+    inputs = formatter(
+        text=texts, return_tensors="pt", padding=True, truncation=True,
         max_length=2048, add_special_tokens=False,
     ).to("cuda")
     eos_ids = model.generation_config.eos_token_id
@@ -263,7 +299,7 @@ def generate_batch(model, tokenizer, samples: list[dict], protocol: dict) -> lis
 
 def score_response(sample: dict, prediction: dict, protocol: dict, index: int) -> dict:
     extracted = protocol["extract_answer"](prediction["response"].strip())
-    deviation = extracted not in sample["options"] and extracted not in ["NONE", ""]
+    deviation = extracted not in sample["options"]
     return {
         "q_idx": index, "question": sample["question"], "options": sample["options"],
         "is_traditional_medicine": "Eastern Medicine" in protocol["process_medical_topics"](sample["medical_topic"]),
@@ -343,31 +379,97 @@ def save_traditional_subset(output: Path, rows: list[dict], metadata: dict) -> N
     write_metrics(subset_dir, {**subset_metadata, **summarize(selected)})
 
 
+def export_vm14k_comparison(output: Path) -> None:
+    """Publish a table only when both complete, comparable 564-row runs exist."""
+    samples, _, expected = prepare_dataset("vm14k")
+    records = []
+    common = None
+    for key in VM14K_BASELINES:
+        directory = output / key / "vm14k"
+        metadata = json.loads((directory / "run_config.json").read_text())
+        summary = json.loads((directory / "summary.json").read_text())
+        rows = [json.loads(line) for line in (directory / "responses.jsonl").read_text().splitlines()]
+        required = {
+            "status": "complete", "dataset": "vm14k", "model": MODELS[key],
+            "samples": 564, "total_dataset_samples": 564, "limit": 0,
+            "generation_mode": "direct", "thinking_enabled": False,
+            "constrained_to_options": True, "dataset_sha256": VM14K_SHA256,
+            "generation_config": expected["generation_config"],
+        }
+        if any(metadata.get(k) != v or summary.get(k) != v for k, v in required.items()):
+            raise ValueError(f"{key}: comparison requires a complete VM14K no-thinking run")
+        if len(rows) != 564 or not metadata.get("revision"):
+            raise ValueError(f"{key}: incomplete responses or missing checkpoint revision")
+        for index, (row, sample) in enumerate(zip(rows, samples), 1):
+            if (row["q_idx"] != index or row["question"] != sample["question"] or
+                    row["options"] != sample["options"] or row["correct_answer"] != sample["answer"]):
+                raise ValueError(f"{key}: responses do not match the frozen VM14K row order")
+        recalculated = summarize(rows)
+        if any(summary.get(k) != recalculated[k] for k in
+               ("samples", "correct", "accuracy", "deviations", "deviation_rate", "token_limit_rate")):
+            raise ValueError(f"{key}: summary does not match responses")
+        settings = {k: metadata[k] for k in (
+            "protocol_sha256", "system_prompt", "generation_config", "max_input_tokens",
+            "assistant_prefix", "quantization", "seed", "dependencies", "chat_template_kwargs",
+        )}
+        if common is not None and settings != common:
+            raise ValueError("Baseline runs used different evaluation settings or dependencies")
+        common = settings
+        records.append({
+            "model": MODELS[key], "correct/564": f"{summary['correct']}/564",
+            "accuracy_pct": round(summary["accuracy"] * 100, 4),
+            "invalid_answer_pct": round(summary["deviation_rate"] * 100, 4),
+            "token_limit_pct": round(summary["token_limit_rate"] * 100, 4),
+        })
+    with (output / "comparison.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(records[0]))
+        writer.writeheader()
+        writer.writerows(records)
+    lines = [
+        "# VM14K baselines: constrained answer-only MCQ evaluation", "",
+        "All 564 questions; thinking disabled. Invalid-answer rate is a decoding diagnostic, "
+        "because output is constrained to option labels.", "",
+        "| Model | Correct/564 | Accuracy (%) | Invalid answers (%) | Token limit (%) |",
+        "| --- | ---: | ---: | ---: | ---: |",
+    ]
+    for row in records:
+        lines.append(f"| {row['model']} | {row['correct/564']} | {row['accuracy_pct']:.2f} | "
+                     f"{row['invalid_answer_pct']:.2f} | {row['token_limit_pct']:.2f} |")
+    (output / "comparison.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def evaluate(key: str, dataset: str, revision: str, args) -> None:
     import torch
 
+    dependencies = check_runtime([key])
     samples, protocol, metadata = prepare_dataset(dataset, args.limit, args.generation_mode)
     output = args.output_dir / key / dataset
     output.mkdir(parents=True, exist_ok=False)
     metadata.update(model=MODELS[key], revision=revision, seed=3407,
                     quantization="nf4-double-quant-bfloat16", backend="transformers",
                     status="running")
+    metadata.update(
+        dependencies=dependencies, requested_batch_size=args.batch_size,
+        thinking_enabled=False if args.generation_mode == "direct" or key == "qwen3-4b" else None,
+        chat_template_kwargs={"enable_thinking": False} if args.generation_mode == "direct" else {},
+        protocol_label="constrained answer-only MCQ evaluation" if args.generation_mode == "direct" else "notebook generation",
+    )
     manifest = output / "run_config.json"
     manifest.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     from transformers import set_seed
     set_seed(3407)
-    model = tokenizer = None
+    model = tokenizer = processor = None
     rows = []
     batch_size = args.batch_size
     started = time.monotonic()
     try:
-        model, tokenizer = load_model(key, revision, os.getenv("HF_TOKEN"))
+        model, tokenizer, processor = load_model(key, revision, os.getenv("HF_TOKEN"))
         started = time.monotonic()
         with (output / "responses.jsonl").open("w", encoding="utf-8") as handle:
             while len(rows) < len(samples):
                 batch = samples[len(rows):len(rows) + batch_size]
                 try:
-                    predictions = generate_batch(model, tokenizer, batch, protocol)
+                    predictions = generate_batch(model, tokenizer, batch, protocol, processor)
                 except torch.cuda.OutOfMemoryError:
                     if batch_size == 1:
                         raise
@@ -384,6 +486,7 @@ def evaluate(key: str, dataset: str, revision: str, args) -> None:
                     handle.write(json.dumps(row, ensure_ascii=False) + "\n")
                 handle.flush()
                 print(f"[medical-eval] {key}/{dataset}: {len(rows)}/{len(samples)}", flush=True)
+        metadata["effective_batch_size"] = batch_size
         summary = {**metadata, **summarize(rows), "status": "complete",
                    "inference_time_s": time.monotonic() - started}
         if dataset == "vm14k-full":
@@ -396,7 +499,7 @@ def evaluate(key: str, dataset: str, revision: str, args) -> None:
         manifest.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
         raise
     finally:
-        del model, tokenizer
+        del model, tokenizer, processor
         gc.collect()
         torch.cuda.empty_cache()
 
@@ -415,19 +518,49 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, default=ROOT / "EVAL/outputs/medical_baselines")
     parser.add_argument("--dry-run", action="store_true", help="Validate datasets/protocol without GPU or network")
     parser.add_argument("--check-access", action="store_true", help="Validate model access without loading weights")
+    parser.add_argument("--check-runtime", action="store_true", help="Check inference dependencies without loading weights")
+    parser.add_argument("--vm14k-baselines", action="store_true",
+                        help="Qwen3-4B + Gemma4-E2B, direct VM14K only; smoke both before a full comparison")
+    parser.add_argument("--export-comparison", action="store_true",
+                        help="Export existing complete Qwen/Gemma VM14K runs from --output-dir; no inference")
     args = parser.parse_args()
     if args.limit < 0 or args.batch_size < 1:
         parser.error("--limit must be nonnegative and --batch-size must be positive")
+    if args.export_comparison:
+        export_vm14k_comparison(args.output_dir)
+        return 0
     models = list(MODELS) if args.model == "all" else [args.model]
     datasets = DEFAULT_DATASETS if args.dataset == "all" else [args.dataset]
+    if args.vm14k_baselines:
+        if args.model != "all" or args.dataset != "all" or args.generation_mode != "direct":
+            parser.error("--vm14k-baselines fixes both models, VM14K, and direct decoding; omit model/dataset overrides")
+        models, datasets = list(VM14K_BASELINES), ["vm14k"]
     for dataset in datasets:
         _, _, metadata = prepare_dataset(dataset, args.limit, args.generation_mode)
         print(json.dumps(metadata, indent=2))
     if args.dry_run:
         return 0
+    if args.check_runtime:
+        print(json.dumps(check_runtime(models), indent=2))
+        if not args.check_access:
+            return 0
     revisions = check_access(models, os.getenv("HF_TOKEN"))
     if args.check_access:
         return 0
+    check_runtime(models)
+    if args.vm14k_baselines and args.limit == 0:
+        smoke_args = copy.copy(args)
+        smoke_args.limit = 4
+        smoke_args.output_dir = args.output_dir / "smoke"
+        for key in models:
+            try:
+                evaluate(key, "vm14k", revisions[key], smoke_args)
+                smoke = json.loads((smoke_args.output_dir / key / "vm14k" / "summary.json").read_text())
+                if smoke["samples"] != 4 or smoke["deviations"] or smoke["token_limit_rate"]:
+                    raise RuntimeError("Smoke run did not produce four valid, terminated answers")
+            except Exception as error:
+                print(f"[medical-eval] SMOKE FAILED {key}: {error}; full evaluation skipped", flush=True)
+                return 1
     failures = 0
     for model in models:
         for dataset in datasets:
@@ -436,6 +569,8 @@ def main() -> int:
             except Exception as error:
                 failures += 1
                 print(f"[medical-eval] FAILED {model}/{dataset}: {error}", flush=True)
+    if args.vm14k_baselines and args.limit == 0 and not failures:
+        export_vm14k_comparison(args.output_dir)
     return 1 if failures else 0
 
 

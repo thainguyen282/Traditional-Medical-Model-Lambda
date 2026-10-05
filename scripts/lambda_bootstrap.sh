@@ -309,17 +309,37 @@ run_medical_eval() {
     local model dataset
     local failed=0
     local output_dir="/workspace/EVAL/outputs/medical_baselines/$JOB_TAG"
-    for model in $EVAL_MEDICAL_MODELS; do
+    local eval_python="python"
+    if [[ " $EVAL_MEDICAL_MODELS " == *" gemma4-e2b "* ]]; then
+        # The venv lives on the repository bind mount, so fresh containers
+        # share it. Training's interpreter and dependency pins are untouched.
+        in_docker "bash /workspace/scripts/setup_baseline_env.sh /workspace/.venv-baselines" \
+            || return 1
+        eval_python="/workspace/.venv-baselines/bin/python"
+    fi
+    if { [ "$EVAL_MEDICAL_MODELS" = "qwen3-4b gemma4-e2b" ] || \
+         [ "$EVAL_MEDICAL_MODELS" = "gemma4-e2b qwen3-4b" ]; } && \
+       [ "${EVAL_DATASETS:-vm14k}" = "vm14k" ] && \
+       [ "${EVAL_GENERATION_MODE:-direct}" = "direct" ]; then
+        # One invocation pins revisions across both smoke and full runs,
+        # gates full evaluation on both smoke checks, and exports the table.
+        in_docker "$eval_python /workspace/scripts/eval_medical_baselines.py \
+            --vm14k-baselines --limit '${EVAL_LIMIT:-0}' \
+            --batch-size '${EVAL_BATCH_SIZE:-4}' --output-dir '$output_dir'" \
+            || failed=1
+    else
+      for model in $EVAL_MEDICAL_MODELS; do
         for dataset in ${EVAL_DATASETS:-vm14k}; do
             echo "[bootstrap] ===== MEDICAL EVAL: $model / $dataset ====="
-            in_docker "python /workspace/scripts/eval_medical_baselines.py \
+            in_docker "$eval_python /workspace/scripts/eval_medical_baselines.py \
                 --model '$model' --dataset '$dataset' \
                 --limit '${EVAL_LIMIT:-0}' --batch-size '${EVAL_BATCH_SIZE:-4}' \
                 --generation-mode '${EVAL_GENERATION_MODE:-direct}' \
                 --output-dir '$output_dir'" \
                 || { echo "[bootstrap] ERROR: evaluation failed: $model/$dataset"; failed=1; }
         done
-    done
+      done
+    fi
     in_docker "python /workspace/scripts/lambda_push_to_hf.py \
         --task eval --repo '$HF_SFT_REPO' --revision 'eval-medical-$JOB_TAG' \
         --eval-src '$output_dir' --log-file /host/train.log" \

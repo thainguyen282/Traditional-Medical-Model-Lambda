@@ -239,7 +239,8 @@ def copy_medical_eval_bundle(key: str, ip: str, datasets: list[str]) -> None:
     from eval_medical_baselines import DATASETS
 
     root = Path(__file__).resolve().parent.parent
-    files = {"scripts/eval_medical_baselines.py"}
+    files = {"scripts/eval_medical_baselines.py", "scripts/setup_baseline_env.sh",
+             "requirements-baselines.txt"}
     for dataset in datasets:
         filename, notebook = DATASETS[dataset]
         files.update({f"EVAL/Data/{filename}", f"EVAL/{notebook}"})
@@ -299,6 +300,7 @@ def run_job(
     git_branch: str,
     keep_alive: bool,
     region: str | None = None,
+    boot_timeout: int = 600,
 ) -> int:
     region = find_region_for(api, instance_type, region)
     log(f"launching {instance_type} in region {region}")
@@ -309,7 +311,7 @@ def run_job(
     exit_code = 1
     baseline_started = False
     try:
-        inst = wait_for_active(api, instance_id)
+        inst = wait_for_active(api, instance_id, timeout=boot_timeout)
         ip = inst["ip"]
         wait_for_ssh(ssh_private_key, ip)
 
@@ -488,6 +490,8 @@ def main() -> int:
                         help=f"Lambda instance type (default: {DEFAULT_INSTANCE_TYPE})")
     parser.add_argument("--region", default=None,
                         help="Require a region, e.g. us-east-1 (Virginia); default: first available")
+    parser.add_argument("--boot-timeout", type=int, default=600,
+                        help="Seconds to wait for Lambda active status before cleanup (default: 600)")
     parser.add_argument("--git-repo",
                         default="https://github.com/Venera-AI/Traditional-Medical-Model.git")
     parser.add_argument("--git-branch", default="main2")
@@ -500,6 +504,8 @@ def main() -> int:
     parser.add_argument("--inference-revision", default=None,
                         help="(inference task) HF revision to pass as --revision to the inference script")
     args = parser.parse_args()
+    if args.boot_timeout < 1:
+        parser.error("--boot-timeout must be a positive number of seconds")
     if not args.baselines and any(value is not None for value in (
             args.eval_datasets, args.eval_limit, args.eval_batch_size, args.eval_generation_mode)):
         parser.error("--eval-datasets/limit/batch-size/generation-mode require --baselines")
@@ -599,6 +605,7 @@ def main() -> int:
         git_branch=args.git_branch,
         keep_alive=args.keep_alive,
         region=args.region,
+        boot_timeout=args.boot_timeout,
     )
 
 

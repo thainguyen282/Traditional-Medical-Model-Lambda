@@ -49,6 +49,15 @@ class BaselineCLITests(unittest.TestCase):
         self.assertEqual(len(rows), 564)
         self.assertEqual(metadata['samples'], 564)
 
+    def test_qwen_gemma_pair_uses_vm14k_direct_and_all_rows(self):
+        args, access = self.invoke(['--task', 'eval', '--baselines', 'qwen3-4b', 'gemma4-e2b'])
+        self.assertEqual(args['env_vars']['EVAL_MEDICAL_MODELS'], 'qwen3-4b gemma4-e2b')
+        self.assertEqual(args['env_vars']['EVAL_DATASETS'], 'vm14k')
+        self.assertEqual(args['env_vars']['EVAL_GENERATION_MODE'], 'direct')
+        self.assertEqual(args['env_vars']['EVAL_LIMIT'], '0')
+        self.assertEqual(args['env_vars']['EVAL_BATCH_SIZE'], '4')
+        access.assert_called_once_with(['qwen3-4b', 'gemma4-e2b'], 'test')
+
     def test_region_is_forwarded_without_changing_gpu_or_image_defaults(self):
         args, _ = self.invoke(['--task', 'eval', '--baselines', 'medreason',
                                '--region', 'us-east-1', '--git-branch', 'thai-dev'])
@@ -56,6 +65,10 @@ class BaselineCLITests(unittest.TestCase):
         self.assertEqual(args['git_branch'], 'thai-dev')
         self.assertEqual(args['instance_type'], launcher.DEFAULT_INSTANCE_TYPE)
         self.assertEqual(args['env_vars']['DOCKER_IMAGE'], '')
+
+    def test_boot_timeout_is_forwarded(self):
+        args, _ = self.invoke(['--task', 'eval', '--baselines', 'medreason', '--boot-timeout', '1200'])
+        self.assertEqual(args['boot_timeout'], 1200)
 
     def test_explicit_options_and_duplicates(self):
         args, access = self.invoke(['--task', 'eval', '--medical-baselines', 'medreason', 'medreason',
@@ -82,6 +95,7 @@ class BaselineCLITests(unittest.TestCase):
 
     def test_invalid_options_fail_before_api_initialization(self):
         cases = [
+            ['--task', 'eval', '--baselines', 'medreason', '--boot-timeout', '0'],
             ['--task', 'sft', '--baselines', 'medreason'],
             ['--task', 'eval', '--baselines', 'missing'],
             ['--task', 'eval', '--baselines', 'medreason', '--eval-datasets', 'missing'],
@@ -105,6 +119,8 @@ class BaselineCLITests(unittest.TestCase):
             with tarfile.open(local) as archive:
                 names = set(archive.getnames())
                 self.assertEqual(names, {'scripts/eval_medical_baselines.py',
+                                         'scripts/setup_baseline_env.sh',
+                                         'requirements-baselines.txt',
                                          'EVAL/Unsloth_QA_goc_VM14K.ipynb',
                                          'EVAL/Data/eastern_medicine_VM14K.jsonl'})
                 for name in names:
@@ -154,6 +170,45 @@ class GitPreflightTests(unittest.TestCase):
             self.assertIsNone(launcher.download_medical_eval('key', 'ip', 'job'))
         ssh.assert_called_once()
         scp.assert_not_called()
+
+
+class BootWaitTests(unittest.TestCase):
+    def test_longer_timeout_allows_active_after_ten_minutes(self):
+        api = Mock()
+        api.get_instance.side_effect = [
+            {'status': 'booting', 'ip': '127.0.0.1'},
+            {'status': 'active', 'ip': '127.0.0.1'},
+        ]
+        with patch.object(launcher.time, 'time', side_effect=[0, 0, 601]), \
+                patch.object(launcher.time, 'sleep'), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(launcher.wait_for_active(api, 'instance', timeout=1200)['status'], 'active')
+        self.assertEqual(api.get_instance.call_count, 2)
+
+    def test_ip_alone_does_not_bypass_boot_timeout(self):
+        api = Mock()
+        api.get_instance.return_value = {'status': 'booting', 'ip': '127.0.0.1'}
+        with patch.object(launcher.time, 'time', side_effect=[0, 0, 600]), \
+                patch.object(launcher.time, 'sleep'), contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit):
+                launcher.wait_for_active(api, 'instance')
+
+    def test_timeout_still_terminates_before_setup(self):
+        api = Mock()
+        api.launch.return_value = 'instance'
+        with patch.object(launcher, 'find_region_for', return_value='us-east-1'), \
+                patch.object(launcher, 'wait_for_active', side_effect=SystemExit(1)) as wait, \
+                patch.object(launcher, 'scp_to') as scp, \
+                patch.object(launcher, 'download_medical_eval') as download, \
+                contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaises(SystemExit):
+                launcher.run_job(api, 'eval', [], launcher.DEFAULT_INSTANCE_TYPE,
+                                 'key', 'keyfile', {}, 'repo', 'thai-dev', False,
+                                 region='us-east-1', boot_timeout=1200)
+        wait.assert_called_once_with(api, 'instance', timeout=1200)
+        api.terminate.assert_called_once_with('instance')
+        scp.assert_not_called()
+        download.assert_not_called()
 
 
 class RegionSelectionTests(unittest.TestCase):
