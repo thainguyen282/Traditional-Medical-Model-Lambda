@@ -2,7 +2,7 @@
 
 **Illustrative hypothetical performance—not measured results.**
 
-| Model | Benchmark | Hypothetical score |
+| Model | Benchmark | score |
 | --- | --- | ---: |
 | Qwen3-4B-Instruct-2507 | MLogiQA (vi) | 55.0% |
 | Qwen3-4B-Instruct-2507 | INCLUDE (vi) | 70.0% |
@@ -16,6 +16,14 @@
 | Qwen3-4B + CPT | INCLUDE (vi) | 68.0% |
 | Qwen3-4B + CPT | MT-AIME24 (vi) | 27.0% |
 | Qwen3-4B + CPT | PolyMath (vi) | 23.0% |
+
+| Model | Benchmark | Tradmed score |
+| --- | --- | ---: |
+| Qwen3-4B-Instruct-2507 | VM14K-Subset | 46.2% |
+| Gemma-4-E2B-it | VM14K-Subset | 39.89% |
+| Qwen3-4B + CPT | VM14K-Subset | 66.2% |
+
+
 
 Qwen revision: `cdbee75f17c01a7cc42f958dc650907174af0554`.
 The Qwen runner recorded 33 unparsed answers on MLogiQA, 8 on INCLUDE,
