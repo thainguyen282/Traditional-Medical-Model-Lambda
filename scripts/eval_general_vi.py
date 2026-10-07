@@ -165,6 +165,11 @@ def parse_choice(text: str) -> str | None:
     matches = re.findall(r"(?:final answer|đáp án|answer)\s*[:：]?\s*\(?([A-D])\)?", text, re.I)
     if matches:
         return matches[-1].upper()
+    # Some chat models put the choice on the first line, then continue with
+    # an explanation despite the answer-only instruction.
+    first_line = re.match(r"^\s*\(?([A-D])\)?(?:\s|[.。:)])", text, re.I)
+    if first_line:
+        return first_line.group(1).upper()
     stripped = text.strip()
     if re.fullmatch(r"\(?[A-D]\)?[.。]?", stripped, re.I):
         return re.search("[A-D]", stripped, re.I).group().upper()
@@ -228,7 +233,12 @@ def evaluate(model_key: str, name: str, rows: list[dict], dataset_meta: dict,
     model = tokenizer = processor = None
     predictions = []
     try:
+        started = time.monotonic()
+        print(f"[general-vi] loading {model_key} for {name} "
+              f"({len(rows)} questions)", flush=True)
         model, tokenizer, processor = load_general_model(model_key, model_info, os.getenv("HF_TOKEN"))
+        print(f"[general-vi] loaded {model_key} for {name} in "
+              f"{time.monotonic() - started:.1f}s", flush=True)
         with (target / "responses.jsonl").open("w", encoding="utf-8") as handle:
             while len(predictions) < len(rows):
                 batch = rows[len(predictions):len(predictions) + batch_size]
@@ -240,12 +250,17 @@ def evaluate(model_key: str, name: str, rows: list[dict], dataset_meta: dict,
                         raise
                     batch_size = max(1, batch_size // 2)
                     torch.cuda.empty_cache()
+                    print(f"[general-vi] CUDA OOM; retrying {model_key}/{name} "
+                          f"with batch size {batch_size}", flush=True)
                     continue
                 for row, response in zip(batch, responses):
                     prediction = {"index": len(predictions), **score(name, row, response, math_equal)}
                     predictions.append(prediction)
                     handle.write(json.dumps(prediction, ensure_ascii=False) + "\n")
                 handle.flush()
+                print(f"[general-vi] {model_key}/{name}: "
+                      f"{len(predictions)}/{len(rows)} "
+                      f"({time.monotonic() - started:.0f}s)", flush=True)
         summary = {**metadata, "status": "complete", "effective_batch_size": batch_size,
                    "correct": sum(item["is_correct"] for item in predictions),
                    "accuracy": sum(item["is_correct"] for item in predictions) / len(rows),
@@ -258,6 +273,8 @@ def evaluate(model_key: str, name: str, rows: list[dict], dataset_meta: dict,
             f"Correct: {summary['correct']}/{len(rows)}\n"
             f"Accuracy: {summary['accuracy']:.2%}\n"
             f"Invalid answers: {summary['invalid_answers']}\n")
+        print(f"[general-vi] complete {model_key}/{name}: "
+              f"{summary['correct']}/{len(rows)} ({summary['accuracy']:.2%})", flush=True)
     except Exception as error:
         metadata.update(status="failed", error=str(error), completed_rows=len(predictions))
         manifest.write_text(json.dumps(metadata, indent=2, ensure_ascii=False) + "\n")

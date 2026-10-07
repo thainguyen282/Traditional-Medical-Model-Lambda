@@ -1,5 +1,8 @@
 # Vietnamese general benchmark baselines
 
+The first Lambda run was interrupted after three complete Qwen benchmarks.
+See [the October 6 results report](../REPORT_GENERAL_VI_20261006.md).
+
 The runner evaluates Qwen3-4B-Instruct-2507, Gemma-4-E2B-it, and the
 `huyennkai/Venera-CPT-TMModel@main` LoRA adapter on four Vietnamese splits.
 The CPT manifest pins both adapter and base model commits. All checkpoints
