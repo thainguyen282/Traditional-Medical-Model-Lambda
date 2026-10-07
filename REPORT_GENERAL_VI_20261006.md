@@ -17,12 +17,15 @@
 | Qwen3-4B + CPT | MT-AIME24 (vi) | 27.0% |
 | Qwen3-4B + CPT | PolyMath (vi) | 23.0% |
 
+![Benchmark comparison](fig/image_2026-10-06_222338387.png)
+
 | Model | Benchmark | Tradmed score |
 | --- | --- | ---: |
 | Qwen3-4B-Instruct-2507 | VM14K-Subset | 46.2% |
 | Gemma-4-E2B-it | VM14K-Subset | 39.89% |
 | Qwen3-4B + CPT | VM14K-Subset | 66.2% |
 
+![Benchmark comparison](fig/Traditional medicine — VM14K-Subset.png)
 
 
 Qwen revision: `cdbee75f17c01a7cc42f958dc650907174af0554`.
