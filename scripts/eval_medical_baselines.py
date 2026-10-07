@@ -22,6 +22,7 @@ MODELS = {
     "medgemma": "google/medgemma-1.5-4b-it",
     "huatuo": "FreedomIntelligence/HuatuoGPT-o1-8B",
     "qwen3-4b": "Qwen/Qwen3-4B-Instruct-2507",
+    "qwen3-4b-cpt": "huyennkai/Venera-CPT-TMModel",
     "gemma4-e2b": "google/gemma-4-E2B-it",
     "qwen2.5-7b": "Qwen/Qwen2.5-7B-Instruct",
     "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.3",

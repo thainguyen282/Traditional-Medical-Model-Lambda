@@ -317,7 +317,12 @@ run_medical_eval() {
             || return 1
         eval_python="/workspace/.venv-baselines/bin/python"
     fi
-    if { [ "$EVAL_MEDICAL_MODELS" = "qwen3-4b gemma4-e2b" ] || \
+    if [ -n "${EVAL_GENERAL_VI:-}" ]; then
+        in_docker "$eval_python /workspace/scripts/eval_general_vi.py \
+            --models $EVAL_MEDICAL_MODELS --benchmarks $EVAL_DATASETS \
+            --limit '${EVAL_LIMIT:-0}' --batch-size '${EVAL_BATCH_SIZE:-4}' \
+            --output-dir '$output_dir'" || failed=1
+    elif { [ "$EVAL_MEDICAL_MODELS" = "qwen3-4b gemma4-e2b" ] || \
          [ "$EVAL_MEDICAL_MODELS" = "gemma4-e2b qwen3-4b" ]; } && \
        [ "${EVAL_DATASETS:-vm14k}" = "vm14k" ] && \
        [ "${EVAL_GENERATION_MODE:-direct}" = "direct" ]; then

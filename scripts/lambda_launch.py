@@ -235,17 +235,20 @@ def check_git_access(repo: str, branch: str, token: str | None) -> None:
                            "and GH_TOKEN access before retrying.")
 
 
-def copy_medical_eval_bundle(key: str, ip: str, datasets: list[str]) -> None:
+def copy_medical_eval_bundle(key: str, ip: str, datasets: list[str], general_vi: bool = False) -> None:
     from eval_medical_baselines import DATASETS
 
     root = Path(__file__).resolve().parent.parent
     files = {"scripts/eval_medical_baselines.py", "scripts/setup_baseline_env.sh",
              "requirements-baselines.txt"}
-    for dataset in datasets:
-        filename, notebook = DATASETS[dataset]
-        files.update({f"EVAL/Data/{filename}", f"EVAL/{notebook}"})
-    if "vm14k-full" in datasets:
-        files.add(f"EVAL/Data/{DATASETS['vm14k'][0]}")
+    if general_vi:
+        files.add("scripts/eval_general_vi.py")
+    else:
+        for dataset in datasets:
+            filename, notebook = DATASETS[dataset]
+            files.update({f"EVAL/Data/{filename}", f"EVAL/{notebook}"})
+        if "vm14k-full" in datasets:
+            files.add(f"EVAL/Data/{DATASETS['vm14k'][0]}")
     with tempfile.TemporaryDirectory(prefix="medical-eval-") as directory:
         bundle = Path(directory) / "medical_eval_bundle.tar.gz"
         with tarfile.open(bundle, "w:gz") as archive:
@@ -322,7 +325,8 @@ def run_job(
         scp_to(ssh_private_key, ip, str(scripts_dir / "lambda_push_to_hf.py"),
                "/home/ubuntu/lambda_push_to_hf.py")
         if env_vars.get("EVAL_MEDICAL_MODELS"):
-            copy_medical_eval_bundle(ssh_private_key, ip, env_vars["EVAL_DATASETS"].split())
+            copy_medical_eval_bundle(ssh_private_key, ip, env_vars["EVAL_DATASETS"].split(),
+                                     bool(env_vars.get("EVAL_GENERAL_VI")))
 
         # Optionally scp a custom inference script (basename copied).
         inf_script = env_vars.get("INFERENCE_SCRIPT", "")
@@ -476,6 +480,8 @@ def main() -> int:
     parser.add_argument("--config", help="Path to a single SFT config yaml")
     parser.add_argument("--baselines", "--medical-baselines", nargs="+",
                         help="(eval only) Baseline aliases, e.g. medreason; skips the README model loop")
+    parser.add_argument("--general-vi", action="store_true",
+                        help="Run Qwen, Gemma 4, and Qwen CPT on four Vietnamese general benchmarks")
     parser.add_argument("--eval-datasets", nargs="+", default=None,
                         help="Baseline datasets: vm14k (default, 564 rows), new, vm14k-full")
     parser.add_argument("--eval-limit", type=int, default=None,
@@ -506,9 +512,17 @@ def main() -> int:
     args = parser.parse_args()
     if args.boot_timeout < 1:
         parser.error("--boot-timeout must be a positive number of seconds")
-    if not args.baselines and any(value is not None for value in (
+    if not (args.baselines or args.general_vi) and any(value is not None for value in (
             args.eval_datasets, args.eval_limit, args.eval_batch_size, args.eval_generation_mode)):
         parser.error("--eval-datasets/limit/batch-size/generation-mode require --baselines")
+    if args.general_vi:
+        if args.baselines or args.eval_generation_mode or args.eval_only or args.config or args.config_list:
+            parser.error("--general-vi cannot be combined with medical baselines, generation mode, or training config")
+        from eval_general_vi import BENCHMARKS, MODEL_KEYS
+        args.baselines = list(MODEL_KEYS)
+        args.eval_datasets = args.eval_datasets or list(BENCHMARKS)
+        if any(dataset not in BENCHMARKS for dataset in args.eval_datasets):
+            parser.error(f"Unknown general benchmark; choose from: {', '.join(BENCHMARKS)}")
     args.eval_datasets = args.eval_datasets or ["vm14k"]
     args.eval_limit = 0 if args.eval_limit is None else args.eval_limit
     args.eval_batch_size = 4 if args.eval_batch_size is None else args.eval_batch_size
@@ -522,7 +536,7 @@ def main() -> int:
         from eval_medical_baselines import MODELS, DATASETS, check_access, prepare_dataset
         if any(model not in MODELS for model in args.baselines):
             parser.error(f"Unknown baseline; choose from: {', '.join(MODELS)}")
-        if any(dataset not in DATASETS for dataset in args.eval_datasets):
+        if not args.general_vi and any(dataset not in DATASETS for dataset in args.eval_datasets):
             parser.error(f"Unknown dataset; choose from: {', '.join(DATASETS)}")
 
     lambda_key = os.environ.get("LAMBDA_API_KEY")
@@ -557,9 +571,18 @@ def main() -> int:
     if args.baselines:
         try:
             check_git_access(args.git_repo, args.git_branch, os.environ.get("GH_TOKEN"))
-            for dataset in dict.fromkeys(args.eval_datasets):
-                prepare_dataset(dataset, args.eval_limit, args.eval_generation_mode)
-            check_access(list(dict.fromkeys(args.baselines)), hf_token)
+            if args.general_vi:
+                from eval_general_vi import source_rows
+                for dataset in dict.fromkeys(args.eval_datasets):
+                    source_rows(dataset, hf_token)
+            else:
+                for dataset in dict.fromkeys(args.eval_datasets):
+                    prepare_dataset(dataset, args.eval_limit, args.eval_generation_mode)
+            if args.general_vi:
+                from eval_general_vi import resolve_models
+                resolve_models(list(dict.fromkeys(args.baselines)), hf_token)
+            else:
+                check_access(list(dict.fromkeys(args.baselines)), hf_token)
         except Exception as error:
             die(f"baseline preflight failed before launching a GPU: {error}")
 
@@ -591,6 +614,7 @@ def main() -> int:
             "EVAL_LIMIT": str(args.eval_limit),
             "EVAL_BATCH_SIZE": str(args.eval_batch_size),
             "EVAL_GENERATION_MODE": args.eval_generation_mode,
+            "EVAL_GENERAL_VI": "1" if args.general_vi else "",
         })
 
     return run_job(
