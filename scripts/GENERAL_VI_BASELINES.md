@@ -66,3 +66,53 @@ copies the exact local runner and requirements to the instance. It uploads
 artifacts to the existing evaluation branch and downloads a local backup
 before terminating. For a paid short trial, add `--eval-limit 4`.
 The remote Git branch must contain compatible bootstrap code.
+
+## Paper-style Qwen/CPT comparison
+
+The `paper-style` profile evaluates the Qwen3-4B checkpoint named in
+[Table 33 of the Qwen3 report](https://arxiv.org/html/2505.09388), the
+later Qwen3-4B-Instruct-2507 baseline, and our CPT adapter on the same
+Vietnamese rows. It samples 55 of 550 INCLUDE test rows using seed 3407,
+and uses the paper's published non-thinking settings: temperature 0.7,
+top-p 0.8, top-k 20, presence penalty 1.5, and up to 32,768 output tokens.
+The custom presence penalty applies to tokens generated in the current
+answer. Model and dataset commits, sampled row indices, and decoding
+settings are stored in every run manifest.
+
+The paper does not publish its exact INCLUDE row indices, prompts, or
+full scorer configuration. This is a matched comparison among the three
+specified checkpoints, **not** an exact reproduction of Table 33.
+The 2507 and CPT checkpoints are not the paper's Qwen3-4B checkpoint.
+The CPT adapter uses `unsloth/Qwen3-4B-Instruct-2507` as its pinned base;
+the standalone 2507 baseline uses the official Qwen repository.
+
+Check the selected data without a GPU:
+
+```bash
+.venv-baselines/bin/python scripts/eval_general_vi.py \
+  --protocol paper-style --dry-run
+```
+
+Run a short local smoke test, then a full evaluation in a new directory:
+
+```bash
+.venv-baselines/bin/python scripts/eval_general_vi.py \
+  --protocol paper-style --limit 4 --batch-size 1 \
+  --output-dir EVAL/outputs/general_vi_paper_smoke
+.venv-baselines/bin/python scripts/eval_general_vi.py \
+  --protocol paper-style --batch-size 1 \
+  --output-dir EVAL/outputs/general_vi_paper_full
+```
+
+Lambda launch (GPU provisioning is not part of adding this profile):
+
+```bash
+.venv/bin/python scripts/lambda_launch.py --task eval --general-vi \
+  --eval-protocol paper-style --eval-batch-size 1 \
+  --git-repo https://github.com/thainguyen282/Traditional-Medical-Model-Lambda.git \
+  --git-branch thai-dev
+```
+
+The 32,768-token cap makes a full math run much longer than the legacy
+profile. The new profile writes its own comparison table only when all
+twelve runs are complete.

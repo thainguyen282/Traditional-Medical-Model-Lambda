@@ -310,7 +310,7 @@ run_medical_eval() {
     local failed=0
     local output_dir="/workspace/EVAL/outputs/medical_baselines/$JOB_TAG"
     local eval_python="python"
-    if [[ " $EVAL_MEDICAL_MODELS " == *" gemma4-e2b "* ]]; then
+    if [ -n "${EVAL_GENERAL_VI:-}" ] || [[ " $EVAL_MEDICAL_MODELS " == *" gemma4-e2b "* ]]; then
         # The venv lives on the repository bind mount, so fresh containers
         # share it. Training's interpreter and dependency pins are untouched.
         in_docker "bash /workspace/scripts/setup_baseline_env.sh /workspace/.venv-baselines" \
@@ -320,6 +320,7 @@ run_medical_eval() {
     if [ -n "${EVAL_GENERAL_VI:-}" ]; then
         in_docker "$eval_python /workspace/scripts/eval_general_vi.py \
             --models $EVAL_MEDICAL_MODELS --benchmarks $EVAL_DATASETS \
+            --protocol '${EVAL_PROTOCOL:-legacy}' \
             --limit '${EVAL_LIMIT:-0}' --batch-size '${EVAL_BATCH_SIZE:-4}' \
             --output-dir '$output_dir'" || failed=1
     elif { [ "$EVAL_MEDICAL_MODELS" = "qwen3-4b gemma4-e2b" ] || \

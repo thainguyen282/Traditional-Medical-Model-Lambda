@@ -481,7 +481,9 @@ def main() -> int:
     parser.add_argument("--baselines", "--medical-baselines", nargs="+",
                         help="(eval only) Baseline aliases, e.g. medreason; skips the README model loop")
     parser.add_argument("--general-vi", action="store_true",
-                        help="Run Qwen, Gemma 4, and Qwen CPT on four Vietnamese general benchmarks")
+                        help="Run Vietnamese general benchmarks; paper-style compares Qwen3-4B, 2507, and CPT")
+    parser.add_argument("--eval-protocol", choices=["legacy", "paper-style"], default=None,
+                        help="General Vietnamese evaluation profile; paper-style mirrors published Qwen3 settings")
     parser.add_argument("--eval-datasets", nargs="+", default=None,
                         help="Baseline datasets: vm14k (default, 564 rows), new, vm14k-full")
     parser.add_argument("--eval-limit", type=int, default=None,
@@ -513,13 +515,16 @@ def main() -> int:
     if args.boot_timeout < 1:
         parser.error("--boot-timeout must be a positive number of seconds")
     if not (args.baselines or args.general_vi) and any(value is not None for value in (
-            args.eval_datasets, args.eval_limit, args.eval_batch_size, args.eval_generation_mode)):
-        parser.error("--eval-datasets/limit/batch-size/generation-mode require --baselines")
+            args.eval_datasets, args.eval_limit, args.eval_batch_size, args.eval_generation_mode,
+            args.eval_protocol)):
+        parser.error("--eval-datasets/limit/batch-size/generation-mode/protocol require --baselines or --general-vi")
+    if args.eval_protocol and not args.general_vi:
+        parser.error("--eval-protocol requires --general-vi")
     if args.general_vi:
         if args.baselines or args.eval_generation_mode or args.eval_only or args.config or args.config_list:
             parser.error("--general-vi cannot be combined with medical baselines, generation mode, or training config")
-        from eval_general_vi import BENCHMARKS, MODEL_KEYS
-        args.baselines = list(MODEL_KEYS)
+        from eval_general_vi import BENCHMARKS, MODEL_KEYS, PAPER_STYLE_MODELS
+        args.baselines = list(PAPER_STYLE_MODELS if args.eval_protocol == "paper-style" else MODEL_KEYS)
         args.eval_datasets = args.eval_datasets or list(BENCHMARKS)
         if any(dataset not in BENCHMARKS for dataset in args.eval_datasets):
             parser.error(f"Unknown general benchmark; choose from: {', '.join(BENCHMARKS)}")
@@ -615,6 +620,7 @@ def main() -> int:
             "EVAL_BATCH_SIZE": str(args.eval_batch_size),
             "EVAL_GENERATION_MODE": args.eval_generation_mode,
             "EVAL_GENERAL_VI": "1" if args.general_vi else "",
+            "EVAL_PROTOCOL": args.eval_protocol or "legacy",
         })
 
     return run_job(

@@ -19,7 +19,11 @@ from eval_medical_baselines import MODELS, check_access, check_runtime, load_mod
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_KEYS = ("qwen3-4b", "gemma4-e2b", "qwen3-4b-cpt")
+PAPER_STYLE_MODELS = ("qwen3-4b-paper", "qwen3-4b", "qwen3-4b-cpt")
+ALL_MODEL_KEYS = tuple(dict.fromkeys((*MODEL_KEYS, *PAPER_STYLE_MODELS)))
 BENCHMARKS = ("mlogiqa", "include", "mt-aime24", "polymath")
+PROTOCOLS = ("legacy", "paper-style")
+SAMPLE_SEED = 3407
 SOURCES = {
     "mlogiqa": ("Qwen/P-MMEval", ("mlogiqa/test/vi.jsonl",)),
     "include": ("CohereLabs/include-base-44", ("Vietnamese/test-00000-of-00001.parquet",)),
@@ -94,6 +98,19 @@ def source_rows(name: str, token: str | None = None):
         raise ValueError(f"{name}: empty Vietnamese evaluation split")
     return rows, {"dataset_repo": repo, "dataset_revision": revision,
                   "source_files": hashes, "total_rows": len(rows), "language": "vi"}
+
+
+def select_rows(name: str, rows: list[dict], metadata: dict, protocol: str):
+    """Use a fixed 10% INCLUDE subset for the paper-style profile."""
+    if protocol != "paper-style" or name != "include":
+        return rows, {**metadata, "selection": "all", "source_indices": list(range(len(rows)))}
+    import random
+    count = len(rows) // 10
+    indices = sorted(random.Random(SAMPLE_SEED).sample(range(len(rows)), count))
+    return [rows[i] for i in indices], {
+        **metadata, "selection": "10% without replacement, fixed seed",
+        "selection_seed": SAMPLE_SEED, "source_indices": indices,
+    }
 
 
 def normalize_row(name: str, row: dict, filename: str) -> dict:
@@ -183,19 +200,55 @@ def prompt(name: str, row: dict) -> str:
     return f"{row['question']}\nGiải bài toán và đặt đáp án cuối cùng trong \\boxed{{}}."
 
 
-def generate(model, tokenizer, processor, name: str, rows: list[dict], max_new_tokens: int):
+def decoding_config(name: str, protocol: str) -> dict:
+    if protocol == "paper-style":
+        return {"do_sample": True, "temperature": 0.7, "top_p": 0.8,
+                "top_k": 20, "presence_penalty": 1.5,
+                "max_input_tokens": 4096, "max_new_tokens": 32768,
+                "thinking_enabled": False}
+    return {"do_sample": False, "max_input_tokens": 4096,
+            "max_new_tokens": 64 if name in ("mlogiqa", "include") else 2048,
+            "thinking_enabled": False if name in ("mlogiqa", "include") else None}
+
+
+def generate(model, tokenizer, processor, name: str, rows: list[dict], config: dict,
+             protocol: str):
     import torch
+    from transformers import LogitsProcessor, LogitsProcessorList
+
     formatter = processor or tokenizer
+    disable_thinking = protocol == "paper-style" or (
+        name in ("mlogiqa", "include") and processor is not None)
     texts = [formatter.apply_chat_template(
         [{"role": "user", "content": prompt(name, row)}],
         tokenize=False, add_generation_prompt=True,
-        **({"enable_thinking": False} if name in ("mlogiqa", "include") and processor else {}),
+        **({"enable_thinking": False} if disable_thinking else {}),
     ) for row in rows]
     inputs = formatter(text=texts, return_tensors="pt", padding=True,
-                       truncation=True, max_length=4096, add_special_tokens=False).to("cuda")
+                       truncation=True, max_length=config["max_input_tokens"],
+                       add_special_tokens=False).to("cuda")
+    kwargs = {key: config[key] for key in ("do_sample", "max_new_tokens")}
+    if config["do_sample"]:
+        kwargs.update(temperature=config["temperature"], top_p=config["top_p"],
+                      top_k=config["top_k"])
+
+        class PresencePenalty(LogitsProcessor):
+            def __init__(self, batch_size, vocabulary_size, prompt_length, penalty):
+                self.prompt_length = prompt_length
+                self.penalty = penalty
+                self.seen = torch.zeros((batch_size, vocabulary_size), dtype=torch.bool,
+                                        device=inputs.input_ids.device)
+
+            def __call__(self, input_ids, scores):
+                if input_ids.shape[1] > self.prompt_length:
+                    self.seen.scatter_(1, input_ids[:, -1:], True)
+                return scores - self.seen.to(scores.dtype) * self.penalty
+
+        kwargs["logits_processor"] = LogitsProcessorList([PresencePenalty(
+            len(rows), model.config.vocab_size, inputs.input_ids.shape[1],
+            config["presence_penalty"])])
     with torch.inference_mode():
-        output = model.generate(**inputs, max_new_tokens=max_new_tokens,
-                                do_sample=False, pad_token_id=tokenizer.pad_token_id)
+        output = model.generate(**inputs, **kwargs, pad_token_id=tokenizer.pad_token_id)
     return tokenizer.batch_decode(output[:, inputs.input_ids.shape[1]:], skip_special_tokens=True)
 
 
@@ -207,22 +260,24 @@ def score(name: str, row: dict, response: str, math_equal=None) -> dict:
 
 
 def evaluate(model_key: str, name: str, rows: list[dict], dataset_meta: dict,
-             model_info: dict, output: Path, batch_size: int, limit: int, math_equal=None):
+             model_info: dict, output: Path, batch_size: int, limit: int,
+             protocol: str = "legacy", math_equal=None):
     import gc
     import torch
     from transformers import set_seed
 
     target = output / model_key / name
     target.mkdir(parents=True, exist_ok=False)
+    config = decoding_config(name, protocol)
     metadata = {**dataset_meta, "benchmark": name, "model": MODELS[model_key],
                 "model_revision": model_info["revision"],
                 "base_model": model_info.get("base_model"),
                 "base_revision": model_info.get("base_revision"),
                 "evaluated_rows": len(rows), "limit": limit,
+                "protocol": protocol,
                 "seed": 3407, "batch_size": batch_size,
                 "quantization": "nf4-double-quant-bfloat16",
-                "decoding": {"do_sample": False, "max_input_tokens": 4096,
-                             "max_new_tokens": 64 if rows[0]["options"] else 2048},
+                "decoding": config,
                 "scorer": ("QwenLM/PolyMath eval/scripts.py math_equal + boxed extraction"
                            if name in ("mt-aime24", "polymath") else "exact choice accuracy"),
                 "scorer_revision": SCORER_COMMIT if name in ("mt-aime24", "polymath") else None,
@@ -244,7 +299,7 @@ def evaluate(model_key: str, name: str, rows: list[dict], dataset_meta: dict,
                 batch = rows[len(predictions):len(predictions) + batch_size]
                 try:
                     responses = generate(model, tokenizer, processor, name, batch,
-                                         64 if batch[0]["options"] else 2048)
+                                         config, protocol)
                 except torch.cuda.OutOfMemoryError:
                     if batch_size == 1:
                         raise
@@ -285,23 +340,27 @@ def evaluate(model_key: str, name: str, rows: list[dict], dataset_meta: dict,
         torch.cuda.empty_cache()
 
 
-def export_comparison(output: Path):
+def export_comparison(output: Path, protocol: str = "legacy"):
     records = []
+    models = PAPER_STYLE_MODELS if protocol == "paper-style" else MODEL_KEYS
     for name in BENCHMARKS:
         common = None
-        for model_key in MODEL_KEYS:
+        for model_key in models:
             target = output / model_key / name
             config = json.loads((target / "run_config.json").read_text())
             summary = json.loads((target / "summary.json").read_text())
             rows = [json.loads(line) for line in (target / "responses.jsonl").read_text().splitlines()]
             if (config["status"] != "complete" or summary["status"] != "complete" or
-                config["limit"] != 0 or len(rows) != config["total_rows"] or
+                config["limit"] != 0 or len(rows) != config["selected_rows"] or
+                config.get("protocol", "legacy") != protocol or
                 summary["evaluated_rows"] != len(rows) or
                 summary["correct"] != sum(row["is_correct"] for row in rows) or
                 summary["accuracy"] != summary["correct"] / len(rows) or
                 any(row["index"] != index for index, row in enumerate(rows))):
                 raise ValueError(f"Incomplete or inconsistent run: {model_key}/{name}")
-            identity = (config["dataset_revision"], config["source_files"], config["scorer_revision"])
+            identity = (config["dataset_revision"], config["source_files"],
+                        config["source_indices"], config["scorer_revision"],
+                        config["decoding"], config["selection"])
             if common is not None and identity != common:
                 raise ValueError(f"Incomparable dataset/scorer revisions: {name}")
             common = identity
@@ -311,9 +370,10 @@ def export_comparison(output: Path):
         writer = csv.DictWriter(handle, fieldnames=list(records[0]))
         writer.writeheader()
         writer.writerows(records)
-    lines = ["# Vietnamese general benchmark results", "",
+    lines = [f"# Vietnamese general benchmark results ({protocol})", "",
              "Accuracy on Vietnamese splits; math uses the pinned PolyMath scorer.",
-             "These scores are not asserted to reproduce Qwen3 report settings.", "",
+             "Paper-style uses published decoding settings but cannot reproduce "
+             "the unpublished INCLUDE sample or original inference framework.", "",
              "| Benchmark | Model | Correct / Total | Accuracy |", "| --- | --- | ---: | ---: |"]
     lines += [f"| {r['benchmark']} | {r['model']} | {r['correct']} / {r['total']} | {r['accuracy']:.2%} |"
               for r in records]
@@ -324,8 +384,9 @@ def main():
     from dotenv import load_dotenv
     load_dotenv(ROOT / ".env")
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--models", nargs="+", choices=MODEL_KEYS, default=list(MODEL_KEYS))
+    parser.add_argument("--models", nargs="+", choices=ALL_MODEL_KEYS, default=None)
     parser.add_argument("--benchmarks", nargs="+", choices=BENCHMARKS, default=list(BENCHMARKS))
+    parser.add_argument("--protocol", choices=PROTOCOLS, default="legacy")
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--output-dir", type=Path, default=ROOT / "EVAL/outputs/general_vi")
@@ -334,17 +395,22 @@ def main():
     args = parser.parse_args()
     if args.limit < 0 or args.batch_size < 1:
         parser.error("--limit must be nonnegative and --batch-size positive")
+    models = list(dict.fromkeys(args.models or (
+        PAPER_STYLE_MODELS if args.protocol == "paper-style" else MODEL_KEYS)))
     if args.export_comparison:
-        export_comparison(args.output_dir)
+        export_comparison(args.output_dir, args.protocol)
         return 0
     datasets = {}
     for name in dict.fromkeys(args.benchmarks):
         rows, metadata = source_rows(name, os.getenv("HF_TOKEN"))
+        rows, metadata = select_rows(name, rows, metadata, args.protocol)
+        metadata["selected_rows"] = len(rows)
         datasets[name] = (rows[:args.limit] if args.limit else rows, metadata)
-        print(json.dumps({"benchmark": name, **metadata}, ensure_ascii=False), flush=True)
+        print(json.dumps({"benchmark": name, "protocol": args.protocol,
+                          "selected_rows": len(rows), "dataset_revision": metadata["dataset_revision"],
+                          "selection": metadata["selection"]}, ensure_ascii=False), flush=True)
     if args.dry_run:
         return 0
-    models = list(dict.fromkeys(args.models))
     revisions = resolve_models(models, os.getenv("HF_TOKEN"))
     check_runtime(models)
     math_equal = (get_math_scorer(Path.home() / ".cache" / "poly_math_scorer")
@@ -355,12 +421,13 @@ def main():
             rows, metadata = datasets[name]
             try:
                 evaluate(key, name, rows, metadata, revisions[key], args.output_dir,
-                         args.batch_size, args.limit, math_equal)
+                         args.batch_size, args.limit, args.protocol, math_equal)
             except Exception as error:
                 failures += 1
                 print(f"[general-vi] FAILED {key}/{name}: {error}", flush=True)
-    if not failures and args.limit == 0 and set(models) == set(MODEL_KEYS) and set(args.benchmarks) == set(BENCHMARKS):
-        export_comparison(args.output_dir)
+    expected = PAPER_STYLE_MODELS if args.protocol == "paper-style" else MODEL_KEYS
+    if not failures and args.limit == 0 and set(models) == set(expected) and set(args.benchmarks) == set(BENCHMARKS):
+        export_comparison(args.output_dir, args.protocol)
     return int(bool(failures))
 
 
