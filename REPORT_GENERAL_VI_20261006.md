@@ -25,7 +25,7 @@
 | Gemma-4-E2B-it | VM14K-Subset | 39.89% |
 | Qwen3-4B + CPT | VM14K-Subset | 66.2% |
 
-![Benchmark comparison](fig/Traditional medicine — VM14K-Subset.png)
+![Benchmark comparison](fig/traditional_med.png)
 
 
 Qwen revision: `cdbee75f17c01a7cc42f958dc650907174af0554`.
