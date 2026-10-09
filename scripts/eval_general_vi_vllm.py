@@ -55,6 +55,7 @@ def run(args):
                 "backend": "vllm", "vllm_version": vllm.__version__,
                 "max_num_seqs": args.max_num_seqs,
                 "gpu_memory_utilization": args.gpu_memory_utilization,
+                "enforce_eager": args.enforce_eager,
                 "status": "running"}
     config_path = target / "run_config.json"
     config_path.write_text(json.dumps(manifest, indent=2) + "\n")
@@ -64,6 +65,7 @@ def run(args):
                   max_model_len=args.max_input_tokens + args.max_new_tokens,
                   max_num_seqs=args.max_num_seqs,
                   gpu_memory_utilization=args.gpu_memory_utilization,
+                  enforce_eager=args.enforce_eager,
                   seed=3407)
         print(f"[vllm] loaded {args.model} in {time.monotonic()-started:.1f}s; "
               f"queuing {len(rows)} MLogiQA questions", flush=True)
@@ -122,10 +124,11 @@ def main():
     parser.add_argument("--model", choices=MODEL_KEYS)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=0)
-    parser.add_argument("--max-num-seqs", type=int, default=24)
+    parser.add_argument("--max-num-seqs", type=int, default=8)
     parser.add_argument("--max-input-tokens", type=int, default=4096)
     parser.add_argument("--max-new-tokens", type=int, default=4096)
-    parser.add_argument("--gpu-memory-utilization", type=float, default=0.90)
+    parser.add_argument("--gpu-memory-utilization", type=float, default=0.70)
+    parser.add_argument("--enforce-eager", action="store_true")
     parser.add_argument("--export-comparison", action="store_true")
     args = parser.parse_args()
     if args.limit < 0 or args.max_num_seqs < 1 or args.max_new_tokens < 1 or args.max_input_tokens < 1:

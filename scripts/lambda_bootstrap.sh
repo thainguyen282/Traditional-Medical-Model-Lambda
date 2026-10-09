@@ -342,8 +342,10 @@ run_medical_eval() {
         for model in $EVAL_MEDICAL_MODELS; do
             in_docker "$eval_python /workspace/scripts/eval_general_vi_vllm.py \
                 --model '$model' --limit '${EVAL_LIMIT:-0}' \
-                --max-num-seqs '${EVAL_BATCH_SIZE:-24}' \
+                --max-num-seqs '${EVAL_BATCH_SIZE:-8}' \
                 --max-new-tokens '${EVAL_MAX_NEW_TOKENS:-4096}' \
+                --gpu-memory-utilization '${EVAL_GPU_MEMORY_UTILIZATION:-0.70}' \
+                ${EVAL_ENFORCE_EAGER:+--enforce-eager} \
                 --output-dir '$output_dir'" || failed=1
         done
         if [ "$failed" -eq 0 ] && [ "${EVAL_LIMIT:-0}" = "0" ] && \

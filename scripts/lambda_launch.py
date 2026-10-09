@@ -505,6 +505,10 @@ def main() -> int:
                         default="transformers", help="General Vietnamese inference backend")
     parser.add_argument("--eval-max-new-tokens", type=int, default=4096,
                         help="vLLM output token cap per MLogiQA answer")
+    parser.add_argument("--eval-gpu-memory-utilization", type=float, default=0.70,
+                        help="Fraction of GPU memory vLLM may reserve (default: 0.70)")
+    parser.add_argument("--eval-enforce-eager", action="store_true",
+                        help="Disable vLLM compilation and CUDA graphs to reduce startup memory")
     parser.add_argument("--eval-models", nargs="+", default=None,
                         help="General Vietnamese model aliases; e.g. qwen3-4b-paper gemma4-e2b")
     parser.add_argument("--eval-protocol", choices=["legacy", "paper-style", "thinking"], default=None,
@@ -553,6 +557,8 @@ def main() -> int:
         parser.error("--eval-backend vllm requires --general-vi")
     if args.eval_max_new_tokens < 1:
         parser.error("--eval-max-new-tokens must be positive")
+    if not 0 < args.eval_gpu_memory_utilization < 1:
+        parser.error("--eval-gpu-memory-utilization must be between 0 and 1")
     if args.eval_models and not args.general_vi:
         parser.error("--eval-models requires --general-vi")
     if args.general_vi:
@@ -658,6 +664,8 @@ def main() -> int:
         "CPT_MAX_STEPS": str(args.cpt_max_steps),
         "EVAL_BACKEND": args.eval_backend,
         "EVAL_MAX_NEW_TOKENS": str(args.eval_max_new_tokens),
+        "EVAL_GPU_MEMORY_UTILIZATION": str(args.eval_gpu_memory_utilization),
+        "EVAL_ENFORCE_EAGER": "1" if args.eval_enforce_eager else "",
         # Docker image overrides (all optional; bootstrap falls back to
         # ghcr.io/venera-ai/traditional-medical-model:<GIT_BRANCH>).
         "DOCKER_IMAGE": os.environ.get("DOCKER_IMAGE", ""),

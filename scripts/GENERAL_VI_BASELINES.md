@@ -4,7 +4,8 @@
 
 This runs the same 80 Vietnamese MLogiQA rows on
 `Qwen/Qwen3-4B-Thinking-2507` and `google/gemma-4-E2B-it`. vLLM queues all
-questions and uses continuous batching, with up to 24 active sequences. The
+questions and uses continuous batching, with up to 8 active sequences on the
+40 GB Lambda GPU. The
 progress bar updates as individual answers finish. Both models use their
 thinking chat templates and sampling at temperature 0.6, top-p 0.95, top-k
 20. Each model runs in a separate process so GPU memory is released before
@@ -14,7 +15,8 @@ the next model loads.
 .venv/bin/python scripts/lambda_launch.py --task eval --general-vi \
   --eval-backend vllm --eval-protocol thinking \
   --eval-models qwen3-4b-thinking-2507 gemma4-e2b \
-  --eval-datasets mlogiqa --eval-batch-size 24 \
+  --eval-datasets mlogiqa --eval-batch-size 8 \
+  --eval-gpu-memory-utilization 0.70 \
   --eval-max-new-tokens 4096 \
   --git-repo https://github.com/thainguyen282/Traditional-Medical-Model-Lambda.git \
   --git-branch thai-dev
