@@ -95,6 +95,10 @@ if [ -n "${EVAL_MEDICAL_MODELS:-}" ]; then
     mkdir -p "$REPO_DIR/EVAL/outputs/medical_baselines/$JOB_TAG" \
         || fail "create baseline output directory"
 fi
+if [ -n "${CPT_NEW_MODEL:-}" ]; then
+    tar -xzf /home/ubuntu/new_cpt_bundle.tar.gz -C "$REPO_DIR" \
+        || fail "install new CPT bundle"
+fi
 
 # If a custom inference script was scp'd to /home/ubuntu, move it into the
 # cloned repo so subsequent steps can run it from /workspace/scripts/.
@@ -164,6 +168,19 @@ in_docker() {
 # 7. Run training (+ auto-eval, + HF push) inside the container.
 # ------------------------------------------------------------------
 run_cpt() {
+    if [ -n "${CPT_NEW_MODEL:-}" ]; then
+        echo "[bootstrap] ===== CPT: $CPT_NEW_MODEL ====="
+        in_docker "python -m venv /workspace/.venv-cpt-new && \
+            /workspace/.venv-cpt-new/bin/python -m pip install \
+            -r /workspace/requirements-cpt-new.txt" || return $?
+        in_docker "cd /workspace && /workspace/.venv-cpt-new/bin/python \
+            CPT/train_new_bases.py --model '$CPT_NEW_MODEL' \
+            --output-dir 'CPT/outputs/$CPT_NEW_MODEL-$JOB_TAG' \
+            --max-steps '${CPT_MAX_STEPS:--1}' \
+            --push-repo '$HF_CPT_REPO' \
+            --push-revision '$CPT_NEW_MODEL-$JOB_TAG'" || return $?
+        return 0
+    fi
     # Step 1: train + push adapter to HF inside container #1.
     echo "[bootstrap] ===== CPT: train + push adapter ====="
     in_docker "cd /workspace/CPT && python CPT.py" || return $?
@@ -310,14 +327,31 @@ run_medical_eval() {
     local failed=0
     local output_dir="/workspace/EVAL/outputs/medical_baselines/$JOB_TAG"
     local eval_python="python"
-    if [ -n "${EVAL_GENERAL_VI:-}" ] || [[ " $EVAL_MEDICAL_MODELS " == *" gemma4-e2b "* ]]; then
+    if [ "${EVAL_BACKEND:-transformers}" = "vllm" ]; then
+        in_docker "bash /workspace/scripts/setup_vllm_env.sh /workspace/.venv-vllm" \
+            || return 1
+        eval_python="/workspace/.venv-vllm/bin/python"
+    elif [ -n "${EVAL_GENERAL_VI:-}" ] || [[ " $EVAL_MEDICAL_MODELS " == *" gemma4-e2b "* ]]; then
         # The venv lives on the repository bind mount, so fresh containers
         # share it. Training's interpreter and dependency pins are untouched.
         in_docker "bash /workspace/scripts/setup_baseline_env.sh /workspace/.venv-baselines" \
             || return 1
         eval_python="/workspace/.venv-baselines/bin/python"
     fi
-    if [ -n "${EVAL_GENERAL_VI:-}" ]; then
+    if [ -n "${EVAL_GENERAL_VI:-}" ] && [ "${EVAL_BACKEND:-transformers}" = "vllm" ]; then
+        for model in $EVAL_MEDICAL_MODELS; do
+            in_docker "$eval_python /workspace/scripts/eval_general_vi_vllm.py \
+                --model '$model' --limit '${EVAL_LIMIT:-0}' \
+                --max-num-seqs '${EVAL_BATCH_SIZE:-24}' \
+                --max-new-tokens '${EVAL_MAX_NEW_TOKENS:-4096}' \
+                --output-dir '$output_dir'" || failed=1
+        done
+        if [ "$failed" -eq 0 ] && [ "${EVAL_LIMIT:-0}" = "0" ] && \
+           [ "$EVAL_MEDICAL_MODELS" = "qwen3-4b-thinking-2507 gemma4-e2b" ]; then
+            in_docker "$eval_python /workspace/scripts/eval_general_vi_vllm.py \
+                --export-comparison --output-dir '$output_dir'" || failed=1
+        fi
+    elif [ -n "${EVAL_GENERAL_VI:-}" ]; then
         in_docker "$eval_python /workspace/scripts/eval_general_vi.py \
             --models $EVAL_MEDICAL_MODELS --benchmarks $EVAL_DATASETS \
             --protocol '${EVAL_PROTOCOL:-legacy}' \

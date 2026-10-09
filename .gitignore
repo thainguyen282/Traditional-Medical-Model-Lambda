@@ -3,6 +3,8 @@ unsloth_compiled_cache
 unsloth_training_checkpoints
 .venv
 .venv-baselines/
+.venv-cpt-new/
+.venv-vllm/
 __pycache__
 wandb
 .env
@@ -29,6 +31,7 @@ app.log
 tm311
 TM-env/
 CPT/cpt_qwen3_medical/
+CPT/outputs/
 CPT/_unsloth_temporary_saved_buffers/
 _unsloth_temporary_saved_buffers/
 CPT/cpt_qwen3_medical_merged/

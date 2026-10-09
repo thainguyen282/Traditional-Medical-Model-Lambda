@@ -1,5 +1,38 @@
 # Vietnamese general benchmark baselines
 
+## Faster MLogiQA thinking evaluation with vLLM
+
+This runs the same 80 Vietnamese MLogiQA rows on
+`Qwen/Qwen3-4B-Thinking-2507` and `google/gemma-4-E2B-it`. vLLM queues all
+questions and uses continuous batching, with up to 24 active sequences. The
+progress bar updates as individual answers finish. Both models use their
+thinking chat templates and sampling at temperature 0.6, top-p 0.95, top-k
+20. Each model runs in a separate process so GPU memory is released before
+the next model loads.
+
+```bash
+.venv/bin/python scripts/lambda_launch.py --task eval --general-vi \
+  --eval-backend vllm --eval-protocol thinking \
+  --eval-models qwen3-4b-thinking-2507 gemma4-e2b \
+  --eval-datasets mlogiqa --eval-batch-size 24 \
+  --eval-max-new-tokens 4096 \
+  --git-repo https://github.com/thainguyen282/Traditional-Medical-Model-Lambda.git \
+  --git-branch thai-dev
+```
+
+The 4,096-token cap makes the run faster but differs from the earlier
+32,768-token Transformers thinking protocol; length-limited answers count as
+invalid and incorrect. For the same token cap as that run, set
+`--eval-max-new-tokens 32768`, which can take much longer. vLLM uses BF16
+model weights, while the earlier run used NF4, so scores are matched between
+the two models in this vLLM run but may differ from the earlier run.
+
+Full runs write `comparison.csv`, `comparison.md`, per-model `summary.json`,
+`responses.jsonl`, and manifests. Lambda uploads the entire directory to
+`HF_SFT_REPO` branch `eval-medical-<job-tag>` and downloads a backup under
+`logs/<job-tag>/medical-eval.tar.gz`. For a four-question trial, add
+`--eval-limit 4`; limited runs do not write a comparison table.
+
 ## MLogiQA Vietnamese thinking run (80 questions)
 
 This focused run compares the dedicated `Qwen/Qwen3-4B-Thinking-2507`

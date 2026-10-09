@@ -243,6 +243,7 @@ def copy_medical_eval_bundle(key: str, ip: str, datasets: list[str], general_vi:
              "requirements-baselines.txt"}
     if general_vi:
         files.add("scripts/eval_general_vi.py")
+        files.update({"scripts/eval_general_vi_vllm.py", "scripts/setup_vllm_env.sh"})
     else:
         for dataset in datasets:
             filename, notebook = DATASETS[dataset]
@@ -255,6 +256,18 @@ def copy_medical_eval_bundle(key: str, ip: str, datasets: list[str], general_vi:
             for name in sorted(files):
                 archive.add(root / name, arcname=name)
         scp_to(key, ip, str(bundle), "/home/ubuntu/medical_eval_bundle.tar.gz")
+
+
+def copy_new_cpt_bundle(key: str, ip: str) -> None:
+    root = Path(__file__).resolve().parent.parent
+    files = ("CPT/train_new_bases.py", "requirements-cpt-new.txt",
+             "requirements-baselines.txt")
+    with tempfile.TemporaryDirectory(prefix="new-cpt-") as directory:
+        bundle = Path(directory) / "new_cpt_bundle.tar.gz"
+        with tarfile.open(bundle, "w:gz") as archive:
+            for name in files:
+                archive.add(root / name, arcname=name)
+        scp_to(key, ip, str(bundle), "/home/ubuntu/new_cpt_bundle.tar.gz")
 
 
 def download_medical_eval(key: str, ip: str, job_tag: str) -> Path | None:
@@ -327,6 +340,8 @@ def run_job(
         if env_vars.get("EVAL_MEDICAL_MODELS"):
             copy_medical_eval_bundle(ssh_private_key, ip, env_vars["EVAL_DATASETS"].split(),
                                      bool(env_vars.get("EVAL_GENERAL_VI")))
+        if env_vars.get("CPT_NEW_MODEL"):
+            copy_new_cpt_bundle(ssh_private_key, ip)
 
         # Optionally scp a custom inference script (basename copied).
         inf_script = env_vars.get("INFERENCE_SCRIPT", "")
@@ -478,10 +493,18 @@ def main() -> int:
                              "'SFT-exp0002|huyennkai/Venera-Traditional-Model|"
                              "sft-unsloth-qwen3-4B-exp0002-tm-sft-1777957925|sft'")
     parser.add_argument("--config", help="Path to a single SFT config yaml")
+    parser.add_argument("--cpt-new-model", choices=["qwen3-4b-thinking-2507", "gemma4-e2b"],
+                        help="Train a separate CPT LoRA on this base instead of legacy CPT.py")
+    parser.add_argument("--cpt-max-steps", type=int, default=-1,
+                        help="Optional short new-base CPT trial; positive step count")
     parser.add_argument("--baselines", "--medical-baselines", nargs="+",
                         help="(eval only) Baseline aliases, e.g. medreason; skips the README model loop")
     parser.add_argument("--general-vi", action="store_true",
                         help="Run Vietnamese general benchmarks; paper-style compares Qwen3-4B, 2507, and CPT")
+    parser.add_argument("--eval-backend", choices=["transformers", "vllm"],
+                        default="transformers", help="General Vietnamese inference backend")
+    parser.add_argument("--eval-max-new-tokens", type=int, default=4096,
+                        help="vLLM output token cap per MLogiQA answer")
     parser.add_argument("--eval-models", nargs="+", default=None,
                         help="General Vietnamese model aliases; e.g. qwen3-4b-paper gemma4-e2b")
     parser.add_argument("--eval-protocol", choices=["legacy", "paper-style", "thinking"], default=None,
@@ -514,6 +537,10 @@ def main() -> int:
     parser.add_argument("--inference-revision", default=None,
                         help="(inference task) HF revision to pass as --revision to the inference script")
     args = parser.parse_args()
+    if args.cpt_new_model and args.task != "cpt":
+        parser.error("--cpt-new-model requires --task cpt")
+    if args.cpt_max_steps != -1 and (not args.cpt_new_model or args.cpt_max_steps < 1):
+        parser.error("--cpt-max-steps requires --cpt-new-model and a positive value")
     if args.boot_timeout < 1:
         parser.error("--boot-timeout must be a positive number of seconds")
     if not (args.baselines or args.general_vi) and any(value is not None for value in (
@@ -522,18 +549,30 @@ def main() -> int:
         parser.error("--eval-datasets/limit/batch-size/generation-mode/protocol require --baselines or --general-vi")
     if args.eval_protocol and not args.general_vi:
         parser.error("--eval-protocol requires --general-vi")
+    if args.eval_backend == "vllm" and not args.general_vi:
+        parser.error("--eval-backend vllm requires --general-vi")
+    if args.eval_max_new_tokens < 1:
+        parser.error("--eval-max-new-tokens must be positive")
     if args.eval_models and not args.general_vi:
         parser.error("--eval-models requires --general-vi")
     if args.general_vi:
         if args.baselines or args.eval_generation_mode or args.eval_only or args.config or args.config_list:
             parser.error("--general-vi cannot be combined with medical baselines, generation mode, or training config")
         from eval_general_vi import BENCHMARKS, MODEL_KEYS, PAPER_STYLE_MODELS, ALL_MODEL_KEYS
-        args.baselines = args.eval_models or list(PAPER_STYLE_MODELS if args.eval_protocol == "paper-style" else MODEL_KEYS)
+        default_models = (("qwen3-4b-thinking-2507", "gemma4-e2b")
+                          if args.eval_backend == "vllm" else
+                          PAPER_STYLE_MODELS if args.eval_protocol == "paper-style" else MODEL_KEYS)
+        args.baselines = list(args.eval_models or default_models)
         if any(model not in ALL_MODEL_KEYS for model in args.baselines):
             parser.error(f"Unknown general model; choose from: {', '.join(ALL_MODEL_KEYS)}")
         args.eval_datasets = args.eval_datasets or list(BENCHMARKS)
         if any(dataset not in BENCHMARKS for dataset in args.eval_datasets):
             parser.error(f"Unknown general benchmark; choose from: {', '.join(BENCHMARKS)}")
+        if args.eval_backend == "vllm" and (args.eval_protocol != "thinking" or
+            args.eval_datasets != ["mlogiqa"] or
+            any(model not in ("qwen3-4b-thinking-2507", "gemma4-e2b") for model in args.baselines)):
+            parser.error("vLLM currently requires --eval-protocol thinking, "
+                         "--eval-datasets mlogiqa, and Qwen Thinking-2507/Gemma E2B")
     args.eval_datasets = args.eval_datasets or ["vm14k"]
     args.eval_limit = 0 if args.eval_limit is None else args.eval_limit
     args.eval_batch_size = 4 if args.eval_batch_size is None else args.eval_batch_size
@@ -597,12 +636,28 @@ def main() -> int:
         except Exception as error:
             die(f"baseline preflight failed before launching a GPU: {error}")
 
+    if args.cpt_new_model:
+        try:
+            from huggingface_hub import HfApi
+            from eval_medical_baselines import MODELS
+            api_hf = HfApi(token=hf_token)
+            check_git_access(args.git_repo, args.git_branch, os.environ.get("GH_TOKEN"))
+            api_hf.model_info(MODELS[args.cpt_new_model])
+            api_hf.repo_info("Maverfrick/TradMed-CPT-53k-2048", repo_type="dataset")
+            api_hf.repo_info(os.environ.get("HF_CPT_REPO", "huyennkai/Venera-CPT-TMModel"))
+        except Exception as error:
+            die(f"new CPT preflight failed before launching a GPU: {error}")
+
     env_vars = {
         "HF_TOKEN": hf_token,
         "WANDB_KEY": os.environ.get("WANDB_KEY", ""),
         "GH_TOKEN": os.environ.get("GH_TOKEN", ""),
         "HF_CPT_REPO": os.environ.get("HF_CPT_REPO", "huyennkai/Venera-CPT-TMModel"),
         "HF_SFT_REPO": os.environ.get("HF_SFT_REPO", "huyennkai/Venera-Traditional-Model"),
+        "CPT_NEW_MODEL": args.cpt_new_model or "",
+        "CPT_MAX_STEPS": str(args.cpt_max_steps),
+        "EVAL_BACKEND": args.eval_backend,
+        "EVAL_MAX_NEW_TOKENS": str(args.eval_max_new_tokens),
         # Docker image overrides (all optional; bootstrap falls back to
         # ghcr.io/venera-ai/traditional-medical-model:<GIT_BRANCH>).
         "DOCKER_IMAGE": os.environ.get("DOCKER_IMAGE", ""),
