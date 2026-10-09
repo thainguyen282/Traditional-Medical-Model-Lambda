@@ -20,9 +20,10 @@ from eval_medical_baselines import MODELS, check_access, check_runtime, load_mod
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_KEYS = ("qwen3-4b", "gemma4-e2b", "qwen3-4b-cpt")
 PAPER_STYLE_MODELS = ("qwen3-4b-paper", "qwen3-4b", "qwen3-4b-cpt")
-ALL_MODEL_KEYS = tuple(dict.fromkeys((*MODEL_KEYS, *PAPER_STYLE_MODELS)))
+ALL_MODEL_KEYS = tuple(dict.fromkeys((*MODEL_KEYS, *PAPER_STYLE_MODELS,
+                                      "qwen3-4b-thinking-2507")))
 BENCHMARKS = ("mlogiqa", "include", "mt-aime24", "polymath")
-PROTOCOLS = ("legacy", "paper-style")
+PROTOCOLS = ("legacy", "paper-style", "thinking")
 SAMPLE_SEED = 3407
 SOURCES = {
     "mlogiqa": ("Qwen/P-MMEval", ("mlogiqa/test/vi.jsonl",)),
@@ -179,6 +180,10 @@ def boxed(text: str) -> str | None:
 
 
 def parse_choice(text: str) -> str | None:
+    # Reasoning may contain tentative letters; score only the final answer.
+    if "</think>" in text:
+        text = text.rsplit("</think>", 1)[1]
+    text = re.sub(r"<\|[^>]+\|>|</?[^>]+>", "", text).strip()
     matches = re.findall(r"(?:final answer|đáp án|answer)\s*[:：]?\s*\(?([A-D])\)?", text, re.I)
     if matches:
         return matches[-1].upper()
@@ -201,6 +206,10 @@ def prompt(name: str, row: dict) -> str:
 
 
 def decoding_config(name: str, protocol: str) -> dict:
+    if protocol == "thinking":
+        return {"do_sample": True, "temperature": 0.6, "top_p": 0.95,
+                "top_k": 20, "max_input_tokens": 4096,
+                "max_new_tokens": 32768, "thinking_enabled": True}
     if protocol == "paper-style":
         return {"do_sample": True, "temperature": 0.7, "top_p": 0.8,
                 "top_k": 20, "presence_penalty": 1.5,
@@ -219,10 +228,13 @@ def generate(model, tokenizer, processor, name: str, rows: list[dict], config: d
     formatter = processor or tokenizer
     disable_thinking = protocol == "paper-style" or (
         name in ("mlogiqa", "include") and processor is not None)
+    if protocol == "thinking":
+        disable_thinking = False
     texts = [formatter.apply_chat_template(
         [{"role": "user", "content": prompt(name, row)}],
         tokenize=False, add_generation_prompt=True,
-        **({"enable_thinking": False} if disable_thinking else {}),
+        **({"enable_thinking": protocol == "thinking"} if protocol == "thinking" else
+           {"enable_thinking": False} if disable_thinking else {}),
     ) for row in rows]
     inputs = formatter(text=texts, return_tensors="pt", padding=True,
                        truncation=True, max_length=config["max_input_tokens"],
@@ -244,12 +256,14 @@ def generate(model, tokenizer, processor, name: str, rows: list[dict], config: d
                     self.seen.scatter_(1, input_ids[:, -1:], True)
                 return scores - self.seen.to(scores.dtype) * self.penalty
 
-        kwargs["logits_processor"] = LogitsProcessorList([PresencePenalty(
-            len(rows), model.config.vocab_size, inputs.input_ids.shape[1],
-            config["presence_penalty"])])
+        if "presence_penalty" in config:
+            kwargs["logits_processor"] = LogitsProcessorList([PresencePenalty(
+                len(rows), model.config.vocab_size, inputs.input_ids.shape[1],
+                config["presence_penalty"])])
     with torch.inference_mode():
         output = model.generate(**inputs, **kwargs, pad_token_id=tokenizer.pad_token_id)
-    return tokenizer.batch_decode(output[:, inputs.input_ids.shape[1]:], skip_special_tokens=True)
+    return tokenizer.batch_decode(output[:, inputs.input_ids.shape[1]:],
+                                  skip_special_tokens=protocol != "thinking")
 
 
 def score(name: str, row: dict, response: str, math_equal=None) -> dict:
@@ -340,10 +354,13 @@ def evaluate(model_key: str, name: str, rows: list[dict], dataset_meta: dict,
         torch.cuda.empty_cache()
 
 
-def export_comparison(output: Path, protocol: str = "legacy"):
+def export_comparison(output: Path, protocol: str = "legacy",
+                      models: list[str] | tuple[str, ...] | None = None,
+                      benchmarks: list[str] | tuple[str, ...] | None = None):
     records = []
-    models = PAPER_STYLE_MODELS if protocol == "paper-style" else MODEL_KEYS
-    for name in BENCHMARKS:
+    models = models or (PAPER_STYLE_MODELS if protocol == "paper-style" else MODEL_KEYS)
+    benchmarks = benchmarks or BENCHMARKS
+    for name in benchmarks:
         common = None
         for model_key in models:
             target = output / model_key / name
@@ -371,9 +388,7 @@ def export_comparison(output: Path, protocol: str = "legacy"):
         writer.writeheader()
         writer.writerows(records)
     lines = [f"# Vietnamese general benchmark results ({protocol})", "",
-             "Accuracy on Vietnamese splits; math uses the pinned PolyMath scorer.",
-             "Paper-style uses published decoding settings but cannot reproduce "
-             "the unpublished INCLUDE sample or original inference framework.", "",
+             "Accuracy on selected Vietnamese splits; math uses the pinned PolyMath scorer.", "",
              "| Benchmark | Model | Correct / Total | Accuracy |", "| --- | --- | ---: | ---: |"]
     lines += [f"| {r['benchmark']} | {r['model']} | {r['correct']} / {r['total']} | {r['accuracy']:.2%} |"
               for r in records]
@@ -398,7 +413,8 @@ def main():
     models = list(dict.fromkeys(args.models or (
         PAPER_STYLE_MODELS if args.protocol == "paper-style" else MODEL_KEYS)))
     if args.export_comparison:
-        export_comparison(args.output_dir, args.protocol)
+        export_comparison(args.output_dir, args.protocol, models,
+                          list(dict.fromkeys(args.benchmarks)))
         return 0
     datasets = {}
     for name in dict.fromkeys(args.benchmarks):
@@ -425,9 +441,9 @@ def main():
             except Exception as error:
                 failures += 1
                 print(f"[general-vi] FAILED {key}/{name}: {error}", flush=True)
-    expected = PAPER_STYLE_MODELS if args.protocol == "paper-style" else MODEL_KEYS
-    if not failures and args.limit == 0 and set(models) == set(expected) and set(args.benchmarks) == set(BENCHMARKS):
-        export_comparison(args.output_dir, args.protocol)
+    if not failures and args.limit == 0:
+        export_comparison(args.output_dir, args.protocol, models,
+                          list(dict.fromkeys(args.benchmarks)))
     return int(bool(failures))
 
 

@@ -1,5 +1,33 @@
 # Vietnamese general benchmark baselines
 
+## MLogiQA Vietnamese thinking run (80 questions)
+
+This focused run compares the dedicated `Qwen/Qwen3-4B-Thinking-2507`
+checkpoint with `google/gemma-4-E2B-it`. Both use their thinking chat
+templates. Qwen uses its recommended thinking sampling settings (temperature
+0.6, top-p 0.95, top-k 20, up to 32,768 output tokens). Gemma receives the
+same sampling settings for a matched run; it is not a model in the Qwen3
+report. Batch size starts at 24 and halves automatically on CUDA OOM.
+
+```bash
+.venv/bin/python scripts/lambda_launch.py --task eval --general-vi \
+  --eval-models qwen3-4b-thinking-2507 gemma4-e2b \
+  --eval-datasets mlogiqa --eval-protocol thinking \
+  --eval-batch-size 24 \
+  --git-repo https://github.com/thainguyen282/Traditional-Medical-Model-Lambda.git \
+  --git-branch thai-dev
+```
+
+The launcher downloads a `logs/<job-tag>/medical-eval.tar.gz` backup. Inside
+are `qwen3-4b-thinking-2507/mlogiqa/summary.json` and
+`gemma4-e2b/mlogiqa/summary.json`, plus all per-question responses and a
+`comparison.csv`/`comparison.md`. The same files are uploaded to the
+`HF_SFT_REPO` Hugging Face repository on branch `eval-medical-<job-tag>` under
+`eval/<job-tag>/`. The
+paper reports 63.7% for the earlier Qwen3-4B in thinking mode on Vietnamese
+MLogiQA; 68.8% is the Qwen3-14B thinking score. The 2507 checkpoint was
+released later, so its result is not directly comparable to the paper's row.
+
 The first Lambda run was interrupted after three complete Qwen benchmarks.
 See [the October 6 results report](../REPORT_GENERAL_VI_20261006.md).
 

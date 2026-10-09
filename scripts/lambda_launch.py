@@ -482,7 +482,9 @@ def main() -> int:
                         help="(eval only) Baseline aliases, e.g. medreason; skips the README model loop")
     parser.add_argument("--general-vi", action="store_true",
                         help="Run Vietnamese general benchmarks; paper-style compares Qwen3-4B, 2507, and CPT")
-    parser.add_argument("--eval-protocol", choices=["legacy", "paper-style"], default=None,
+    parser.add_argument("--eval-models", nargs="+", default=None,
+                        help="General Vietnamese model aliases; e.g. qwen3-4b-paper gemma4-e2b")
+    parser.add_argument("--eval-protocol", choices=["legacy", "paper-style", "thinking"], default=None,
                         help="General Vietnamese evaluation profile; paper-style mirrors published Qwen3 settings")
     parser.add_argument("--eval-datasets", nargs="+", default=None,
                         help="Baseline datasets: vm14k (default, 564 rows), new, vm14k-full")
@@ -520,11 +522,15 @@ def main() -> int:
         parser.error("--eval-datasets/limit/batch-size/generation-mode/protocol require --baselines or --general-vi")
     if args.eval_protocol and not args.general_vi:
         parser.error("--eval-protocol requires --general-vi")
+    if args.eval_models and not args.general_vi:
+        parser.error("--eval-models requires --general-vi")
     if args.general_vi:
         if args.baselines or args.eval_generation_mode or args.eval_only or args.config or args.config_list:
             parser.error("--general-vi cannot be combined with medical baselines, generation mode, or training config")
-        from eval_general_vi import BENCHMARKS, MODEL_KEYS, PAPER_STYLE_MODELS
-        args.baselines = list(PAPER_STYLE_MODELS if args.eval_protocol == "paper-style" else MODEL_KEYS)
+        from eval_general_vi import BENCHMARKS, MODEL_KEYS, PAPER_STYLE_MODELS, ALL_MODEL_KEYS
+        args.baselines = args.eval_models or list(PAPER_STYLE_MODELS if args.eval_protocol == "paper-style" else MODEL_KEYS)
+        if any(model not in ALL_MODEL_KEYS for model in args.baselines):
+            parser.error(f"Unknown general model; choose from: {', '.join(ALL_MODEL_KEYS)}")
         args.eval_datasets = args.eval_datasets or list(BENCHMARKS)
         if any(dataset not in BENCHMARKS for dataset in args.eval_datasets):
             parser.error(f"Unknown general benchmark; choose from: {', '.join(BENCHMARKS)}")

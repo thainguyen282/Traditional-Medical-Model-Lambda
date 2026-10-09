@@ -23,6 +23,7 @@ MODELS = {
     "huatuo": "FreedomIntelligence/HuatuoGPT-o1-8B",
     "qwen3-4b": "Qwen/Qwen3-4B-Instruct-2507",
     "qwen3-4b-paper": "Qwen/Qwen3-4B",
+    "qwen3-4b-thinking-2507": "Qwen/Qwen3-4B-Thinking-2507",
     "qwen3-4b-cpt": "huyennkai/Venera-CPT-TMModel",
     "gemma4-e2b": "google/gemma-4-E2B-it",
     "qwen2.5-7b": "Qwen/Qwen2.5-7B-Instruct",
