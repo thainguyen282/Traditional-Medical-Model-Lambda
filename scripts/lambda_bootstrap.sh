@@ -330,7 +330,9 @@ run_medical_eval() {
     if [ "${EVAL_BACKEND:-transformers}" = "vllm" ]; then
         in_docker "bash /workspace/scripts/setup_vllm_env.sh /workspace/.venv-vllm" \
             || return 1
-        eval_python="/workspace/.venv-vllm/bin/python"
+        # FlashInfer invokes ninja by name; the interpreter path alone does not
+        # expose the venv executables to its subprocesses. Activate in each container.
+        eval_python="source /workspace/.venv-vllm/bin/activate && python"
     elif [ -n "${EVAL_GENERAL_VI:-}" ] || [[ " $EVAL_MEDICAL_MODELS " == *" gemma4-e2b "* ]]; then
         # The venv lives on the repository bind mount, so fresh containers
         # share it. Training's interpreter and dependency pins are untouched.

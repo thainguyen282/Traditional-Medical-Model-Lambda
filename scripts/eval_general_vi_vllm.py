@@ -56,16 +56,23 @@ def run(args):
                 "max_num_seqs": args.max_num_seqs,
                 "gpu_memory_utilization": args.gpu_memory_utilization,
                 "enforce_eager": args.enforce_eager,
+                "language_model_only": args.model == "gemma4-e2b",
                 "status": "running"}
     config_path = target / "run_config.json"
     config_path.write_text(json.dumps(manifest, indent=2) + "\n")
     started = time.monotonic()
     try:
+        print(f"[vllm] initializing {args.model}: max_num_seqs={args.max_num_seqs}, "
+              f"gpu_memory_utilization={args.gpu_memory_utilization}, "
+              f"enforce_eager={args.enforce_eager}, "
+              f"language_model_only={manifest['language_model_only']}", flush=True)
         llm = LLM(model=MODELS[args.model], revision=revision, dtype="bfloat16",
                   max_model_len=args.max_input_tokens + args.max_new_tokens,
                   max_num_seqs=args.max_num_seqs,
                   gpu_memory_utilization=args.gpu_memory_utilization,
                   enforce_eager=args.enforce_eager,
+                  # MLogiQA contains text only; disable Gemma media inputs.
+                  language_model_only=manifest["language_model_only"],
                   seed=3407)
         print(f"[vllm] loaded {args.model} in {time.monotonic()-started:.1f}s; "
               f"queuing {len(rows)} MLogiQA questions", flush=True)
