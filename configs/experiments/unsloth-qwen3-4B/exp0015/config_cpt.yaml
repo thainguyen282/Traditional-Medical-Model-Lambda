@@ -12,7 +12,7 @@ model:
   max_seq_length: 2048
 
 dataset:
-  name: "Maverfrick/TradMed-CPT-53k-2048"
+  name: "venera-ai/TradMed-CPT-53k-2048"
   train_split: "train"
   validation_split: "validation"
   text_field: "text"
