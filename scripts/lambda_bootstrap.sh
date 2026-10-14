@@ -183,7 +183,20 @@ run_cpt() {
     fi
     # Step 1: train + push adapter to HF inside container #1.
     echo "[bootstrap] ===== CPT: train + push adapter ====="
-    in_docker "cd /workspace/CPT && python CPT.py" || return $?
+    if [ -n "${CONFIG_LIST:-}" ]; then
+        # Legacy CPT publishes one adapter to main, so accept exactly one config.
+        local configs=()
+        local cfg
+        while IFS= read -r cfg; do
+            [ -z "$cfg" ] || configs+=("$cfg")
+        done <<< "$CONFIG_LIST"
+        [ "${#configs[@]}" -eq 1 ] || { echo "[bootstrap] CPT requires exactly one config"; return 1; }
+        local quoted_config
+        printf -v quoted_config '%q' "${configs[0]}"
+        in_docker "cd /workspace/CPT && python CPT.py --config $quoted_config" || return $?
+    else
+        in_docker "cd /workspace/CPT && python CPT.py" || return $?
+    fi
 
     # Step 2: run eval notebooks in SEPARATE docker runs (one fresh CUDA
     # context per notebook). CPT.py's training initialises CUDA, and any

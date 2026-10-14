@@ -492,7 +492,7 @@ def main() -> int:
                              "where variant ∈ {goc,cpt,sft,cpt_sft}. Example: "
                              "'SFT-exp0002|huyennkai/Venera-Traditional-Model|"
                              "sft-unsloth-qwen3-4B-exp0002-tm-sft-1777957925|sft'")
-    parser.add_argument("--config", help="Path to a single SFT config yaml")
+    parser.add_argument("--config", help="Path to a single SFT or CPT config yaml")
     parser.add_argument("--cpt-new-model", choices=["qwen3-4b-thinking-2507", "gemma4-e2b"],
                         help="Train a separate CPT LoRA on this base instead of legacy CPT.py")
     parser.add_argument("--cpt-max-steps", type=int, default=-1,

@@ -1,14 +1,62 @@
+import argparse
+import json
 import os
+import yaml
+from pathlib import Path
+# Resolve and validate YAML before importing GPU libraries or accessing the Hub.
+REPO_ROOT = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description="Continual pretraining with optional YAML config")
+parser.add_argument("--config", type=Path)
+parser.add_argument("--print-config", action="store_true", help="Print overrides and exit without loading a GPU")
+cli = parser.parse_args()
+config = {}
+if cli.config:
+    config_path = cli.config if cli.config.is_absolute() else REPO_ROOT / cli.config
+    config = yaml.safe_load(config_path.read_text())
+    if not isinstance(config, dict):
+        parser.error("CPT config must be a YAML mapping")
+    for section in ("model", "dataset", "unsloth", "training", "lora"):
+        if not isinstance(config.get(section, {}), dict):
+            parser.error(f"{section} must be a mapping")
+    if config.get("dataset", {}).get("add_chat_template", False):
+        parser.error("CPT requires raw text: add_chat_template must be false")
+if cli.print_config:
+    print(json.dumps(config, indent=2))
+    raise SystemExit(0)
+model_config = config.get("model", {})
+data_config = config.get("dataset", {})
+unsloth_config = config.get("unsloth", {})
+
+from dotenv import load_dotenv
+from huggingface_hub import HfApi, get_token
 import torch
 from datasets import load_dataset
 from unsloth import FastLanguageModel
 from unsloth import UnslothTrainer, UnslothTrainingArguments
 
-MODEL_NAME = "unsloth/Qwen3-4B-Instruct-2507"
+MODEL_NAME = model_config.get("name", "unsloth/Qwen3-4B-Instruct-2507")
 OUTPUT_DIR = "cpt_qwen3_medical"
-MAX_SEQ_LENGTH = 2048
+MAX_SEQ_LENGTH = model_config.get("max_seq_length", 2048)
 # Dataset đã pre-chunk ~2048 tokens và có sẵn split train/validation.
-DATASET_ID = "venera-ai/TradMed-CPT-53k-2048"
+DATASET_ID = data_config.get("name", "Maverfrick/TradMed-CPT-53k-2048")
+TEXT_FIELD = data_config.get("text_field", "text")
+
+# Load credentials for direct runs as well as Docker-provided environments.
+load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
+HF_TOKEN = get_token()
+if not HF_TOKEN:
+    raise RuntimeError(
+        f"{DATASET_ID} is private. Set HF_TOKEN in the environment or repository "
+        ".env, or log in with Hugging Face before running CPT."
+    )
+try:
+    HfApi(token=HF_TOKEN).dataset_info(DATASET_ID)
+except Exception:
+    raise RuntimeError(
+        f"Cannot access private dataset {DATASET_ID}. Check that HF_TOKEN is "
+        "valid and has read access to this venera-ai dataset; also check Hub "
+        "connectivity. Browser login does not authenticate the training process."
+    ) from None
 
 # =========================
 # LOAD MODEL
@@ -16,7 +64,7 @@ DATASET_ID = "venera-ai/TradMed-CPT-53k-2048"
 model, tokenizer = FastLanguageModel.from_pretrained(
     model_name=MODEL_NAME,
     max_seq_length=MAX_SEQ_LENGTH,
-    load_in_4bit=False,
+    load_in_4bit=unsloth_config.get("load_in_4bit", False),
 )
 
 # LoRA chỉ trên linear projections — KHÔNG train embed_tokens / lm_head.
@@ -26,8 +74,7 @@ model, tokenizer = FastLanguageModel.from_pretrained(
 # format collapse. Chỉ thêm "embed_tokens" + "lm_head" vào list dưới đây nếu
 # phát hiện thuật ngữ Hán-Việt/TCM bị tokenize vỡ vụn (embedding_learning_rate
 # trong training_args sẽ tự kích hoạt).
-model = FastLanguageModel.get_peft_model(
-    model,
+lora_kwargs = dict(
     # r=64: data domain lớn hơn ~30–60× so với run cũ → cần nhiều capacity hơn
     # r=32 để hấp thụ kiến thức TCM.
     r=64,
@@ -41,6 +88,11 @@ model = FastLanguageModel.get_peft_model(
         "gate_proj", "up_proj", "down_proj",
     ],
 )
+
+lora_kwargs.update(config.get("lora", {}))
+if "gradient_checkpointing" in unsloth_config:
+    lora_kwargs["use_gradient_checkpointing"] = unsloth_config["gradient_checkpointing"]
+model = FastLanguageModel.get_peft_model(model, **lora_kwargs)
 
 # =========================
 # HELPER: CLEAN TEXT
@@ -61,30 +113,30 @@ def clean_text(text):
 # và cắt đứt ngữ cảnh xuyên chunk. Để packing=True nối các chunk lại; eos chỉ
 # nên xuất hiện ở ranh giới tài liệu thật (ngoài phạm vi xử lý ở đây).
 def format_text(example):
-    raw_text = example.get("text", "")
+    raw_text = example.get(TEXT_FIELD, "")
     if not raw_text:
-        return {"text": ""}
-    return {"text": clean_text(raw_text)}
+        return {TEXT_FIELD: ""}
+    return {TEXT_FIELD: clean_text(raw_text)}
 
 # =========================
 # LOAD DATASET (HF — đã có sẵn split train/validation)
 # =========================
-train_dataset = load_dataset(DATASET_ID, split="train")
+train_dataset = load_dataset(DATASET_ID, split=data_config.get("train_split", "train"), token=HF_TOKEN)
 print("Train cols:", train_dataset.column_names, "rows:", len(train_dataset))
 train_dataset = train_dataset.map(format_text)
-train_dataset = train_dataset.filter(lambda x: len(x["text"]) > 0)
+train_dataset = train_dataset.filter(lambda x: len(x[TEXT_FIELD]) > 0)
 
 # validation split held-out → monitor CPT có học được domain hay không.
 # eval_loss giảm = học được; tăng nhanh = overfit hoặc format collapse.
-eval_dataset = load_dataset(DATASET_ID, split="validation")
+eval_dataset = load_dataset(DATASET_ID, split=data_config.get("validation_split", "validation"), token=HF_TOKEN)
 print("Eval cols:", eval_dataset.column_names, "rows:", len(eval_dataset))
 eval_dataset = eval_dataset.map(format_text)
-eval_dataset = eval_dataset.filter(lambda x: len(x["text"]) > 0)
+eval_dataset = eval_dataset.filter(lambda x: len(x[TEXT_FIELD]) > 0)
 
 # =========================
 # TRAIN
 # =========================
-training_args = UnslothTrainingArguments(
+training_kwargs = dict(
     output_dir=OUTPUT_DIR,
     per_device_train_batch_size=2,
     per_device_eval_batch_size=2,
@@ -113,17 +165,29 @@ training_args = UnslothTrainingArguments(
     seed=3407,
 )
 
+training_kwargs.update(config.get("training", {}))
+# Configured relative outputs are rooted at the repo, regardless of launch cwd.
+if cli.config:
+    output = Path(training_kwargs["output_dir"])
+    training_kwargs["output_dir"] = str(output if output.is_absolute() else REPO_ROOT / output)
+OUTPUT_DIR = training_kwargs["output_dir"]
+print("[CPT] model:", MODEL_NAME, "dataset:", DATASET_ID, flush=True)
+print("[CPT] effective training arguments:", json.dumps(training_kwargs, sort_keys=True), flush=True)
+training_args = UnslothTrainingArguments(**training_kwargs)
+
 trainer = UnslothTrainer(
     model=model,
     tokenizer=tokenizer,
     train_dataset=train_dataset,
     eval_dataset=eval_dataset,
-    dataset_text_field="text",
+    dataset_text_field=TEXT_FIELD,
     max_seq_length=MAX_SEQ_LENGTH,
     # Pack short docs thành sequence đủ max_seq_length → bỏ hết padding,
     # compute không bị phí cho token <pad>.
-    packing=True,
+    packing=data_config.get("packing", True),
     args=training_args,
+    **({"dataset_kwargs": {"add_special_tokens": data_config["add_special_tokens"]}}
+       if "add_special_tokens" in data_config else {}),
 )
 
 trainer.train()
