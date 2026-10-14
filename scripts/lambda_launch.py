@@ -511,7 +511,7 @@ def main() -> int:
                         help="Disable vLLM compilation and CUDA graphs to reduce startup memory")
     parser.add_argument("--eval-models", nargs="+", default=None,
                         help="General Vietnamese model aliases; e.g. qwen3-4b-paper gemma4-e2b")
-    parser.add_argument("--eval-protocol", choices=["legacy", "paper-style", "thinking"], default=None,
+    parser.add_argument("--eval-protocol", choices=["legacy", "paper-style", "thinking", "instruct"], default=None,
                         help="General Vietnamese evaluation profile; paper-style mirrors published Qwen3 settings")
     parser.add_argument("--eval-datasets", nargs="+", default=None,
                         help="Baseline datasets: vm14k (default, 564 rows), new, vm14k-full")
@@ -555,6 +555,8 @@ def main() -> int:
         parser.error("--eval-protocol requires --general-vi")
     if args.eval_backend == "vllm" and not args.general_vi:
         parser.error("--eval-backend vllm requires --general-vi")
+    if args.eval_protocol == "instruct" and args.eval_backend != "vllm":
+        parser.error("--eval-protocol instruct requires --eval-backend vllm")
     if args.eval_max_new_tokens < 1:
         parser.error("--eval-max-new-tokens must be positive")
     if not 0 < args.eval_gpu_memory_utilization < 1:
@@ -574,11 +576,12 @@ def main() -> int:
         args.eval_datasets = args.eval_datasets or list(BENCHMARKS)
         if any(dataset not in BENCHMARKS for dataset in args.eval_datasets):
             parser.error(f"Unknown general benchmark; choose from: {', '.join(BENCHMARKS)}")
-        if args.eval_backend == "vllm" and (args.eval_protocol != "thinking" or
-            args.eval_datasets != ["mlogiqa"] or
-            any(model not in ("qwen3-4b-thinking-2507", "gemma4-e2b") for model in args.baselines)):
-            parser.error("vLLM currently requires --eval-protocol thinking, "
-                         "--eval-datasets mlogiqa, and Qwen Thinking-2507/Gemma E2B")
+        if args.eval_backend == "vllm":
+            allowed = {"thinking": ("qwen3-4b-thinking-2507", "gemma4-e2b"),
+                       "instruct": ("qwen3-4b-cpt",)}.get(args.eval_protocol, ())
+            if args.eval_datasets != ["mlogiqa"] or any(m not in allowed for m in args.baselines):
+                parser.error("vLLM requires MLogiQA and thinking baselines with --eval-protocol thinking, "
+                             "or qwen3-4b-cpt with --eval-protocol instruct")
     args.eval_datasets = args.eval_datasets or ["vm14k"]
     args.eval_limit = 0 if args.eval_limit is None else args.eval_limit
     args.eval_batch_size = 4 if args.eval_batch_size is None else args.eval_batch_size

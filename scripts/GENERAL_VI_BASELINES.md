@@ -1,5 +1,28 @@
 # Vietnamese general benchmark baselines
 
+Completed measured run: [October 9 MLogiQA report](../markdown/REPORT_MLOGIQA_20261009.md).
+
+## Existing CPT adapter on MLogiQA with vLLM
+
+`qwen3-4b-cpt` loads `huyennkai/Venera-CPT-TMModel@main` as a rank-64
+rsLoRA adapter on its declared base, `unsloth/Qwen3-4B-Instruct-2507`.
+The manifest records the resolved adapter and base commits. This is an
+instruction checkpoint, so it requires `--eval-protocol instruct`; its
+final answer does not require a closing thinking tag. Sampling and output
+budget can match the thinking baselines, but this is not a controlled
+before/after CPT comparison to Thinking-2507.
+
+```bash
+.venv/bin/python scripts/lambda_launch.py --task eval --general-vi \
+  --instance-type gpu_1x_a100_sxm4 \
+  --eval-backend vllm --eval-protocol instruct \
+  --eval-models qwen3-4b-cpt --eval-datasets mlogiqa \
+  --eval-batch-size 8 --eval-gpu-memory-utilization 0.60 \
+  --eval-enforce-eager --eval-max-new-tokens 8192 --eval-limit 0 \
+  --git-repo https://github.com/thainguyen282/Traditional-Medical-Model-Lambda.git \
+  --git-branch thai-dev
+```
+
 ## Faster MLogiQA thinking evaluation with vLLM
 
 This runs the same 80 Vietnamese MLogiQA rows on

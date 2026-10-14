@@ -13,12 +13,15 @@ from eval_general_vi import export_comparison, parse_choice, prompt, source_rows
 from eval_medical_baselines import MODELS
 
 ROOT = Path(__file__).resolve().parents[1]
-MODEL_KEYS = ("qwen3-4b-thinking-2507", "gemma4-e2b")
+THINKING_MODEL_KEYS = ("qwen3-4b-thinking-2507", "gemma4-e2b")
+MODEL_KEYS = (*THINKING_MODEL_KEYS, "qwen3-4b-cpt")
 
 
 def final_answer(model_key: str, raw: str, finish_reason: str | None) -> str | None:
     if finish_reason == "length":
         return None
+    if model_key == "qwen3-4b-cpt":
+        return parse_choice(raw)
     if model_key == "gemma4-e2b":
         from vllm.reasoning.gemma4_utils import parse_thinking_output
         raw = parse_thinking_output(raw)["answer"] or ""
@@ -30,7 +33,7 @@ def final_answer(model_key: str, raw: str, finish_reason: str | None) -> str | N
 
 
 def run(args):
-    from huggingface_hub import HfApi
+    from huggingface_hub import HfApi, hf_hub_download, snapshot_download
     from vllm import LLM, SamplingParams
     import vllm
 
@@ -40,15 +43,33 @@ def run(args):
         raise ValueError(f"Expected 80 Vietnamese MLogiQA rows, got {len(rows)}")
     rows = rows[:args.limit] if args.limit else rows
     revision = HfApi(token=token).model_info(MODELS[args.model]).sha
+    engine_model, engine_revision = MODELS[args.model], revision
+    lora_request = None
+    lora_kwargs = {}
+    is_cpt = args.model == "qwen3-4b-cpt"
+    if is_cpt:
+        from vllm.lora.request import LoRARequest
+        adapter_config = json.loads(Path(hf_hub_download(
+            MODELS[args.model], "adapter_config.json", revision=revision, token=token)).read_text())
+        engine_model = adapter_config["base_model_name_or_path"]
+        if engine_model != "unsloth/Qwen3-4B-Instruct-2507":
+            raise ValueError(f"Unexpected CPT base: {engine_model}; verify its protocol before evaluation")
+        engine_revision = HfApi(token=token).model_info(engine_model).sha
+        adapter_path = snapshot_download(MODELS[args.model], revision=revision, token=token,
+                                        allow_patterns=["adapter_config.json", "adapter_model.safetensors"])
+        lora_request = LoRARequest("qwen3-4b-cpt", 1, adapter_path)
+        lora_kwargs = {"enable_lora": True, "max_loras": 1,
+                       "max_lora_rank": adapter_config["r"]}
     target = args.output_dir / args.model / "mlogiqa"
     target.mkdir(parents=True, exist_ok=False)
     decoding = {"do_sample": True, "temperature": 0.6, "top_p": 0.95,
                 "top_k": 20, "max_input_tokens": args.max_input_tokens,
-                "max_new_tokens": args.max_new_tokens, "thinking_enabled": True}
+                "max_new_tokens": args.max_new_tokens, "thinking_enabled": not is_cpt}
     manifest = {**dataset_meta, "selection": "all", "source_indices": list(range(80)),
                 "selected_rows": 80, "benchmark": "mlogiqa", "model": MODELS[args.model],
-                "model_revision": revision, "base_model": None, "base_revision": None,
-                "evaluated_rows": len(rows), "limit": args.limit, "protocol": "thinking-vllm",
+                "model_revision": revision, "base_model": engine_model if is_cpt else None,
+                "base_revision": engine_revision if is_cpt else None,
+                "evaluated_rows": len(rows), "limit": args.limit, "protocol": f"{args.protocol}-vllm",
                 "seed": 3407, "batch_size": args.max_num_seqs,
                 "quantization": "none-bfloat16", "decoding": decoding,
                 "scorer": "exact choice accuracy", "scorer_revision": None,
@@ -66,22 +87,22 @@ def run(args):
               f"gpu_memory_utilization={args.gpu_memory_utilization}, "
               f"enforce_eager={args.enforce_eager}, "
               f"language_model_only={manifest['language_model_only']}", flush=True)
-        llm = LLM(model=MODELS[args.model], revision=revision, dtype="bfloat16",
+        llm = LLM(model=engine_model, revision=engine_revision, dtype="bfloat16",
                   max_model_len=args.max_input_tokens + args.max_new_tokens,
                   max_num_seqs=args.max_num_seqs,
                   gpu_memory_utilization=args.gpu_memory_utilization,
                   enforce_eager=args.enforce_eager,
                   # MLogiQA contains text only; disable Gemma media inputs.
                   language_model_only=manifest["language_model_only"],
-                  seed=3407)
+                  seed=3407, **lora_kwargs)
         print(f"[vllm] loaded {args.model} in {time.monotonic()-started:.1f}s; "
               f"queuing {len(rows)} MLogiQA questions", flush=True)
         sampling = SamplingParams(temperature=0.6, top_p=0.95, top_k=20,
                                   min_p=0, max_tokens=args.max_new_tokens, seed=3407)
         chats = [[{"role": "user", "content": prompt("mlogiqa", row)}] for row in rows]
         outputs = llm.chat(chats, sampling_params=sampling,
-                           chat_template_kwargs={"enable_thinking": True},
-                           use_tqdm=True)
+                           chat_template_kwargs={"enable_thinking": not is_cpt},
+                           use_tqdm=True, **({"lora_request": lora_request} if is_cpt else {}))
         tokenizer = llm.get_tokenizer()
         predictions = []
         with (target / "responses.jsonl").open("w", encoding="utf-8") as handle:
@@ -129,6 +150,7 @@ def main():
     load_dotenv(ROOT / ".env")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", choices=MODEL_KEYS)
+    parser.add_argument("--protocol", choices=("thinking", "instruct"), default="thinking")
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--max-num-seqs", type=int, default=8)
@@ -145,10 +167,12 @@ def main():
     if args.export_comparison:
         if args.model or args.limit:
             parser.error("comparison export requires full runs of both models")
-        export_comparison(args.output_dir, "thinking-vllm", MODEL_KEYS, ("mlogiqa",))
+        export_comparison(args.output_dir, "thinking-vllm", THINKING_MODEL_KEYS, ("mlogiqa",))
         return 0
     if args.model is None:
         parser.error("--model is required unless exporting the comparison")
+    if (args.model == "qwen3-4b-cpt") != (args.protocol == "instruct"):
+        parser.error("CPT requires --protocol instruct; thinking baselines require --protocol thinking")
     return run(args)
 
 

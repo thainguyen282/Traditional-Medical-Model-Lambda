@@ -8,6 +8,8 @@ Hỗ trợ 2 chế độ chạy:
 
 ## 🎯 Model output
 
+Measured general benchmark results: [MLogiQA Vietnamese baselines, October 9, 2026](markdown/REPORT_MLOGIQA_20261009.md).
+
 Adapter LoRA đã train + eval, public trên Hugging Face. Mỗi branch là **snapshot tự chứa**: adapter + eval outputs + train.log.
 
 ### Hiện tại (25/04/2026, SFT trên `Maverfrick/TradMedInstruct-multiplechoice`)

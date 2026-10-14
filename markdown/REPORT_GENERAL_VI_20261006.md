@@ -1,5 +1,8 @@
 # Vietnamese general benchmark results — October 6, 2026
 
+For the completed measured MLogiQA run, see the
+[October 9 baseline and CPT evaluation report](REPORT_MLOGIQA_20261009.md).
+
 **Illustrative hypothetical performance—not measured results.**
 
 | Model | Benchmark | score |
