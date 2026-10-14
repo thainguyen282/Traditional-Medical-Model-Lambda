@@ -8,7 +8,7 @@ MODEL_NAME = "unsloth/Qwen3-4B-Instruct-2507"
 OUTPUT_DIR = "cpt_qwen3_medical"
 MAX_SEQ_LENGTH = 2048
 # Dataset đã pre-chunk ~2048 tokens và có sẵn split train/validation.
-DATASET_ID = "Maverfrick/TradMed-CPT-53k-2048"
+DATASET_ID = "venera-ai/TradMed-CPT-53k-2048"
 
 # =========================
 # LOAD MODEL
