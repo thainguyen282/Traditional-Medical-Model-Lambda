@@ -653,7 +653,7 @@ def main() -> int:
             check_git_access(args.git_repo, args.git_branch, os.environ.get("GH_TOKEN"))
             api_hf.model_info(MODELS[args.cpt_new_model])
             api_hf.repo_info("venera-ai/TradMed-CPT-53k-2048", repo_type="dataset")
-            api_hf.repo_info(os.environ.get("HF_CPT_REPO", "huyennkai/Venera-CPT-TMModel"))
+            api_hf.repo_info(os.environ.get("HF_CPT_REPO", "Maverfrick/Venera-CPT-TMModel"))
         except Exception as error:
             die(f"new CPT preflight failed before launching a GPU: {error}")
 
@@ -661,7 +661,7 @@ def main() -> int:
         "HF_TOKEN": hf_token,
         "WANDB_KEY": os.environ.get("WANDB_KEY", ""),
         "GH_TOKEN": os.environ.get("GH_TOKEN", ""),
-        "HF_CPT_REPO": os.environ.get("HF_CPT_REPO", "huyennkai/Venera-CPT-TMModel"),
+        "HF_CPT_REPO": os.environ.get("HF_CPT_REPO", "Maverfrick/Venera-CPT-TMModel"),
         "HF_SFT_REPO": os.environ.get("HF_SFT_REPO", "huyennkai/Venera-Traditional-Model"),
         "CPT_NEW_MODEL": args.cpt_new_model or "",
         "CPT_MAX_STEPS": str(args.cpt_max_steps),

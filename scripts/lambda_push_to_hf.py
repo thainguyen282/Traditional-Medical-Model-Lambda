@@ -4,7 +4,7 @@ Push a trained artifact (LoRA adapter + tokenizer) to a Hugging Face repo.
 
 Runs on the Lambda instance after training finishes. Two modes:
 
-  --task cpt  --src <dir> --repo huyennkai/Venera-CPT-TMModel --revision <tag>
+  --task cpt  --src <dir> --repo Maverfrick/Venera-CPT-TMModel --revision <tag>
       Uploads <dir> (expected to be CPT/cpt_qwen3_medical) as-is.
 
   --task sft  --config <yaml> --repo huyennkai/Venera-Traditional-Model --revision <tag>
