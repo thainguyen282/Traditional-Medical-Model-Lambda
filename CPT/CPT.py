@@ -217,7 +217,7 @@ EVAL_DIR = os.path.abspath(os.path.join(HERE, "..", "EVAL"))
 EVAL_OUTPUTS_DIR = os.path.join(EVAL_DIR, "outputs")
 HOST_LOG = "/host/train.log"  # bind-mounted from Lambda host
 
-HF_CPT_REPO = os.environ.get("HF_CPT_REPO", "huyennkai/Venera-CPT-TMModel")
+HF_CPT_REPO = os.environ.get("HF_CPT_REPO", "Maverfrick/Venera-CPT-TMModel")
 JOB_TAG = os.environ.get("JOB_TAG") or f"local-{int(time.time())}"
 # Push thẳng adapter vào branch `main` (lambda_push_to_hf.py dùng "main"
 # verbatim). JOB_TAG vẫn được nhúng vào commit message để truy vết run nào.
