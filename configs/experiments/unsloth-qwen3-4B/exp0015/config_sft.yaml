@@ -1,0 +1,54 @@
+name: "qwen3-4b-exp0015-cpt-sft-yhct"
+
+model:
+  # User-selected CPT adapter; pin the current main commit for reproducibility.
+  name: "Maverfrick/Venera-CPT-TMModel"
+  revision: "e0589a27e7b66bcbd9cfd8b709c0785d18bf0bf5"
+  require_adapter: true
+  max_seq_length: 2048
+
+datasets:
+  # VM14K-clean YHCT MCQs with the EVAL prompt and Final Answer: X targets.
+  # Reserve 5% of the cleaned train split for validation.
+  - path: "configs/dataset/venera_yhct_mcq.yaml"
+    train_samples: -1
+    train_val_split: 0.05
+
+benchmark:
+  path: "configs/evals/minimal_mmlu.yaml"
+
+unsloth:
+  load_in_4bit: true
+  attn_implementation: "sdpa"
+
+training:
+  output_dir: "group_outputs/exp0015/yhct"
+  per_device_train_batch_size: 8
+  gradient_accumulation_steps: 8
+  per_device_eval_batch_size: 4
+  num_train_epochs: 3
+  # Conservative learning rate for continued CPT-SFT training.
+  learning_rate: 5e-5
+  weight_decay: 0.01
+  warmup_steps: 100
+  lr_scheduler_type: "cosine"
+  optim: "adamw_8bit"
+  eval_strategy: "steps"
+  eval_steps: 100
+  save_total_limit: 2
+  logging_steps: 10
+  fp16: false
+  bf16: true
+  save_steps: 100
+  seed: 3407
+  gradient_checkpointing: true
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  neftune_noise_alpha: 5
+
+# Continue the CPT adapter with its saved LoRA configuration.
+# No new adapter is created; rank/alpha are inherited from CPT.
+
+monitoring:
+  project: "VeneraMedicalM1"
+  tags: ["lora", "unsloth", "qwen3-4b-thinking-2507", "exp0015", "venera_yhct_mcq", "vm14k-clean", "cpt-sft", "neftune"]

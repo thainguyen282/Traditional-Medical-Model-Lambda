@@ -295,6 +295,11 @@ class TrainCommand:
         # Unsloth trả về PeftModel sẵn — chỉ cần bật training mode.
         # Nếu là base model và có lora_config → tạo adapter mới (SFT thường).
         is_peft_model = hasattr(model, "peft_config")
+        if self.config["model"].get("require_adapter", False) and not is_peft_model:
+            raise ValueError(
+                f"Expected a CPT LoRA adapter at {model_name!r}, but loaded a base model. "
+                "Point model.name (and model.revision for Hub checkpoints) at the saved CPT adapter."
+            )
 
         if is_peft_model:
             # Continue-training CPT adapter: KHÔNG gọi get_peft_model lần nữa
