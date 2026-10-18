@@ -559,7 +559,7 @@ def main() -> int:
     parser.add_argument("--eval-backend", choices=["transformers", "vllm"],
                         default="transformers", help="General Vietnamese inference backend")
     parser.add_argument("--eval-max-new-tokens", type=int, default=4096,
-                        help="vLLM output token cap per MLogiQA answer")
+                        help="vLLM output token cap per answer")
     parser.add_argument("--eval-gpu-memory-utilization", type=float, default=0.70,
                         help="Fraction of GPU memory vLLM may reserve (default: 0.70)")
     parser.add_argument("--eval-enforce-eager", action="store_true",
@@ -634,8 +634,8 @@ def main() -> int:
         if args.eval_backend == "vllm":
             allowed = {"thinking": ("qwen3-4b-thinking-2507", "gemma4-e2b"),
                        "instruct": ("qwen3-4b-cpt",)}.get(args.eval_protocol, ())
-            if args.eval_datasets != ["mlogiqa"] or any(m not in allowed for m in args.baselines):
-                parser.error("vLLM requires MLogiQA and thinking baselines with --eval-protocol thinking, "
+            if any(m not in allowed for m in args.baselines):
+                parser.error("vLLM requires thinking baselines with --eval-protocol thinking, "
                              "or qwen3-4b-cpt with --eval-protocol instruct")
     args.eval_datasets = args.eval_datasets or ["vm14k"]
     args.eval_limit = 0 if args.eval_limit is None else args.eval_limit

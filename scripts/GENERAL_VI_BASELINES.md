@@ -2,6 +2,35 @@
 
 Completed measured run: [October 9 MLogiQA report](../markdown/REPORT_MLOGIQA_20261009.md).
 
+## All four benchmarks with vLLM
+
+The vLLM backend supports MLogiQA, INCLUDE, MT-AIME24, and PolyMath.
+Use the existing model aliases `qwen3-4b-thinking-2507` and `gemma4-e2b`
+for `Qwen/Qwen3-4B-Thinking-2507` and `google/gemma-4-E2B-it`.
+Each model/benchmark pair runs in a fresh process. Both models use BF16,
+temperature 0.6, top-p 0.95, top-k 20, seed 3407, and the same output budget.
+Math scoring uses the existing pinned PolyMath boxed-answer/equality scorer;
+only the final answer after thinking is scored. Length-limited generations
+count as invalid and incorrect.
+
+```bash
+.venv/bin/python scripts/lambda_launch.py --task eval --general-vi \
+  --instance-type gpu_1x_a100_sxm4 \
+  --eval-backend vllm --eval-protocol thinking \
+  --eval-models qwen3-4b-thinking-2507 gemma4-e2b \
+  --eval-datasets mlogiqa include mt-aime24 polymath \
+  --eval-batch-size 8 --eval-gpu-memory-utilization 0.70 \
+  --eval-enforce-eager --eval-max-new-tokens 32768 --eval-limit 0
+```
+
+This is eight evaluations over 1,160 Vietnamese questions per model.
+The 32,768-token limit allows long math reasoning and can make the run lengthy.
+Use `--eval-limit 2` for an initial GPU trial. Limited trials skip comparison
+export. Full runs export comparison tables for exactly the requested datasets.
+The launcher transfers local evaluator code and setup scripts, uploads results
+and `train.log` to `HF_SFT_REPO`, and downloads the evaluation archive under
+`logs/<job-tag>/medical-eval.tar.gz` before cleanup.
+
 ## Existing CPT adapter on MLogiQA with vLLM
 
 `qwen3-4b-cpt` loads `huyennkai/Venera-CPT-TMModel@main` as a rank-64

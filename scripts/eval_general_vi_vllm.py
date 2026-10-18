@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate Vietnamese MLogiQA with vLLM continuous batching and thinking."""
+"""Evaluate Vietnamese general benchmarks with vLLM continuous batching and thinking."""
 from __future__ import annotations
 
 import argparse
@@ -9,7 +9,8 @@ import os
 from pathlib import Path
 import time
 
-from eval_general_vi import export_comparison, parse_choice, prompt, source_rows
+from eval_general_vi import (BENCHMARKS, SCORER_COMMIT, boxed, export_comparison,
+                             get_math_scorer, parse_choice, prompt, source_rows)
 from eval_medical_baselines import MODELS
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,11 +18,11 @@ THINKING_MODEL_KEYS = ("qwen3-4b-thinking-2507", "gemma4-e2b")
 MODEL_KEYS = (*THINKING_MODEL_KEYS, "qwen3-4b-cpt")
 
 
-def final_answer(model_key: str, raw: str, finish_reason: str | None) -> str | None:
+def final_answer(model_key: str, raw: str, finish_reason: str | None, benchmark: str = "mlogiqa") -> str | None:
     if finish_reason == "length":
         return None
     if model_key == "qwen3-4b-cpt":
-        return parse_choice(raw)
+        return parse_choice(raw) if benchmark in ("mlogiqa", "include") else boxed(raw)
     if model_key == "gemma4-e2b":
         from vllm.reasoning.gemma4_utils import parse_thinking_output
         raw = parse_thinking_output(raw)["answer"] or ""
@@ -29,7 +30,7 @@ def final_answer(model_key: str, raw: str, finish_reason: str | None) -> str | N
         raw = raw.rsplit("</think>", 1)[1]
     else:
         return None
-    return parse_choice(raw)
+    return parse_choice(raw) if benchmark in ("mlogiqa", "include") else boxed(raw)
 
 
 def run(args):
@@ -38,9 +39,10 @@ def run(args):
     import vllm
 
     token = os.getenv("HF_TOKEN")
-    rows, dataset_meta = source_rows("mlogiqa", token)
-    if len(rows) != 80:
-        raise ValueError(f"Expected 80 Vietnamese MLogiQA rows, got {len(rows)}")
+    rows, dataset_meta = source_rows(args.benchmark, token)
+    total_rows = len(rows)
+    is_math = args.benchmark in ("mt-aime24", "polymath")
+    math_equal = get_math_scorer(ROOT / "cache" / "general_vi") if is_math else None
     rows = rows[:args.limit] if args.limit else rows
     revision = HfApi(token=token).model_info(MODELS[args.model]).sha
     engine_model, engine_revision = MODELS[args.model], revision
@@ -60,19 +62,20 @@ def run(args):
         lora_request = LoRARequest("qwen3-4b-cpt", 1, adapter_path)
         lora_kwargs = {"enable_lora": True, "max_loras": 1,
                        "max_lora_rank": adapter_config["r"]}
-    target = args.output_dir / args.model / "mlogiqa"
+    target = args.output_dir / args.model / args.benchmark
     target.mkdir(parents=True, exist_ok=False)
     decoding = {"do_sample": True, "temperature": 0.6, "top_p": 0.95,
                 "top_k": 20, "max_input_tokens": args.max_input_tokens,
                 "max_new_tokens": args.max_new_tokens, "thinking_enabled": not is_cpt}
-    manifest = {**dataset_meta, "selection": "all", "source_indices": list(range(80)),
-                "selected_rows": 80, "benchmark": "mlogiqa", "model": MODELS[args.model],
+    manifest = {**dataset_meta, "selection": "all", "source_indices": list(range(total_rows)),
+                "selected_rows": total_rows, "benchmark": args.benchmark, "model": MODELS[args.model],
                 "model_revision": revision, "base_model": engine_model if is_cpt else None,
                 "base_revision": engine_revision if is_cpt else None,
                 "evaluated_rows": len(rows), "limit": args.limit, "protocol": f"{args.protocol}-vllm",
                 "seed": 3407, "batch_size": args.max_num_seqs,
                 "quantization": "none-bfloat16", "decoding": decoding,
-                "scorer": "exact choice accuracy", "scorer_revision": None,
+                "scorer": "PolyMath math_equal + boxed extraction" if is_math else "exact choice accuracy",
+                "scorer_revision": SCORER_COMMIT if is_math else None,
                 "backend": "vllm", "vllm_version": vllm.__version__,
                 "max_num_seqs": args.max_num_seqs,
                 "gpu_memory_utilization": args.gpu_memory_utilization,
@@ -96,10 +99,10 @@ def run(args):
                   language_model_only=manifest["language_model_only"],
                   seed=3407, **lora_kwargs)
         print(f"[vllm] loaded {args.model} in {time.monotonic()-started:.1f}s; "
-              f"queuing {len(rows)} MLogiQA questions", flush=True)
+              f"queuing {len(rows)} {args.benchmark} questions", flush=True)
         sampling = SamplingParams(temperature=0.6, top_p=0.95, top_k=20,
                                   min_p=0, max_tokens=args.max_new_tokens, seed=3407)
-        chats = [[{"role": "user", "content": prompt("mlogiqa", row)}] for row in rows]
+        chats = [[{"role": "user", "content": prompt(args.benchmark, row)}] for row in rows]
         outputs = llm.chat(chats, sampling_params=sampling,
                            chat_template_kwargs={"enable_thinking": not is_cpt},
                            use_tqdm=True, **({"lora_request": lora_request} if is_cpt else {}))
@@ -109,10 +112,11 @@ def run(args):
             for index, (row, result) in enumerate(zip(rows, outputs)):
                 generated = result.outputs[0]
                 raw = tokenizer.decode(generated.token_ids, skip_special_tokens=False)
-                answer = final_answer(args.model, raw, generated.finish_reason)
+                answer = final_answer(args.model, raw, generated.finish_reason, args.benchmark)
                 prediction = {"index": index, **row, "response": raw,
                               "extracted_answer": answer,
-                              "is_correct": answer == row["answer"],
+                              "is_correct": (bool(math_equal(answer, row["answer"])) if answer is not None and is_math
+                                             else answer == row["answer"] if not is_math else False),
                               "finish_reason": generated.finish_reason,
                               "generated_tokens": len(generated.token_ids)}
                 predictions.append(prediction)
@@ -129,7 +133,7 @@ def run(args):
         config_path.write_text(json.dumps(manifest, indent=2) + "\n")
         (target / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
         (target / "infer_result.txt").write_text(
-            f"Model: {MODELS[args.model]}\nBenchmark: MLogiQA vi\n"
+            f"Model: {MODELS[args.model]}\nBenchmark: {args.benchmark} vi\n"
             f"Correct: {summary['correct']}/{len(rows)}\n"
             f"Accuracy: {summary['accuracy']:.2%}\n"
             f"Invalid answers: {summary['invalid_answers']}\n"
@@ -150,6 +154,9 @@ def main():
     load_dotenv(ROOT / ".env")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", choices=MODEL_KEYS)
+    parser.add_argument("--benchmark", choices=BENCHMARKS, default="mlogiqa")
+    parser.add_argument("--benchmarks", nargs="+", choices=BENCHMARKS, default=list(BENCHMARKS),
+                        help="Benchmarks included in comparison export")
     parser.add_argument("--protocol", choices=("thinking", "instruct"), default="thinking")
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=0)
@@ -167,7 +174,7 @@ def main():
     if args.export_comparison:
         if args.model or args.limit:
             parser.error("comparison export requires full runs of both models")
-        export_comparison(args.output_dir, "thinking-vllm", THINKING_MODEL_KEYS, ("mlogiqa",))
+        export_comparison(args.output_dir, "thinking-vllm", THINKING_MODEL_KEYS, args.benchmarks)
         return 0
     if args.model is None:
         parser.error("--model is required unless exporting the comparison")

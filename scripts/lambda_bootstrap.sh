@@ -361,19 +361,21 @@ run_medical_eval() {
     fi
     if [ -n "${EVAL_GENERAL_VI:-}" ] && [ "${EVAL_BACKEND:-transformers}" = "vllm" ]; then
         for model in $EVAL_MEDICAL_MODELS; do
+          for dataset in $EVAL_DATASETS; do
             in_docker "$eval_python /workspace/scripts/eval_general_vi_vllm.py \
-                --model '$model' --limit '${EVAL_LIMIT:-0}' \
+                --model '$model' --benchmark '$dataset' --limit '${EVAL_LIMIT:-0}' \
                 --protocol '${EVAL_PROTOCOL:-thinking}' \
                 --max-num-seqs '${EVAL_BATCH_SIZE:-8}' \
                 --max-new-tokens '${EVAL_MAX_NEW_TOKENS:-4096}' \
                 --gpu-memory-utilization '${EVAL_GPU_MEMORY_UTILIZATION:-0.70}' \
                 ${EVAL_ENFORCE_EAGER:+--enforce-eager} \
                 --output-dir '$output_dir'" || failed=1
+          done
         done
         if [ "$failed" -eq 0 ] && [ "${EVAL_LIMIT:-0}" = "0" ] && \
            [ "$EVAL_MEDICAL_MODELS" = "qwen3-4b-thinking-2507 gemma4-e2b" ]; then
             in_docker "$eval_python /workspace/scripts/eval_general_vi_vllm.py \
-                --export-comparison --output-dir '$output_dir'" || failed=1
+                --export-comparison --benchmarks $EVAL_DATASETS --output-dir '$output_dir'" || failed=1
         fi
     elif [ -n "${EVAL_GENERAL_VI:-}" ]; then
         in_docker "$eval_python /workspace/scripts/eval_general_vi.py \

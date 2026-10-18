@@ -8,7 +8,9 @@ source "$eval_env/bin/activate"
 vllm_wheel="https://github.com/vllm-project/vllm/releases/download/v0.31.0/vllm-0.31.0+cu129-cp38-abi3-manylinux_2_28_$(uname -m).whl"
 "$eval_env/bin/uv" pip install --python "$eval_env/bin/python" \
   --torch-backend=cu129 \
-  "$vllm_wheel" 'pyarrow==23.0.1' 'python-dotenv==1.2.1' 'ninja==1.13.2'
+  "$vllm_wheel" 'pyarrow==23.0.1' 'python-dotenv==1.2.1' 'ninja==1.13.2' \
+  'sympy==1.14.0' 'regex==2026.2.19' 'word2number==1.1' \
+  'antlr4-python3-runtime==4.11.1' 'pebble==5.1.3'
 "$eval_env/bin/python" -c 'import torch; from vllm import LLM, SamplingParams; import vllm; assert torch.version.cuda.startswith("12.9"), torch.version.cuda; print("vLLM", vllm.__version__, "CUDA", torch.version.cuda, flush=True)'
 
 # Fail during setup if the JIT build executable cannot be launched.

@@ -1,0 +1,55 @@
+"""CPU-only regression checks for vLLM benchmark routing and scoring."""
+import json
+from pathlib import Path
+import sys
+import tempfile
+import types
+import unittest
+from unittest.mock import Mock, patch
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'scripts'))
+import eval_general_vi_vllm as runner
+
+
+class VllmGeneralTests(unittest.TestCase):
+    def test_math_uses_final_box_after_reasoning(self):
+        raw = r'reasoning \boxed{1}</think>Final answer: \boxed{42}'
+        self.assertEqual(runner.final_answer('qwen3-4b-thinking-2507', raw, 'stop', 'polymath'), '42')
+        self.assertIsNone(runner.final_answer('qwen3-4b-thinking-2507', raw, 'length', 'polymath'))
+        self.assertIsNone(runner.final_answer('qwen3-4b-thinking-2507', r'\boxed{42}', 'stop', 'polymath'))
+
+    def test_every_benchmark_routes_and_scores(self):
+        for benchmark in runner.BENCHMARKS:
+            with self.subTest(benchmark=benchmark), tempfile.TemporaryDirectory() as directory:
+                is_math = benchmark in ('mt-aime24', 'polymath')
+                row = {'question': 'Question', 'options': None if is_math else ['a', 'b', 'c', 'd'],
+                       'answer': '42' if is_math else 'B'}
+                raw = '</think>' + (r'\boxed{42}' if is_math else 'Final Answer: B')
+                tokenizer = Mock()
+                tokenizer.decode.return_value = raw
+                generated = types.SimpleNamespace(token_ids=[1], finish_reason='stop')
+                engine = Mock()
+                engine.chat.return_value = [types.SimpleNamespace(outputs=[generated])]
+                engine.get_tokenizer.return_value = tokenizer
+                api = Mock()
+                api.model_info.return_value.sha = 'revision'
+                hub = types.SimpleNamespace(HfApi=Mock(return_value=api), hf_hub_download=Mock(), snapshot_download=Mock())
+                vllm = types.SimpleNamespace(LLM=Mock(return_value=engine), SamplingParams=Mock(), __version__='test')
+                args = types.SimpleNamespace(benchmark=benchmark, model='qwen3-4b-thinking-2507',
+                    limit=0, output_dir=Path(directory), max_input_tokens=4096, max_new_tokens=8192,
+                    max_num_seqs=8, gpu_memory_utilization=.7, enforce_eager=True, protocol='thinking')
+                with patch.dict(sys.modules, {'huggingface_hub': hub, 'vllm': vllm}), \
+                     patch.object(runner, 'source_rows', return_value=([row], {'total_rows': 1})) as source, \
+                     patch.object(runner, 'get_math_scorer', return_value=lambda a, b: a == b) as scorer:
+                    self.assertEqual(runner.run(args), 0)
+                source.assert_called_once_with(benchmark, runner.os.getenv('HF_TOKEN'))
+                self.assertEqual(scorer.called, is_math)
+                summary = json.loads((Path(directory) / args.model / benchmark / 'summary.json').read_text())
+                self.assertEqual(summary['correct'], 1)
+                self.assertEqual(summary['selected_rows'], 1)
+                self.assertEqual(summary['benchmark'], benchmark)
+
+
+if __name__ == '__main__':
+    unittest.main()
