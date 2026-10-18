@@ -295,6 +295,35 @@ def download_medical_eval(key: str, ip: str, job_tag: str) -> Path | None:
     return local_archive
 
 
+def download_sft_backup(key: str, ip: str, job_tag: str) -> Path:
+    """Preserve outputs and diagnostics before destroying the training host."""
+    remote_archive = f"/home/ubuntu/{job_tag}-sft-backup.tar.gz"
+    repo = f"/home/ubuntu/{REMOTE_REPO_DIR}"
+    command = (
+        f"cd {shlex.quote(repo)} && "
+        "paths=(); "
+        "for p in group_outputs outputs EVAL/outputs app.log; do "
+        "if [ -e \"$p\" ]; then paths+=(\"$p\"); fi; done; "
+        f"sudo tar -czf {shlex.quote(remote_archive)} "
+        "\"${paths[@]}\" -C /home/ubuntu train.log && "
+        f"sudo chmod 644 {shlex.quote(remote_archive)}"
+    )
+    ssh_cmd(key, ip, "bash -lc " + shlex.quote(command))
+    destination = Path("logs") / job_tag
+    destination.mkdir(parents=True, exist_ok=True)
+    archive_path = destination / "sft-backup.tar.gz"
+    subprocess.run([
+        "scp", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "ConnectTimeout=15", "-i", key,
+        f"{REMOTE_USER}@{ip}:{remote_archive}", str(archive_path),
+    ], check=True, timeout=1800)
+    with tarfile.open(archive_path) as archive:
+        if not any(member.name == "train.log" for member in archive.getmembers()):
+            raise RuntimeError("SFT backup is missing train.log")
+    log(f"SFT backup saved locally: {archive_path.resolve()}")
+    return archive_path
+
+
 def render_env_file(env_vars: dict[str, str]) -> str:
     lines = []
     for k, v in env_vars.items():
@@ -326,6 +355,8 @@ def run_job(
 
     exit_code = 1
     baseline_started = False
+    job_finished = False
+    ip = None
     try:
         inst = wait_for_active(api, instance_id, timeout=boot_timeout)
         ip = inst["ip"]
@@ -337,6 +368,15 @@ def run_job(
                "/home/ubuntu/lambda_bootstrap.sh")
         scp_to(ssh_private_key, ip, str(scripts_dir / "lambda_push_to_hf.py"),
                "/home/ubuntu/lambda_push_to_hf.py")
+        if task == "sft":
+            root = scripts_dir.parent
+            with tempfile.TemporaryDirectory(prefix="sft-source-") as directory:
+                bundle = Path(directory) / "sft_source.tar.gz"
+                with tarfile.open(bundle, "w:gz") as archive:
+                    for name in ("main.py", "src", "configs"):
+                        archive.add(root / name, arcname=name,
+                                    filter=lambda item: None if "__pycache__" in item.name else item)
+                scp_to(ssh_private_key, ip, str(bundle), "/home/ubuntu/sft_source.tar.gz")
         if env_vars.get("EVAL_MEDICAL_MODELS"):
             copy_medical_eval_bundle(ssh_private_key, ip, env_vars["EVAL_DATASETS"].split(),
                                      bool(env_vars.get("EVAL_GENERAL_VI")))
@@ -419,10 +459,12 @@ def run_job(
                 last_size = new_size
 
             if "DONE_SUCCESS" in sentinel:
+                job_finished = True
                 log("job finished: SUCCESS")
                 exit_code = 0
                 break
             if "DONE_FAILED" in sentinel:
+                job_finished = True
                 log("job finished: FAILED")
                 exit_code = 2
                 break
@@ -430,8 +472,21 @@ def run_job(
             time.sleep(POLL_INTERVAL_TRAIN)
 
     except KeyboardInterrupt:
-        log("interrupted locally — remote job continues; proceeding to terminate.")
+        log("interrupted locally — preserving the SFT instance while its job may still be running.")
+        if task == "sft":
+            keep_alive = True
     finally:
+        if task == "sft" and ip and not job_finished:
+            log("SFT completion is unconfirmed; preserving the instance. Billing continues.")
+            keep_alive = True
+        if task == "sft" and ip and not keep_alive:
+            try:
+                download_sft_backup(ssh_private_key, ip, job_tag)
+            except (Exception, KeyboardInterrupt) as error:
+                log(f"WARNING: SFT backup failed: {error}")
+                log("Leaving the instance running to preserve outputs; billing continues.")
+                keep_alive = True
+                exit_code = 2
         if baseline_started:
             try:
                 download_medical_eval(ssh_private_key, ip, job_tag)
@@ -662,7 +717,7 @@ def main() -> int:
         "WANDB_KEY": os.environ.get("WANDB_KEY", ""),
         "GH_TOKEN": os.environ.get("GH_TOKEN", ""),
         "HF_CPT_REPO": os.environ.get("HF_CPT_REPO", "Maverfrick/Venera-CPT-TMModel"),
-        "HF_SFT_REPO": os.environ.get("HF_SFT_REPO", "huyennkai/Venera-Traditional-Model"),
+        "HF_SFT_REPO": os.environ.get("HF_SFT_REPO", "Maverfrick/Venera-Traditional-Model"),
         "CPT_NEW_MODEL": args.cpt_new_model or "",
         "CPT_MAX_STEPS": str(args.cpt_max_steps),
         "EVAL_BACKEND": args.eval_backend,

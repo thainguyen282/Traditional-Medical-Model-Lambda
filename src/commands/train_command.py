@@ -142,6 +142,7 @@ class TrainCommand:
             # SAVE TRAINED MODEL
             # --------------------------------------------------
             trainer.save_model(model_output_dir)
+            trainer.save_state()
             tokenizer.save_pretrained(model_output_dir)
 
             # Fix adapter_config.json: convert relative base_model path to absolute
@@ -157,6 +158,11 @@ class TrainCommand:
                     self.logger.info(f"Fixed adapter base_model path to {adapter_cfg['base_model_name_or_path']}")
 
             self.logger.info(f"Trained model saved to {model_output_dir}")
+
+            # Lambda publishes first, then evaluates in fresh containers.
+            if os.environ.get("SFT_DEFER_BENCHMARKS") == "1":
+                self.logger.info("Deferring evaluation until after checkpoint publication")
+                return
 
             # --------------------------------------------------
             # EVAL TRAINED MODEL (with LoRA)

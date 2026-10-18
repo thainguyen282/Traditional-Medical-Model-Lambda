@@ -88,6 +88,12 @@ if [ ! -d "$REPO_DIR/.git" ]; then
 fi
 cd "$REPO_DIR" || fail "cd repo"
 
+# SFT uses the exact local source/configuration supplied by the launcher.
+if [ "$TASK_TYPE" = "sft" ]; then
+    tar -xzf /home/ubuntu/sft_source.tar.gz -C "$REPO_DIR" \
+        || fail "install SFT source bundle"
+fi
+
 # Baseline runs use the exact evaluator, protocol and data from the launcher.
 if [ -n "${EVAL_MEDICAL_MODELS:-}" ]; then
     tar -xzf /home/ubuntu/medical_eval_bundle.tar.gz -C "$REPO_DIR" \
@@ -234,10 +240,9 @@ run_cpt() {
 
 run_sft() {
     local config="$1"
-    # Step 1: train + Benchmarker (lm-eval runs in-process, not a subprocess
-    # — it does not trip the fork-after-CUDA issue that notebooks do).
+    # Train and save first; evaluation notebooks run after publication.
     echo "[bootstrap] ===== SFT train: $config ====="
-    in_docker "cd /workspace && python main.py --config '$config'" || return $?
+    in_docker "cd /workspace && SFT_DEFER_BENCHMARKS=1 python main.py --config '$config'" || return $?
 
     # Step 2: push adapter (+ auto benchmark_evaluations) to HF so the
     # eval notebooks can load the exact pushed version from the Hub.
@@ -246,7 +251,8 @@ run_sft() {
         --task sft \
         --repo '$HF_SFT_REPO' \
         --config '$config' \
-        --revision '$JOB_TAG'" \
+        --revision '$JOB_TAG' \
+        --log-file /host/train.log" \
         || return $?
 
     # Step 3: compute the full revision name + pick which notebooks to run.

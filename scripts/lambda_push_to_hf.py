@@ -164,6 +164,12 @@ def main() -> int:
         if not any(artifact_dir.iterdir()):
             die(f"artifact dir empty: {artifact_dir}")
 
+    if args.task == "sft" and not args.skip_model:
+        for name in ("adapter_config.json", "adapter_model.safetensors"):
+            path = artifact_dir / name
+            if not path.is_file() or path.stat().st_size == 0:
+                die(f"missing or empty SFT adapter file: {path}")
+
     log(f"task={args.task} label={pipeline_label} src={artifact_dir}"
         f"{' (skip-model)' if args.skip_model else ''}")
     log(f"target: {args.repo}@{revision}")
@@ -183,8 +189,15 @@ def main() -> int:
             revision=revision,
             commit_message=commit_msg,
             token=token,
-            ignore_patterns=["*.pyc", "__pycache__/*", ".git/*"],
+            ignore_patterns=["*.pyc", "__pycache__/*", ".git/*", "checkpoint-*/*"],
         )
+
+    if args.task == "sft" and not args.skip_model:
+        uploaded = set(api.list_repo_files(repo_id=args.repo, revision=revision, token=token))
+        required = {"adapter_config.json", "adapter_model.safetensors"}
+        if not required.issubset(uploaded):
+            die(f"SFT upload verification failed: missing {sorted(required - uploaded)}")
+        log("Verified adapter files on Hugging Face")
 
     eval_srcs = auto_eval_srcs + [Path(s) for s in args.eval_src]
     for src_path in eval_srcs:

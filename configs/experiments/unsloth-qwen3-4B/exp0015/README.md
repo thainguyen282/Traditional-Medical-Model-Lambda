@@ -44,3 +44,20 @@ All eight Unsloth MCQ evaluation notebooks retain their original settings:
 `Final Answer: X` prompt, and unrestricted output tokens. Following the
 instruction remains the model's responsibility; reasoning or malformed
 responses remain visible. No one-token constraint is applied.
+
+### Lambda artifact preservation
+
+The launcher copies local `main.py`, `src/`, and `configs/` into the instance.
+Lambda saves the adapter and trainer state, skips the in-process MMLU benchmarks,
+and publishes the adapter plus `train.log` before running the evaluation notebooks.
+The uploader verifies that the adapter files exist on the destination branch;
+intermediate `checkpoint-*` folders stay in the recovery backup rather than the Hub upload.
+The destination is `HF_SFT_REPO` from the launcher environment / `.env`.
+
+Before terminating a completed SFT instance, the launcher downloads training
+outputs, evaluation outputs, and logs to `logs/<job-tag>/sft-backup.tar.gz`.
+If backup fails or job completion cannot be confirmed (including Ctrl+C), it
+leaves the instance running for recovery. **Billing continues until you terminate it.**
+With `--keep-alive`, automatic download and termination are skipped.
+This backup covers `group_outputs/`, `outputs/`, and `EVAL/outputs/`; keep exp0015's
+configured output directory under `group_outputs/`.
