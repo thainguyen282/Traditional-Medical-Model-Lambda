@@ -141,12 +141,18 @@ def wait_for_active(api: LambdaAPI, instance_id: str, timeout: int = 600) -> dic
 
 
 def ssh_cmd(key: str, ip: str, remote_cmd: str, *, check: bool = True,
-            capture: bool = False) -> subprocess.CompletedProcess:
+            capture: bool = False, retries: int = 1,
+            delay: int = 10) -> subprocess.CompletedProcess:
+    if retries < 1:
+        raise ValueError("retries must be at least 1")
     cmd = [
         "ssh",
         "-o", "StrictHostKeyChecking=no",
         "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "BatchMode=yes",
+        "-o", "ConnectTimeout=15",
         "-o", "ServerAliveInterval=30",
+        "-o", "ServerAliveCountMax=3",
         "-i", key,
         f"{REMOTE_USER}@{ip}",
         remote_cmd,
@@ -154,9 +160,20 @@ def ssh_cmd(key: str, ip: str, remote_cmd: str, *, check: bool = True,
     # errors='replace' so `tail -c +N` mid-multibyte-sequence (Vietnamese
     # text in logs) doesn't crash the orchestrator and terminate the
     # instance mid-eval.
-    return subprocess.run(cmd, check=check,
-                          capture_output=capture, text=True,
-                          encoding="utf-8", errors="replace")
+    # Opt in only for commands safe to repeat: a disconnect can happen after
+    # the remote command has already run. Exit 255 denotes an SSH failure;
+    # ordinary remote command failures should be reported immediately.
+    for attempt in range(1, retries + 1):
+        result = subprocess.run(cmd, check=False,
+                                capture_output=capture, text=True,
+                                encoding="utf-8", errors="replace")
+        if result.returncode != 255 or attempt == retries:
+            if check:
+                result.check_returncode()
+            return result
+        log(f"  SSH connection failed (attempt {attempt}/{retries}), "
+            f"retrying in {delay}s...")
+        time.sleep(delay)
 
 
 def scp_to(key: str, ip: str, local_path: str, remote_path: str,
@@ -413,7 +430,7 @@ def run_job(
 
         ssh_cmd(ssh_private_key, ip,
                 "chmod 600 /home/ubuntu/job.env && "
-                "chmod +x /home/ubuntu/lambda_bootstrap.sh")
+                "chmod +x /home/ubuntu/lambda_bootstrap.sh", retries=4)
 
         # Kick off training in tmux so the session survives if our ssh drops.
         log("starting training in remote tmux session 'train'")
