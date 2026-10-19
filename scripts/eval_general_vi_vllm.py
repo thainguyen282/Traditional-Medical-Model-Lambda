@@ -4,25 +4,63 @@ from __future__ import annotations
 
 import argparse
 import gc
+from functools import lru_cache
 import json
 import os
 from pathlib import Path
 import time
 
 from eval_general_vi import (BENCHMARKS, SCORER_COMMIT, boxed, export_comparison,
-                             get_math_scorer, parse_choice, prompt, source_rows)
-from eval_medical_baselines import MODELS
+                             get_math_scorer, parse_choice, prompt as general_prompt,
+                             source_rows as general_source_rows)
+from eval_medical_baselines import (MODELS as BASELINE_MODELS, build_prompt, prepare_dataset)
+
+MODELS = {**BASELINE_MODELS, "exp0015": "Maverfrick/Venera-Traditional-Model"}
+EXP0015_REVISION = "06fc5e88287113fc29b1cdf236dd294260272daa"
+EXP0015_BASE = "unsloth/Qwen3-4B-Thinking-2507"
+EXP0015_BASE_REVISION = "fb56efbd0f60c5bcd531901fa5fe3ee3157b5135"
+EXP0015_CPT_REVISION = "e0589a27e7b66bcbd9cfd8b709c0785d18bf0bf5"
 
 ROOT = Path(__file__).resolve().parents[1]
 THINKING_MODEL_KEYS = ("qwen3-4b-thinking-2507", "gemma4-e2b")
-MODEL_KEYS = (*THINKING_MODEL_KEYS, "qwen3-4b-cpt")
+MODEL_KEYS = (*THINKING_MODEL_KEYS, "qwen3-4b-cpt", "exp0015")
+
+
+EVALUATION_BENCHMARKS = (*BENCHMARKS, "vm14k")
+
+
+@lru_cache(maxsize=1)
+def vm14k_protocol():
+    return prepare_dataset("vm14k", generation_mode="notebook")
+
+
+def source_rows(benchmark, token):
+    if benchmark != "vm14k":
+        return general_source_rows(benchmark, token)
+    rows, protocol, metadata = vm14k_protocol()
+    return rows, {
+        "dataset_repo": "local/VM14K-traditional",
+        "dataset_revision": metadata["dataset_sha256"],
+        "source_files": {metadata["dataset_file"]: metadata["dataset_sha256"]},
+        "total_rows": len(rows), "language": "vi",
+        "system_prompt": protocol["system_prompt"],
+        "prompt_protocol_sha256": metadata["protocol_sha256"],
+        "constrained_to_options": False,
+    }
+
+
+def prompt(benchmark, row):
+    if benchmark != "vm14k":
+        return general_prompt(benchmark, row)
+    _, protocol, _ = vm14k_protocol()
+    return build_prompt(row, protocol["system_prompt"])
 
 
 def final_answer(model_key: str, raw: str, finish_reason: str | None, benchmark: str = "mlogiqa") -> str | None:
     if finish_reason == "length":
         return None
     if model_key == "qwen3-4b-cpt":
-        return parse_choice(raw) if benchmark in ("mlogiqa", "include") else boxed(raw)
+        return parse_choice(raw) if benchmark in ("mlogiqa", "include", "vm14k") else boxed(raw)
     if model_key == "gemma4-e2b":
         from vllm.reasoning.gemma4_utils import parse_thinking_output
         raw = parse_thinking_output(raw)["answer"] or ""
@@ -30,7 +68,7 @@ def final_answer(model_key: str, raw: str, finish_reason: str | None, benchmark:
         raw = raw.rsplit("</think>", 1)[1]
     else:
         return None
-    return parse_choice(raw) if benchmark in ("mlogiqa", "include") else boxed(raw)
+    return parse_choice(raw) if benchmark in ("mlogiqa", "include", "vm14k") else boxed(raw)
 
 
 def run(args):
@@ -44,22 +82,27 @@ def run(args):
     is_math = args.benchmark in ("mt-aime24", "polymath")
     math_equal = get_math_scorer(ROOT / "cache" / "general_vi") if is_math else None
     rows = rows[:args.limit] if args.limit else rows
-    revision = HfApi(token=token).model_info(MODELS[args.model]).sha
+    requested_revision = (getattr(args, "revision", None) or
+                          (EXP0015_REVISION if args.model == "exp0015" else None))
+    revision = HfApi(token=token).model_info(MODELS[args.model], revision=requested_revision).sha
     engine_model, engine_revision = MODELS[args.model], revision
     lora_request = None
     lora_kwargs = {}
     is_cpt = args.model == "qwen3-4b-cpt"
-    if is_cpt:
+    is_adapter = args.model in ("qwen3-4b-cpt", "exp0015")
+    if is_adapter:
         from vllm.lora.request import LoRARequest
         adapter_config = json.loads(Path(hf_hub_download(
             MODELS[args.model], "adapter_config.json", revision=revision, token=token)).read_text())
         engine_model = adapter_config["base_model_name_or_path"]
-        if engine_model != "unsloth/Qwen3-4B-Instruct-2507":
+        expected_base = EXP0015_BASE if args.model == "exp0015" else "unsloth/Qwen3-4B-Instruct-2507"
+        if engine_model != expected_base:
             raise ValueError(f"Unexpected CPT base: {engine_model}; verify its protocol before evaluation")
-        engine_revision = HfApi(token=token).model_info(engine_model).sha
+        engine_revision = HfApi(token=token).model_info(
+            engine_model, revision=EXP0015_BASE_REVISION if args.model == "exp0015" else None).sha
         adapter_path = snapshot_download(MODELS[args.model], revision=revision, token=token,
                                         allow_patterns=["adapter_config.json", "adapter_model.safetensors"])
-        lora_request = LoRARequest("qwen3-4b-cpt", 1, adapter_path)
+        lora_request = LoRARequest(args.model, 1, adapter_path)
         lora_kwargs = {"enable_lora": True, "max_loras": 1,
                        "max_lora_rank": adapter_config["r"]}
     target = args.output_dir / args.model / args.benchmark
@@ -69,8 +112,8 @@ def run(args):
                 "max_new_tokens": args.max_new_tokens, "thinking_enabled": not is_cpt}
     manifest = {**dataset_meta, "selection": "all", "source_indices": list(range(total_rows)),
                 "selected_rows": total_rows, "benchmark": args.benchmark, "model": MODELS[args.model],
-                "model_revision": revision, "base_model": engine_model if is_cpt else None,
-                "base_revision": engine_revision if is_cpt else None,
+                "model_revision": revision, "base_model": engine_model if is_adapter else None,
+                "base_revision": engine_revision if is_adapter else None,
                 "evaluated_rows": len(rows), "limit": args.limit, "protocol": f"{args.protocol}-vllm",
                 "seed": 3407, "batch_size": args.max_num_seqs,
                 "quantization": "none-bfloat16", "decoding": decoding,
@@ -82,6 +125,11 @@ def run(args):
                 "enforce_eager": args.enforce_eager,
                 "language_model_only": args.model == "gemma4-e2b",
                 "status": "running"}
+    if args.model == "exp0015":
+        manifest.update(cpt_source="Maverfrick/Venera-CPT-TMModel",
+                        cpt_source_revision=EXP0015_CPT_REVISION,
+                        adapter_composition="CPT adapter continued by SFT; apply final adapter once",
+                        adapter_config=adapter_config)
     config_path = target / "run_config.json"
     config_path.write_text(json.dumps(manifest, indent=2) + "\n")
     started = time.monotonic()
@@ -105,7 +153,7 @@ def run(args):
         chats = [[{"role": "user", "content": prompt(args.benchmark, row)}] for row in rows]
         outputs = llm.chat(chats, sampling_params=sampling,
                            chat_template_kwargs={"enable_thinking": not is_cpt},
-                           use_tqdm=True, **({"lora_request": lora_request} if is_cpt else {}))
+                           use_tqdm=True, **({"lora_request": lora_request} if is_adapter else {}))
         tokenizer = llm.get_tokenizer()
         predictions = []
         with (target / "responses.jsonl").open("w", encoding="utf-8") as handle:
@@ -154,8 +202,9 @@ def main():
     load_dotenv(ROOT / ".env")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", choices=MODEL_KEYS)
-    parser.add_argument("--benchmark", choices=BENCHMARKS, default="mlogiqa")
-    parser.add_argument("--benchmarks", nargs="+", choices=BENCHMARKS, default=list(BENCHMARKS),
+    parser.add_argument("--revision", help="Hub model/adapter revision (exp0015 defaults to its pinned commit)")
+    parser.add_argument("--benchmark", choices=EVALUATION_BENCHMARKS, default="mlogiqa")
+    parser.add_argument("--benchmarks", nargs="+", choices=EVALUATION_BENCHMARKS, default=list(BENCHMARKS),
                         help="Benchmarks included in comparison export")
     parser.add_argument("--protocol", choices=("thinking", "instruct"), default="thinking")
     parser.add_argument("--output-dir", type=Path, required=True)
@@ -165,6 +214,7 @@ def main():
     parser.add_argument("--max-new-tokens", type=int, default=4096)
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.70)
     parser.add_argument("--enforce-eager", action="store_true")
+    parser.add_argument("--comparison-models", nargs="+", choices=MODEL_KEYS, default=list(THINKING_MODEL_KEYS))
     parser.add_argument("--export-comparison", action="store_true")
     args = parser.parse_args()
     if args.limit < 0 or args.max_num_seqs < 1 or args.max_new_tokens < 1 or args.max_input_tokens < 1:
@@ -174,7 +224,7 @@ def main():
     if args.export_comparison:
         if args.model or args.limit:
             parser.error("comparison export requires full runs of both models")
-        export_comparison(args.output_dir, "thinking-vllm", THINKING_MODEL_KEYS, args.benchmarks)
+        export_comparison(args.output_dir, f"{args.protocol}-vllm", args.comparison_models, args.benchmarks)
         return 0
     if args.model is None:
         parser.error("--model is required unless exporting the comparison")

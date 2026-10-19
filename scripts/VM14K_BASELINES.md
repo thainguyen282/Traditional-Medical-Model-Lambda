@@ -115,3 +115,45 @@ results. The local copy is under `EVAL/outputs/medical_baselines/tm-eval-1791208
 Sources: [Qwen model card](https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507),
 [Gemma model card](https://huggingface.co/google/gemma-4-E2B-it),
 [Transformers v5.5.0 Gemma support](https://github.com/huggingface/transformers/tree/v5.5.0/src/transformers/models/gemma4).
+
+## Matched general-baseline thinking evaluation
+
+Submit `sbatch scripts/slurm/eval_vm14k_thinking.sbatch` to evaluate both
+Qwen3-4B-Thinking-2507 and Gemma4-E2B on the frozen 564 traditional questions.
+The job pins the same model commits as general run `tm-eval-1792338556` and
+uses the same evaluator: vLLM 0.31.0, BF16 without quantization, temperature
+0.6, top-p 0.95, top-k 20, min-p 0, seed 3407, 4096 input tokens,
+32768 output tokens, 8 active sequences, GPU memory fraction 0.70, eager mode.
+The environment must already be installed at `.venv-vllm-slurm`.
+Outputs go to `EVAL/outputs/vm14k_thinking/slurm-<job-id>/`.
+
+The VM14K medical prompt and frozen row order are preserved. This is a new
+thinking protocol, not a reproduction of the original notebook: that uses
+250 output tokens and greedy decoding (`do_sample=False`; its temperature
+0.7/top-p 0.8 have no effect under greedy decoding). The direct baseline
+above instead constrains output to a letter, disables thinking, uses 16
+output tokens, 2048 input tokens, and Transformers with NF4 weights.
+The new protocol retains special tokens in saved generated responses and
+scores only the final answer after the thinking boundary. Length-limited
+responses and missing reasoning boundaries count as invalid and incorrect.
+The shared general MCQ parser replaces the original notebook answer parser.
+Scores across these protocols measure different generation conditions.
+
+## CPT-SFT exp0015 with answer-only decoding
+
+```bash
+.venv/bin/python scripts/lambda_launch.py --task eval \
+  --baselines exp0015 --eval-datasets vm14k --eval-generation-mode direct \
+  --eval-batch-size 4 --eval-limit 0 --instance-type gpu_1x_a100_sxm4
+```
+
+This uses the same direct NF4/greedy protocol above. The final adapter is
+`Maverfrick/Venera-Traditional-Model@06fc5e88287113fc29b1cdf236dd294260272daa`,
+applied once on `unsloth/Qwen3-4B-Thinking-2507@fb56efbd0f60c5bcd531901fa5fe3ee3157b5135`.
+The native template's open thinking block is explicitly closed before the
+`Final Answer:` prefill; only option labels and EOS may be generated.
+Saved responses have the form `Final Answer: A`. This forces answer-only
+inference on a thinking-trained checkpoint. Four valid, terminated smoke
+answers are required before the full 564-row evaluation. The manifest records
+adapter/base revisions and the prompt closure. Lambda uses the existing
+medical bundle, result upload/download, and automatic termination lifecycle.

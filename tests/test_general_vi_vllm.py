@@ -51,5 +51,48 @@ class VllmGeneralTests(unittest.TestCase):
                 self.assertEqual(summary['benchmark'], benchmark)
 
 
+    def test_exp0015_uses_final_adapter_once_on_pinned_underlying_base(self):
+        with tempfile.TemporaryDirectory() as directory:
+            adapter_config = Path(directory) / 'adapter_config.json'
+            adapter_config.write_text(json.dumps({'base_model_name_or_path': runner.EXP0015_BASE,
+                                                 'r': 64, 'use_rslora': True, 'lora_alpha': 64}))
+            api = Mock()
+            api.model_info.side_effect = [types.SimpleNamespace(sha=runner.EXP0015_REVISION),
+                                         types.SimpleNamespace(sha=runner.EXP0015_BASE_REVISION)]
+            snapshot = Mock(return_value='/adapter')
+            hub = types.SimpleNamespace(HfApi=Mock(return_value=api),
+                                        hf_hub_download=Mock(return_value=str(adapter_config)),
+                                        snapshot_download=snapshot)
+            tokenizer = Mock()
+            tokenizer.decode.return_value = '</think>Final Answer: B'
+            engine = Mock()
+            engine.get_tokenizer.return_value = tokenizer
+            engine.chat.return_value = [types.SimpleNamespace(outputs=[
+                types.SimpleNamespace(token_ids=[1], finish_reason='stop')])]
+            vllm = types.SimpleNamespace(LLM=Mock(return_value=engine), SamplingParams=Mock(), __version__='test')
+            lora = types.SimpleNamespace(LoRARequest=Mock(return_value='final-sft-adapter'))
+            args = types.SimpleNamespace(model='exp0015', benchmark='include', limit=0,
+                output_dir=Path(directory), max_input_tokens=4096, max_new_tokens=32768,
+                max_num_seqs=8, gpu_memory_utilization=.70, enforce_eager=True, protocol='thinking')
+            row = {'question': 'Q', 'options': ['a', 'b', 'c', 'd'], 'answer': 'B'}
+            with patch.dict(sys.modules, {'huggingface_hub': hub, 'vllm': vllm,
+                                         'vllm.lora.request': lora}), \
+                 patch.object(runner, 'source_rows', return_value=([row], {'total_rows': 1})):
+                self.assertEqual(runner.run(args), 0)
+            self.assertEqual(vllm.LLM.call_args.kwargs['model'], runner.EXP0015_BASE)
+            self.assertEqual(vllm.LLM.call_args.kwargs['revision'], runner.EXP0015_BASE_REVISION)
+            self.assertEqual(vllm.LLM.call_args.kwargs['max_lora_rank'], 64)
+            self.assertTrue(vllm.LLM.call_args.kwargs['enable_lora'])
+            snapshot.assert_called_once()
+            self.assertEqual(snapshot.call_args.kwargs['revision'], runner.EXP0015_REVISION)
+            lora.LoRARequest.assert_called_once_with('exp0015', 1, '/adapter')
+            self.assertEqual(engine.chat.call_args.kwargs['lora_request'], 'final-sft-adapter')
+            self.assertEqual(engine.chat.call_args.kwargs['chat_template_kwargs'], {'enable_thinking': True})
+            manifest = json.loads((Path(directory) / 'exp0015/include/run_config.json').read_text())
+            self.assertEqual(manifest['cpt_source_revision'], runner.EXP0015_CPT_REVISION)
+            self.assertEqual(manifest['decoding']['max_new_tokens'], 32768)
+            self.assertEqual(manifest['base_model'], runner.EXP0015_BASE)
+
+
 if __name__ == '__main__':
     unittest.main()

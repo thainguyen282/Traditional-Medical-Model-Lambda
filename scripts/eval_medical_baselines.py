@@ -19,6 +19,7 @@ import time
 
 ROOT = Path(__file__).resolve().parent.parent
 MODELS = {
+    "exp0015": "Maverfrick/Venera-Traditional-Model",
     "medgemma": "google/medgemma-1.5-4b-it",
     "huatuo": "FreedomIntelligence/HuatuoGPT-o1-8B",
     "qwen3-4b": "Qwen/Qwen3-4B-Instruct-2507",
@@ -31,6 +32,22 @@ MODELS = {
     "medreason": "UCSC-VLAA/MedReason-8B",
     "baichuan-m2-32b": "baichuan-inc/Baichuan-M2-32B",
 }
+EXP0015_REVISION = "06fc5e88287113fc29b1cdf236dd294260272daa"
+EXP0015_BASE = "unsloth/Qwen3-4B-Thinking-2507"
+EXP0015_BASE_REVISION = "fb56efbd0f60c5bcd531901fa5fe3ee3157b5135"
+
+
+def validate_exp0015(token):
+    from huggingface_hub import HfApi, hf_hub_download
+    api = HfApi(token=token)
+    api.model_info(MODELS["exp0015"], revision=EXP0015_REVISION)
+    config = json.loads(Path(hf_hub_download(MODELS["exp0015"], "adapter_config.json",
+                         revision=EXP0015_REVISION, token=token)).read_text())
+    if config["base_model_name_or_path"] != EXP0015_BASE or config["r"] != 64:
+        raise ValueError("Unexpected exp0015 base or adapter rank")
+    api.model_info(EXP0015_BASE, revision=EXP0015_BASE_REVISION)
+    return config
+
 DATASETS = {
     "new": ("tcm_mcq.jsonl", "Unsloth_QA_goc_new.ipynb"),
     "vm14k": ("eastern_medicine_VM14K.jsonl", "Unsloth_QA_goc_VM14K.ipynb"),
@@ -146,6 +163,11 @@ def check_access(models: list[str], token: str | None) -> dict[str, str]:
     revisions = {}
     for key in models:
         repo = MODELS[key]
+        if key == "exp0015":
+            validate_exp0015(token)
+            revisions[key] = EXP0015_REVISION
+            print(f"[medical-eval] access OK: {repo}@{EXP0015_REVISION}", flush=True)
+            continue
         headers = {"Authorization": f"Bearer {token}"} if token else {}
         response = requests.get(
             f"https://huggingface.co/{repo}/resolve/main/config.json",
@@ -201,6 +223,12 @@ def load_model(key: str, revision: str, token: str | None):
     if not torch.cuda.is_available():
         raise RuntimeError("A CUDA GPU is required for the 4-bit baseline evaluation")
     repo = MODELS[key]
+    adapter = key == "exp0015"
+    if adapter:
+        if revision != EXP0015_REVISION:
+            raise ValueError("exp0015 requires the pinned final CPT-SFT revision")
+        validate_exp0015(token)
+        repo = EXP0015_BASE
     loader = Gemma3ForConditionalGeneration if key == "medgemma" else AutoModelForCausalLM
     processor = None
     if key == "gemma4-e2b":
@@ -208,7 +236,7 @@ def load_model(key: str, revision: str, token: str | None):
         loader = Gemma4ForConditionalGeneration
         processor = AutoProcessor.from_pretrained(repo, revision=revision, token=token)
     model = loader.from_pretrained(
-        repo, revision=revision, token=token,
+        repo, revision=EXP0015_BASE_REVISION if adapter else revision, token=token,
         torch_dtype=torch.bfloat16, device_map={"": 0},
         attn_implementation="sdpa",
         quantization_config=BitsAndBytesConfig(
@@ -216,8 +244,12 @@ def load_model(key: str, revision: str, token: str | None):
             bnb_4bit_use_double_quant=True, bnb_4bit_compute_dtype=torch.bfloat16,
         ),
     )
+    if adapter:
+        from peft import PeftModel
+        model = PeftModel.from_pretrained(model, MODELS[key], revision=revision,
+                                          token=token, is_trainable=False)
     tokenizer = (processor.tokenizer if processor is not None else
-                 AutoTokenizer.from_pretrained(repo, revision=revision, token=token))
+                 AutoTokenizer.from_pretrained(repo, revision=EXP0015_BASE_REVISION if adapter else revision, token=token))
     tokenizer.padding_side = "left"
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -255,16 +287,26 @@ def answer_constraint(tokenizer, samples, input_length, eos_ids, max_new_tokens)
     return allowed_tokens
 
 
+def format_generation_prompt(formatter, sample, protocol):
+    direct = protocol["generation_mode"] == "direct"
+    text = formatter.apply_chat_template(
+        [{"role": "user", "content": build_prompt(sample, protocol["system_prompt"])}],
+        tokenize=False, add_generation_prompt=True,
+        **({"enable_thinking": False} if direct else {}))
+    if direct:
+        # Thinking-2507 ignores enable_thinking=False and opens this block.
+        if text.rstrip().endswith("<think>"):
+            text += "</think>\n\n"
+        text += ANSWER_PREFIX
+    return text
+
+
 def generate_batch(model, tokenizer, samples: list[dict], protocol: dict, processor=None) -> list[dict]:
     import torch
 
     direct = protocol["generation_mode"] == "direct"
     formatter = processor if processor is not None else tokenizer
-    texts = [formatter.apply_chat_template(
-        [{"role": "user", "content": build_prompt(sample, protocol["system_prompt"])}],
-        tokenize=False, add_generation_prompt=True,
-        **({"enable_thinking": False} if direct else {}),
-    ) + (ANSWER_PREFIX if direct else "") for sample in samples]
+    texts = [format_generation_prompt(formatter, sample, protocol) for sample in samples]
     if direct:
         # Preserve the assistant prefill if a question exceeds the input budget.
         tokenizer.truncation_side = "left"
@@ -457,6 +499,10 @@ def evaluate(key: str, dataset: str, revision: str, args) -> None:
         chat_template_kwargs={"enable_thinking": False} if args.generation_mode == "direct" else {},
         protocol_label="constrained answer-only MCQ evaluation" if args.generation_mode == "direct" else "notebook generation",
     )
+    if key == "exp0015":
+        metadata.update(base_model=EXP0015_BASE, base_revision=EXP0015_BASE_REVISION,
+                        adapter_composition="final CPT-SFT adapter applied once",
+                        thinking_prompt_closed=args.generation_mode == "direct")
     manifest = output / "run_config.json"
     manifest.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     from transformers import set_seed
@@ -551,7 +597,8 @@ def main() -> int:
     if args.check_access:
         return 0
     check_runtime(models)
-    if args.vm14k_baselines and args.limit == 0:
+    if (args.vm14k_baselines or (models == ["exp0015"] and datasets == ["vm14k"]
+                               and args.generation_mode == "direct")) and args.limit == 0:
         smoke_args = copy.copy(args)
         smoke_args.limit = 4
         smoke_args.output_dir = args.output_dir / "smoke"
