@@ -5,7 +5,7 @@ Results are drawn from saved completed summaries in this output directory. CPT-S
 | Benchmark | Qwen3-4B-Thinking-2507 | CPT-SFT exp0015 | 
 | --- | --- | --- | 
 | INCLUDE (550 questions) | 60.18% (331/550) | 10.91% (60/550) | 
-| mLogiQA (80 questions) | 68.3% (55\80) | 26.25% (21/80) | 
+| mLogiQA (80 questions) | 68.3% (55/80) | 26.25% (21/80) | 
 | MT-AIME24 (30 questions) | 76.67% (23/30) | 0.00% (0/30) | 
 | PolyMath (500 questions) | 59.80% (299/500) | 12% (60/500) | 
 | Medical VM14K (564 questions) | 40.81 (230/564) | 62.77% (354/564) | 
