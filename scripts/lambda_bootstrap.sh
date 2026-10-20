@@ -360,7 +360,19 @@ run_medical_eval() {
             || return 1
         eval_python="/workspace/.venv-baselines/bin/python"
     fi
-    if [ -n "${EVAL_GENERAL_VI:-}" ] && [ "${EVAL_BACKEND:-transformers}" = "vllm" ]; then
+    # Test the exact evaluation interpreter, including a real allocation:
+    # is_available() alone does not establish that a CUDA context is usable.
+    if ! in_docker "mkdir -p '$output_dir' && set -o pipefail; {
+        echo '----- evaluation GPU preflight -----'
+        nvidia-smi &&
+        $eval_python -c 'import torch; print(\"torch:\", torch.__version__, \"CUDA build:\", torch.version.cuda, flush=True); torch.cuda.init(); print(\"GPU:\", torch.cuda.get_device_name(0), flush=True); x = torch.ones(1, device=\"cuda\"); print(\"CUDA allocation result:\", x.cpu().item(), flush=True); torch.cuda.synchronize()'
+    } 2>&1 | tee '$output_dir/gpu-preflight.log'"; then
+        echo "[bootstrap] ERROR: evaluation CUDA preflight failed; skipping model downloads"
+        failed=1
+    fi
+    if [ "$failed" -ne 0 ]; then
+        echo "[bootstrap] GPU diagnostics will be uploaded with the job log"
+    elif [ -n "${EVAL_GENERAL_VI:-}" ] && [ "${EVAL_BACKEND:-transformers}" = "vllm" ]; then
         for model in $EVAL_MEDICAL_MODELS; do
           for dataset in $EVAL_DATASETS; do
             in_docker "$eval_python /workspace/scripts/eval_general_vi_vllm.py \
