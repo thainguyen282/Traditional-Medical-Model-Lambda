@@ -52,12 +52,18 @@ class VllmGeneralTests(unittest.TestCase):
 
 
     def test_exp0015_uses_final_adapter_once_on_pinned_underlying_base(self):
+        self._check_thinking_adapter('exp0015', runner.EXP0015_REVISION)
+
+    def test_cpt_only_uses_pinned_adapter_with_baseline_thinking_settings(self):
+        self._check_thinking_adapter('qwen3-4b-thinking-cpt', runner.EXP0015_CPT_REVISION)
+
+    def _check_thinking_adapter(self, model, revision):
         with tempfile.TemporaryDirectory() as directory:
             adapter_config = Path(directory) / 'adapter_config.json'
             adapter_config.write_text(json.dumps({'base_model_name_or_path': runner.EXP0015_BASE,
                                                  'r': 64, 'use_rslora': True, 'lora_alpha': 64}))
             api = Mock()
-            api.model_info.side_effect = [types.SimpleNamespace(sha=runner.EXP0015_REVISION),
+            api.model_info.side_effect = [types.SimpleNamespace(sha=revision),
                                          types.SimpleNamespace(sha=runner.EXP0015_BASE_REVISION)]
             snapshot = Mock(return_value='/adapter')
             hub = types.SimpleNamespace(HfApi=Mock(return_value=api),
@@ -71,7 +77,7 @@ class VllmGeneralTests(unittest.TestCase):
                 types.SimpleNamespace(token_ids=[1], finish_reason='stop')])]
             vllm = types.SimpleNamespace(LLM=Mock(return_value=engine), SamplingParams=Mock(), __version__='test')
             lora = types.SimpleNamespace(LoRARequest=Mock(return_value='final-sft-adapter'))
-            args = types.SimpleNamespace(model='exp0015', benchmark='include', limit=0,
+            args = types.SimpleNamespace(model=model, benchmark='include', limit=0,
                 output_dir=Path(directory), max_input_tokens=4096, max_new_tokens=32768,
                 max_num_seqs=8, gpu_memory_utilization=.70, enforce_eager=True, protocol='thinking')
             row = {'question': 'Q', 'options': ['a', 'b', 'c', 'd'], 'answer': 'B'}
@@ -84,12 +90,16 @@ class VllmGeneralTests(unittest.TestCase):
             self.assertEqual(vllm.LLM.call_args.kwargs['max_lora_rank'], 64)
             self.assertTrue(vllm.LLM.call_args.kwargs['enable_lora'])
             snapshot.assert_called_once()
-            self.assertEqual(snapshot.call_args.kwargs['revision'], runner.EXP0015_REVISION)
-            lora.LoRARequest.assert_called_once_with('exp0015', 1, '/adapter')
+            self.assertEqual(snapshot.call_args.kwargs['revision'], revision)
+            lora.LoRARequest.assert_called_once_with(model, 1, '/adapter')
             self.assertEqual(engine.chat.call_args.kwargs['lora_request'], 'final-sft-adapter')
             self.assertEqual(engine.chat.call_args.kwargs['chat_template_kwargs'], {'enable_thinking': True})
-            manifest = json.loads((Path(directory) / 'exp0015/include/run_config.json').read_text())
-            self.assertEqual(manifest['cpt_source_revision'], runner.EXP0015_CPT_REVISION)
+            manifest = json.loads((Path(directory) / model / 'include/run_config.json').read_text())
+            if model == 'exp0015':
+                self.assertEqual(manifest['cpt_source_revision'], runner.EXP0015_CPT_REVISION)
+            else:
+                self.assertEqual(manifest['model_revision'], runner.EXP0015_CPT_REVISION)
+                self.assertEqual(manifest['adapter_composition'], 'CPT-only adapter; apply once')
             self.assertEqual(manifest['decoding']['max_new_tokens'], 32768)
             self.assertEqual(manifest['base_model'], runner.EXP0015_BASE)
 

@@ -15,7 +15,8 @@ from eval_general_vi import (BENCHMARKS, SCORER_COMMIT, boxed, export_comparison
                              source_rows as general_source_rows)
 from eval_medical_baselines import (MODELS as BASELINE_MODELS, build_prompt, prepare_dataset)
 
-MODELS = {**BASELINE_MODELS, "exp0015": "Maverfrick/Venera-Traditional-Model"}
+MODELS = {**BASELINE_MODELS, "exp0015": "Maverfrick/Venera-Traditional-Model",
+          "qwen3-4b-thinking-cpt": "Maverfrick/Venera-CPT-TMModel"}
 EXP0015_REVISION = "06fc5e88287113fc29b1cdf236dd294260272daa"
 EXP0015_BASE = "unsloth/Qwen3-4B-Thinking-2507"
 EXP0015_BASE_REVISION = "fb56efbd0f60c5bcd531901fa5fe3ee3157b5135"
@@ -23,7 +24,7 @@ EXP0015_CPT_REVISION = "e0589a27e7b66bcbd9cfd8b709c0785d18bf0bf5"
 
 ROOT = Path(__file__).resolve().parents[1]
 THINKING_MODEL_KEYS = ("qwen3-4b-thinking-2507", "gemma4-e2b")
-MODEL_KEYS = (*THINKING_MODEL_KEYS, "qwen3-4b-cpt", "exp0015")
+MODEL_KEYS = (*THINKING_MODEL_KEYS, "qwen3-4b-cpt", "exp0015", "qwen3-4b-thinking-cpt")
 
 
 EVALUATION_BENCHMARKS = (*BENCHMARKS, "vm14k")
@@ -83,23 +84,24 @@ def run(args):
     math_equal = get_math_scorer(ROOT / "cache" / "general_vi") if is_math else None
     rows = rows[:args.limit] if args.limit else rows
     requested_revision = (getattr(args, "revision", None) or
-                          (EXP0015_REVISION if args.model == "exp0015" else None))
+                          (EXP0015_REVISION if args.model == "exp0015" else
+                           EXP0015_CPT_REVISION if args.model == "qwen3-4b-thinking-cpt" else None))
     revision = HfApi(token=token).model_info(MODELS[args.model], revision=requested_revision).sha
     engine_model, engine_revision = MODELS[args.model], revision
     lora_request = None
     lora_kwargs = {}
     is_cpt = args.model == "qwen3-4b-cpt"
-    is_adapter = args.model in ("qwen3-4b-cpt", "exp0015")
+    is_adapter = args.model in ("qwen3-4b-cpt", "exp0015", "qwen3-4b-thinking-cpt")
     if is_adapter:
         from vllm.lora.request import LoRARequest
         adapter_config = json.loads(Path(hf_hub_download(
             MODELS[args.model], "adapter_config.json", revision=revision, token=token)).read_text())
         engine_model = adapter_config["base_model_name_or_path"]
-        expected_base = EXP0015_BASE if args.model == "exp0015" else "unsloth/Qwen3-4B-Instruct-2507"
+        expected_base = EXP0015_BASE if not is_cpt else "unsloth/Qwen3-4B-Instruct-2507"
         if engine_model != expected_base:
             raise ValueError(f"Unexpected CPT base: {engine_model}; verify its protocol before evaluation")
         engine_revision = HfApi(token=token).model_info(
-            engine_model, revision=EXP0015_BASE_REVISION if args.model == "exp0015" else None).sha
+            engine_model, revision=EXP0015_BASE_REVISION if not is_cpt else None).sha
         adapter_path = snapshot_download(MODELS[args.model], revision=revision, token=token,
                                         allow_patterns=["adapter_config.json", "adapter_model.safetensors"])
         lora_request = LoRARequest(args.model, 1, adapter_path)
@@ -129,6 +131,9 @@ def run(args):
         manifest.update(cpt_source="Maverfrick/Venera-CPT-TMModel",
                         cpt_source_revision=EXP0015_CPT_REVISION,
                         adapter_composition="CPT adapter continued by SFT; apply final adapter once",
+                        adapter_config=adapter_config)
+    if args.model == "qwen3-4b-thinking-cpt":
+        manifest.update(adapter_composition="CPT-only adapter; apply once",
                         adapter_config=adapter_config)
     config_path = target / "run_config.json"
     config_path.write_text(json.dumps(manifest, indent=2) + "\n")

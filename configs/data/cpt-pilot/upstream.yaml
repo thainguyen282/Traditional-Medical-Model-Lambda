@@ -1,0 +1,44 @@
+seed: 42
+max_domain_tokens: null
+max_scan_documents: 2000000
+min_replay_documents: 32
+replay_headroom: 1.25
+excluded_source_ids: []
+sources:
+- bucket: domain
+  repo: venera-ai/TradMed-CPT-53k-2048
+  revision: c708ab848892fa6944720aab549983a5830c8226
+  selection_notes: All train/validation chunks; group original source documents.
+- bucket: fineweb
+  repo: HuggingFaceFW/fineweb-edu
+  revision: 87f09149ef4734204d70ed1d046ddc9ca3f2b8f9
+  config: sample-10BT
+  min_quality_score: 3
+  selection_notes: Deterministic sample-10BT stream; educational score >= 3.
+- bucket: dolma
+  repo: allenai/dolma
+  revision: 7f48140530a023e9ea4c5cfb141160922727d4d3
+  url_list: urls/v1_7.txt
+  allowed_components:
+  - books
+  - encyclopedia
+  selection_notes: Interleaved Dolma v1.7 books and wiki from the pinned URL listing;
+    exported content hashes recorded.
+- bucket: math
+  repo: open-web-math/open-web-math
+  revision: fde8ef8de2300f5e778f56261843dab89f230815
+  selection_notes: Deterministic upstream mathematical text stream; VM14K decontamination
+    follows.
+- bucket: code
+  repo: bigcode/the-stack-v2
+  revision: e565caa3a78c2423bd374333a472b049eb090e47
+  allowed_licenses:
+  - MIT
+  - Apache-2.0
+  - BSD-2-Clause
+  - BSD-3-Clause
+  allowed_languages:
+  - Python
+  selection_notes: Permissive Python files only; all detected licenses allowlisted;
+    generated/vendor code excluded before SWH S3 hydration.
+  config: Python

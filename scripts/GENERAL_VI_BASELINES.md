@@ -2,6 +2,15 @@
 
 Completed measured run: [October 9 MLogiQA report](../markdown/REPORT_MLOGIQA_20261009.md).
 
+## Local Thinking CPT-only run
+
+Use [the local CPT setup](CPT_GENERAL_VI_LOCAL.md) to evaluate the pinned
+`Maverfrick/Venera-CPT-TMModel` Thinking adapter with the saved base settings:
+
+```bash
+bash scripts/run_cpt_general_vi_local.sh --output-dir EVAL/outputs/general_vi_cpt/local-full-20261020
+```
+
 ## All four benchmarks with vLLM
 
 The vLLM backend supports MLogiQA, INCLUDE, MT-AIME24, and PolyMath.

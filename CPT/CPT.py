@@ -23,6 +23,11 @@ if cli.config:
 if cli.print_config:
     print(json.dumps(config, indent=2))
     raise SystemExit(0)
+if config.get("pilot", {}).get("enabled"):
+    from train_pilot import train
+    train(config)
+    raise SystemExit(0)
+
 model_config = config.get("model", {})
 data_config = config.get("dataset", {})
 unsloth_config = config.get("unsloth", {})

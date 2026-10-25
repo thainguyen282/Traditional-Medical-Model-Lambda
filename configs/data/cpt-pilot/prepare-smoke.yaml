@@ -1,0 +1,8 @@
+seed: 42
+tokenizer:
+  name: Qwen/Qwen3.5-4B
+  revision: 851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a
+data:
+  source_manifest: CPT/pilot_data/smoke/sources.json
+  output_dir: CPT/pilot_data/smoke/prepared
+  acquisition_config: configs/data/cpt-pilot/upstream-smoke.yaml
