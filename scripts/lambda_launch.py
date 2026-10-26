@@ -270,7 +270,7 @@ def copy_medical_eval_bundle(key: str, ip: str, datasets: list[str], general_vi:
             files.update({f"EVAL/Data/{filename}", f"EVAL/{notebook}"})
         if "vm14k-full" in datasets:
             files.add(f"EVAL/Data/{DATASETS['vm14k'][0]}")
-    with tempfile.TemporaryDirectory(prefix="medical-eval-", dir=local_temp_root()) as directory:
+    with tempfile.TemporaryDirectory(prefix="medical-eval-") as directory:
         bundle = Path(directory) / "medical_eval_bundle.tar.gz"
         with tarfile.open(bundle, "w:gz") as archive:
             for name in sorted(files):
@@ -282,7 +282,7 @@ def copy_new_cpt_bundle(key: str, ip: str) -> None:
     root = Path(__file__).resolve().parent.parent
     files = ("CPT/train_new_bases.py", "requirements-cpt-new.txt",
              "requirements-baselines.txt")
-    with tempfile.TemporaryDirectory(prefix="new-cpt-", dir=local_temp_root()) as directory:
+    with tempfile.TemporaryDirectory(prefix="new-cpt-") as directory:
         bundle = Path(directory) / "new_cpt_bundle.tar.gz"
         with tarfile.open(bundle, "w:gz") as archive:
             for name in files:
@@ -290,68 +290,56 @@ def copy_new_cpt_bundle(key: str, ip: str) -> None:
         scp_to(key, ip, str(bundle), "/home/ubuntu/new_cpt_bundle.tar.gz")
 
 
-def local_temp_root() -> Path:
-    """Keep launcher temporary files inside the repository, including secrets."""
-    directory = Path(__file__).resolve().parents[1] / ".cache" / "lambda"
+def qwen35_temp_root() -> Path:
+    directory = Path(__file__).resolve().parents[1] / '.cache/lambda'
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     return directory
 
 
-def build_cpt_pilot_bundle(config_path: str, baseline: bool, destination: Path) -> dict:
-    """Only explicitly selected code, frozen evaluation, and prepared data; no secrets."""
-    from cpt_pilot import preflight
-    config = preflight(config_path, baseline, launch=True)
+def build_qwen35_bundle(config_path: str, destination: Path) -> dict:
     root = Path(__file__).resolve().parents[1]
-    config_file = Path(config_path).resolve()
-    if not config_file.is_relative_to(root):
-        raise ValueError("Pilot config must be inside the repository")
-    names = {"CPT/CPT.py", "CPT/train_pilot.py", "CPT/pilot_data.py",
-             "scripts/cpt_pilot.py", "scripts/eval_medical_baselines.py",
-             "scripts/lambda_bootstrap.sh", "requirements-cpt-pilot.txt", "requirements-cpt-pilot.lock.txt",
-             "EVAL/Data/eastern_medicine_VM14K.jsonl", "EVAL/Unsloth_QA_goc_VM14K.ipynb",
-             str(config_file.relative_to(root))}
-    if not baseline and config["pilot"].get("preparation_config"):
-        from cpt_pilot import preparation_inputs
-        _, preparation_files = preparation_inputs(config)
-        names.update(preparation_files)
-    elif not baseline:
-        prepared = root / config["pilot"]["prepared_dir"]
-        names.add(str((prepared / "preparation.json").relative_to(root)))
-        names.update(str(file.relative_to(root)) for file in prepared.glob("*-*.jsonl"))
-    files = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in sorted(names)}
-    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root,
-                            capture_output=True, text=True, check=True).stdout.strip()
-    manifest = {"git_revision": commit, "files": files,
-                "config": str(config_file.relative_to(root)), "baseline": baseline}
-    with tarfile.open(destination, "w:gz") as archive:
-        for name in sorted(names):
-            archive.add(root / name, arcname=name, recursive=False)
-        content = json.dumps(manifest, indent=2).encode()
-        entry = tarfile.TarInfo("CPT/pilot_source.json")
-        entry.size = len(content)
+    sys.path.insert(0, str(root / 'CPT'))
+    from qwen35_common import load_config
+    config_path = Path(config_path).resolve()
+    if not config_path.is_relative_to(root):
+        raise ValueError('Qwen3.5 configs must be inside the repository')
+    config = load_config(config_path)
+    names = ['CPT/qwen35_common.py', 'CPT/train_qwen35.py', 'CPT/eval_qwen35_vm14k.py',
+             'requirements-qwen35.txt', 'scripts/eval_medical_baselines.py', 'scripts/lambda_bootstrap.sh',
+             'EVAL/Data/eastern_medicine_VM14K.jsonl', 'EVAL/Unsloth_QA_goc_VM14K.ipynb',
+             str(config_path.relative_to(root))]
+    files = {name: hashlib.sha256((root/name).read_bytes()).hexdigest() for name in names}
+    metadata = {'git_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
+                'files': files, 'config': str(config_path.relative_to(root)), 'name': config['name']}
+    with tarfile.open(destination, 'w:gz') as archive:
+        for name in names:
+            archive.add(root/name, arcname=name, recursive=False)
+        content = json.dumps(metadata, indent=2).encode()
+        entry = tarfile.TarInfo('CPT/qwen35_source.json'); entry.size = len(content)
         archive.addfile(entry, io.BytesIO(content))
-    manifest["bundle_sha256"] = hashlib.sha256(destination.read_bytes()).hexdigest()
-    return manifest
+    metadata['bundle_sha256'] = hashlib.sha256(destination.read_bytes()).hexdigest()
+    return metadata
 
 
-def download_cpt_pilot_backup(key: str, ip: str, job_tag: str) -> Path:
-    repo = f"/home/ubuntu/{REMOTE_REPO_DIR}"
-    remote = f"/home/ubuntu/{job_tag}-cpt-pilot.tar.gz"
-    command = (f"cd {shlex.quote(repo)} && paths=(); "
-               "for p in CPT/pilot_outputs CPT/pilot_runs CPT/pilot_data CPT/pilot_source.json; do "
-               "if [ -e \"$p\" ]; then paths+=(\"$p\"); fi; done; "
-               f"sudo tar -czf {shlex.quote(remote)} \"${{paths[@]}}\" "
-               "-C /home/ubuntu train.log && "
-               f"sudo chmod 644 {shlex.quote(remote)}")
-    ssh_cmd(key, ip, "bash -lc " + shlex.quote(command))
-    destination = Path("logs") / job_tag / "cpt-pilot.tar.gz"
+def download_qwen35_backup(key: str, ip: str, job_tag: str) -> Path | None:
+    repo = f'/home/ubuntu/{REMOTE_REPO_DIR}'
+    archive = f'/home/ubuntu/{job_tag}-qwen35-backup.tar.gz'
+    if ssh_cmd(key, ip, 'test -f /home/ubuntu/train.log', check=False, capture=True).returncode:
+        return None
+    command = (f'cd {shlex.quote(repo)} && paths=(); '
+               'for p in CPT/qwen35_outputs CPT/qwen35_source.json; do '
+               'if [ -e "$p" ]; then paths+=("$p"); fi; done; '
+               f'sudo tar -czf {shlex.quote(archive)} "${{paths[@]}}" -C /home/ubuntu train.log && '
+               f'sudo chmod 644 {shlex.quote(archive)}')
+    ssh_cmd(key, ip, 'bash -lc '+shlex.quote(command))
+    destination = Path('logs')/job_tag/'qwen35-backup.tar.gz'
     destination.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["scp", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null",
-                    "-o", "ConnectTimeout=15", "-i", key,
-                    f"{REMOTE_USER}@{ip}:{remote}", str(destination)], check=True, timeout=1800)
-    with tarfile.open(destination) as archive:
-        if "train.log" not in archive.getnames():
-            raise RuntimeError("CPT backup missing train.log")
+    subprocess.run(['scp', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null',
+                    '-o', 'ConnectTimeout=15', '-i', key,
+                    f'{REMOTE_USER}@{ip}:{archive}', str(destination)], check=True, timeout=1800)
+    with tarfile.open(destination) as saved:
+        if 'train.log' not in saved.getnames():
+            raise RuntimeError('Qwen3.5 backup is missing train.log')
     return destination
 
 
@@ -434,8 +422,7 @@ def run_job(
 ) -> int:
     region = find_region_for(api, instance_type, region)
     log(f"launching {instance_type} in region {region}")
-    suffix = time.time_ns() if env_vars.get("CPT_PILOT") else int(time.time())
-    job_tag = f"tm-{task}-{suffix}"
+    job_tag = f"tm-{task}-{int(time.time())}"
     instance_id = api.launch(region, instance_type, [ssh_key_name], name=job_tag)
     log(f"instance_id={instance_id}")
 
@@ -454,22 +441,18 @@ def run_job(
                "/home/ubuntu/lambda_bootstrap.sh")
         scp_to(ssh_private_key, ip, str(scripts_dir / "lambda_push_to_hf.py"),
                "/home/ubuntu/lambda_push_to_hf.py")
-        if env_vars.get("CPT_PILOT"):
-            with tempfile.TemporaryDirectory(prefix="cpt-pilot-", dir=local_temp_root()) as directory:
-                bundle = Path(directory) / "cpt_pilot.tar.gz"
-                manifest = build_cpt_pilot_bundle(configs[0], bool(env_vars.get("CPT_PILOT_BASELINE")), bundle)
-                env_vars["CPT_PILOT_BUNDLE_SHA256"] = manifest["bundle_sha256"]
-                configs = [manifest["config"]]
-                scp_to(ssh_private_key, ip, str(bundle), "/home/ubuntu/cpt_pilot.tar.gz")
-                local = Path("logs") / job_tag
-                local.mkdir(parents=True, exist_ok=True)
-                (local / "source_manifest.json").write_text(json.dumps(manifest, indent=2))
-                (local / "run.json").write_text(json.dumps({"job_tag": job_tag,
-                    "instance_id": instance_id,
-                    "artifact_url": f"https://huggingface.co/{env_vars['HF_CPT_REPO']}/tree/cpt-pilot-{job_tag}"}, indent=2))
+        if env_vars.get('CPT_QWEN35'):
+            with tempfile.TemporaryDirectory(prefix='qwen35-source-', dir=qwen35_temp_root()) as directory:
+                bundle = Path(directory)/'qwen35_source.tar.gz'
+                source = build_qwen35_bundle(configs[0], bundle)
+                env_vars['QWEN35_BUNDLE_SHA256'] = source['bundle_sha256']
+                configs = [source['config']]
+                scp_to(ssh_private_key, ip, str(bundle), '/home/ubuntu/qwen35_source.tar.gz')
+                local = Path('logs')/job_tag; local.mkdir(parents=True, exist_ok=True)
+                (local/'source_manifest.json').write_text(json.dumps(source, indent=2))
         if task == "sft":
             root = scripts_dir.parent
-            with tempfile.TemporaryDirectory(prefix="sft-source-", dir=local_temp_root()) as directory:
+            with tempfile.TemporaryDirectory(prefix="sft-source-") as directory:
                 bundle = Path(directory) / "sft_source.tar.gz"
                 with tarfile.open(bundle, "w:gz") as archive:
                     for name in ("main.py", "src", "configs"):
@@ -502,7 +485,7 @@ def run_job(
             "GIT_BRANCH": git_branch,
         }
         env_body = render_env_file(remote_env)
-        env_path = local_temp_root() / f"{job_tag}.env"
+        env_path = (qwen35_temp_root() if env_vars.get('CPT_QWEN35') else Path("/tmp")) / f"{job_tag}.env"
         env_path.write_text(env_body)
         try:
             os.chmod(env_path, 0o600)
@@ -586,11 +569,11 @@ def run_job(
                 log("Leaving the instance running to preserve outputs; billing continues.")
                 keep_alive = True
                 exit_code = 2
-        if env_vars.get("CPT_PILOT") and ip:
+        if env_vars.get('CPT_QWEN35') and ip:
             try:
-                download_cpt_pilot_backup(ssh_private_key, ip, job_tag)
+                download_qwen35_backup(ssh_private_key, ip, job_tag)
             except (Exception, KeyboardInterrupt) as error:
-                log(f"ERROR: CPT pilot backup failed: {error}; check HF artifacts in job log")
+                log(f'ERROR: Qwen3.5 backup failed: {error}; cleanup still follows --keep-alive')
                 exit_code = 2
         if baseline_started:
             try:
@@ -653,10 +636,6 @@ def main() -> int:
                              "'SFT-exp0002|huyennkai/Venera-Traditional-Model|"
                              "sft-unsloth-qwen3-4B-exp0002-tm-sft-1777957925|sft'")
     parser.add_argument("--config", help="Path to a single SFT or CPT config yaml")
-    parser.add_argument("--cpt-pilot-baseline", action="store_true",
-                        help="With --task eval --config PILOT, evaluate only the pinned original on VM14K")
-    parser.add_argument("--cpt-pilot-smoke", action="store_true",
-                        help="With a pilot smoke config, evaluate only 2 VM14K questions")
     parser.add_argument("--cpt-new-model", choices=["qwen3-4b-thinking-2507", "gemma4-e2b"],
                         help="Train a separate CPT LoRA on this base instead of legacy CPT.py")
     parser.add_argument("--cpt-max-steps", type=int, default=-1,
@@ -705,33 +684,6 @@ def main() -> int:
     parser.add_argument("--inference-revision", default=None,
                         help="(inference task) HF revision to pass as --revision to the inference script")
     args = parser.parse_args()
-    pilot_config = None
-    if args.config:
-        import yaml
-        candidate = yaml.safe_load(Path(args.config).read_text())
-        if candidate.get("pilot", {}).get("enabled"):
-            from cpt_pilot import preflight
-            if args.task not in ("cpt", "eval") or (args.task == "eval") != args.cpt_pilot_baseline:
-                parser.error("Pilot requires --task cpt, or --task eval --cpt-pilot-baseline")
-            if args.cpt_new_model or args.baselines or args.general_vi or args.eval_only:
-                parser.error("Pilot cannot be combined with legacy model/evaluation selectors")
-            try:
-                pilot_config = preflight(args.config, args.cpt_pilot_baseline, launch=True)
-                if not args.cpt_pilot_baseline and pilot_config["pilot"].get("preparation_config"):
-                    from cpt_pilot import preparation_inputs
-                    preparation, _ = preparation_inputs(pilot_config)
-                    if preparation["data"].get("acquisition_config"):
-                        from fetch_cpt_sources import require_code_credentials
-                        require_code_credentials()
-            except Exception as error:
-                parser.error(f"Pilot preflight failed before allocating a GPU: {error}")
-            max_steps = pilot_config["training"].get("max_steps", -1)
-            if args.cpt_pilot_smoke and (args.cpt_pilot_baseline or not 0 < max_steps <= 2):
-                parser.error("--cpt-pilot-smoke requires a CPT pilot config with max_steps 1 or 2")
-            if not args.cpt_pilot_smoke and max_steps > 0:
-                parser.error("A partial-budget pilot requires --cpt-pilot-smoke")
-    if (args.cpt_pilot_baseline or args.cpt_pilot_smoke) and pilot_config is None:
-        parser.error("Pilot options require --config pointing to a pilot config")
     if args.cpt_new_model and args.task != "cpt":
         parser.error("--cpt-new-model requires --task cpt")
     if args.cpt_max_steps != -1 and (not args.cpt_new_model or args.cpt_max_steps < 1):
@@ -836,6 +788,26 @@ def main() -> int:
         except Exception as error:
             die(f"baseline preflight failed before launching a GPU: {error}")
 
+    qwen35_config = None
+    if args.task == 'cpt' and args.config:
+        import yaml
+        candidate = yaml.safe_load(Path(args.config).read_text())
+        if candidate.get('pipeline', {}).get('implementation') == 'CPT/train_qwen35.py':
+            if args.cpt_new_model:
+                parser.error('Qwen3.5 configs cannot be combined with --cpt-new-model')
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'CPT'))
+            from qwen35_common import load_config, check_dataset
+            try:
+                qwen35_config = load_config(args.config)
+                from huggingface_hub import HfApi
+                HfApi(token=hf_token).model_info(qwen35_config['model']['name'], revision=qwen35_config['model']['revision'])
+                check_dataset(qwen35_config, hf_token)
+                check_git_access(args.git_repo, args.git_branch, os.environ.get('GH_TOKEN'))
+                with tempfile.TemporaryDirectory(prefix='qwen35-preflight-', dir=qwen35_temp_root()) as directory:
+                    build_qwen35_bundle(args.config, Path(directory)/'source.tar.gz')
+            except Exception as error:
+                die(f'Qwen3.5 preflight failed before GPU allocation: {error}')
+
     if args.cpt_new_model:
         try:
             from huggingface_hub import HfApi
@@ -886,28 +858,8 @@ def main() -> int:
             "EVAL_PROTOCOL": args.eval_protocol or "legacy",
         })
 
-    if pilot_config:
-        try:
-            from huggingface_hub import HfApi
-            hf = HfApi(token=hf_token)
-            hf.model_info(pilot_config["model"]["name"], revision=pilot_config["model"]["revision"])
-            check_git_access(args.git_repo, args.git_branch, os.environ.get("GH_TOKEN"))
-            if not args.cpt_pilot_baseline and pilot_config["pilot"].get("preparation_config"):
-                from cpt_pilot import preparation_inputs
-                preparation, _ = preparation_inputs(pilot_config)
-                if preparation["data"].get("acquisition_config"):
-                    from fetch_cpt_sources import load_config as load_acquisition, check_access
-                    check_access(load_acquisition(Path(__file__).resolve().parents[1] / preparation["data"]["acquisition_config"]))
-            with tempfile.TemporaryDirectory(prefix="pilot-preflight-", dir=local_temp_root()) as directory:
-                build_cpt_pilot_bundle(configs[0], args.cpt_pilot_baseline, Path(directory) / "bundle.tar.gz")
-        except Exception as error:
-            die(f"Pilot preflight failed before launching a GPU: {error}")
-        env_vars.update(CPT_PILOT="1", CPT_PILOT_BASELINE="1" if args.cpt_pilot_baseline else "",
-                        CPT_PILOT_SMOKE="1" if args.cpt_pilot_smoke else "")
-        if not args.cpt_pilot_baseline:
-            for name in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_DEFAULT_REGION"):
-                env_vars[name] = os.getenv(name, "")
-            env_vars["CPT_PILOT_PREPARATION_CONFIG"] = pilot_config["pilot"].get("preparation_config", "")
+    if qwen35_config:
+        env_vars.update(CPT_QWEN35='1', QWEN35_NAME=qwen35_config['name'])
 
     return run_job(
         api=api,

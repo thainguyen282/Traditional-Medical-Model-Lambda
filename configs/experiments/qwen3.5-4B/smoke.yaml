@@ -1,0 +1,47 @@
+name: qwen35-smoke
+pipeline:
+  implementation: CPT/train_qwen35.py
+model:
+  name: Qwen/Qwen3.5-4B
+  revision: 851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a
+  max_seq_length: 2048
+dataset:
+  name: Maverfrick/TradMed-CPT-80-20-Qwen3.5-2048
+  revision: a6e7c0e5a51318526fe117cf230394f0765dc2e0
+  mixture: mixed
+  preserve_whitespace: true
+  add_chat_template: false
+lora:
+  r: 64
+  lora_alpha: 64
+  lora_dropout: 0.0
+  bias: none
+  use_rslora: true
+training:
+  num_train_epochs: 1
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 16
+  per_device_eval_batch_size: 1
+  learning_rate: 3.0e-05
+  warmup_ratio: 0.03
+  lr_scheduler_type: cosine
+  optim: adamw_bnb_8bit
+  bf16: true
+  fp16: false
+  seed: 42
+  eval_strategy: 'no'
+  logging_steps: 1
+  max_steps: 2
+validation_blocks: 2
+evaluation:
+  dataset: vm14k
+  limit: 2
+  max_input_tokens: 2048
+  max_new_tokens: 512
+  temperature: 0.6
+  top_p: 0.95
+  top_k: 20
+  seed: 3407
+publish:
+  repo: Maverfrick/Qwen3.5-4B-TradMed-CPT
+smoke: true

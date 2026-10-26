@@ -1,0 +1,118 @@
+output_dir: CPT/prepared_mix_qwen35
+seed: 42
+sequence_length: 2048
+validation_fraction: 0.01
+near_duplicate_threshold: 0.85
+total_tokens: null
+allow_repetition: false
+tokenizer:
+  name: Qwen/Qwen3.5-4B
+  revision: 851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a
+  eos_token: <|im_end|>
+exclude_benchmarks:
+- EVAL/Data/eastern_medicine_VM14K.jsonl
+exclude_document_ids: []
+sources:
+  domain:
+    prevalidated_source:
+      text_field: text
+      document_field: source
+      chunk_field: chunk_index
+      inputs:
+      - kind: hf
+        repo: venera-ai/TradMed-CPT-53k-2048
+        revision: c708ab848892fa6944720aab549983a5830c8226
+        split: validation
+        role: validation
+      - kind: hf
+        repo: venera-ai/TradMed-CPT-53k-2048
+        revision: c708ab848892fa6944720aab549983a5830c8226
+        split: train
+        role: train
+    inputs:
+    - kind: source_groups
+      path: .cache/cpt-source-groups/domain-1542960544afa671edfd2ed5820374e2fcb7362dad0017b267e1ef845d00eda8.json
+      sha256: 8043e8e39781dc6c1e0da8bd344a2e94581871dec7655766791b7dfc07f602d7
+  fineweb:
+    prevalidated_source:
+      text_field: text
+      document_field: id
+      score_field: score
+      min_score: 3
+      max_scan_rows: 200000
+      inputs:
+      - kind: hf
+        repo: HuggingFaceFW/fineweb-edu
+        config: sample-10BT
+        revision: 87f09149ef4734204d70ed1d046ddc9ca3f2b8f9
+        split: train
+    inputs:
+    - kind: source_groups
+      path: .cache/cpt-source-groups/fineweb-4680412daa1748645c6f601f472e3d86964011c493e6d7df59368af729d5f292.json
+      sha256: 6f0f911692441ec5b29a5c382b34925577a03f6bec0ee87ff80898147bef1eaf
+  dolma:
+    prevalidated_source:
+      text_field: text
+      document_field: document_id
+      allowed_components:
+      - general
+      - books
+      - encyclopedia
+      component_field: component
+      inputs:
+      - kind: dolma_urls
+        repo: allenai/dolma
+        revision: 7f48140530a023e9ea4c5cfb141160922727d4d3
+        url_list: urls/v1_7.txt
+        components:
+          books: books
+          wiki: encyclopedia
+    inputs:
+    - kind: source_groups
+      path: .cache/cpt-source-groups/dolma-34651af3c1b811404967429f81d1c787c24ec434299d606c21569d1296081d62.json
+      sha256: 6dbae2e5701529beb51a075be07d648e994656c28a01c751ef0f7984bce6b3b0
+  math:
+    prevalidated_source:
+      text_field: text
+      document_field: url
+      max_scan_rows: 200000
+      inputs:
+      - kind: hf
+        repo: open-web-math/open-web-math
+        revision: fde8ef8de2300f5e778f56261843dab89f230815
+        split: train
+    inputs:
+    - kind: source_groups
+      path: .cache/cpt-source-groups/math-c3d7f40c6c33650c5e58e539e02ca4c66a26646f98c4e4a6b91331f05b5a071d.json
+      sha256: e1ef0600632e1d3d2868909210155ac5e0af17afc5e2d80fad35ef2dce0249c0
+  code:
+    prevalidated_source:
+      text_field: content
+      document_field: hexsha
+      license_field: max_stars_repo_licenses
+      language_field: lang
+      allowed_licenses:
+      - MIT
+      - Apache-2.0
+      - BSD-2-Clause
+      - BSD-3-Clause
+      allowed_languages:
+      - Python
+      max_scan_rows: 200000
+      provenance_fields:
+      - hexsha
+      - max_stars_repo_name
+      - max_stars_repo_path
+      - max_stars_repo_head_hexsha
+      - max_stars_repo_licenses
+      inputs:
+      - kind: hf
+        repo: bigcode/the-stack-dedup
+        data_dir: data/python
+        revision: 17cad72c886a2858e08d4c349a00d6466f54df63
+        split: train
+    inputs:
+    - kind: source_groups
+      path: .cache/cpt-source-groups/code-74dfba85897d8dd66c6eff3f6039a4a01c6aecb54c58aae3ecbadfaf0d3f942a.json
+      sha256: 3cdbdf04d693ef21e069b154deab72b42a583d0b9e321deefba34a9f3464955a
+workers: 4

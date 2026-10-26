@@ -70,14 +70,6 @@ lambda_launch.py ──API──▶ [terminate instance]
      - Make the package public under `Packages → Settings → Change visibility`, or
      - Pass `GHCR_LOGIN=1` and `GHCR_USER=<gh-username>` in env so bootstrap does `docker login` with `$GH_TOKEN`.
 
-## Qwen3.5 CPT mixture pilot
-
-For the 80/20 token-controlled CPT pilot and VM14K-only evaluation, see
-[CPT_PILOT_REVIEW.md](CPT_PILOT_REVIEW.md). It documents the developer-facing
-changes, direct upstream acquisition on Lambda, smoke test, exact launch commands,
-artifact locations, and comparison report. Pilot preflight runs before GPU
-allocation; the existing legacy CPT command below keeps its existing behavior.
-
 ## Usage
 
 ### Check available instance types
@@ -256,3 +248,5 @@ lambda_launch.py
   `DONE_FAILED`. The only path that *doesn't* terminate is `--keep-alive`.
 - If the orchestrator itself dies (e.g. machine reboots), instances will keep
   running. Always double-check the Lambda dashboard after an unusual exit.
+
+For the separate Qwen3.5 TradMed and 80/20 runs, see [Qwen3.5 CPT commands and developer review](QWEN35_CPT.md).

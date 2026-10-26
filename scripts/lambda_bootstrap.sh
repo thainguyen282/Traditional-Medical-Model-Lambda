@@ -88,22 +88,20 @@ if [ ! -d "$REPO_DIR/.git" ]; then
 fi
 cd "$REPO_DIR" || fail "cd repo"
 
-# Pilot bundles contain the exact local code/config and frozen prepared tokens.
-if [ -n "${CPT_PILOT:-}" ]; then
-    printf '%s  %s\n' "$CPT_PILOT_BUNDLE_SHA256" /home/ubuntu/cpt_pilot.tar.gz | sha256sum -c - \
-        || fail "CPT pilot bundle hash mismatch"
-    tar -xzf /home/ubuntu/cpt_pilot.tar.gz -C "$REPO_DIR" || fail "install pilot source bundle"
-    python3 - "$REPO_DIR" "$CPT_PILOT_BUNDLE_SHA256" <<'VERIFY_PILOT'
+# Dedicated Qwen3.5 jobs use an exact local code/config bundle.
+if [ -n "${CPT_QWEN35:-}" ]; then
+    printf '%s  %s\n' "$QWEN35_BUNDLE_SHA256" /home/ubuntu/qwen35_source.tar.gz | sha256sum -c - \
+        || fail "Qwen3.5 source archive checksum"
+    tar -xzf /home/ubuntu/qwen35_source.tar.gz -C "$REPO_DIR" || fail "extract Qwen3.5 source"
+    python3 - "$REPO_DIR" "$QWEN35_BUNDLE_SHA256" <<'VERIFY_QWEN35'
 import hashlib, json, pathlib, sys
-root = pathlib.Path(sys.argv[1])
-path = root / 'CPT/pilot_source.json'
-manifest = json.loads(path.read_text())
-for name, expected in manifest['files'].items():
-    assert hashlib.sha256((root / name).read_bytes()).hexdigest() == expected, name
-manifest['bundle_sha256'] = sys.argv[2]
-path.write_text(json.dumps(manifest, indent=2))
-VERIFY_PILOT
-    [ "$?" -eq 0 ] || fail "pilot source verification"
+root=pathlib.Path(sys.argv[1]); path=root/'CPT/qwen35_source.json'
+metadata=json.loads(path.read_text())
+for name, checksum in metadata['files'].items():
+    assert hashlib.sha256((root/name).read_bytes()).hexdigest()==checksum,name
+metadata['bundle_sha256']=sys.argv[2];path.write_text(json.dumps(metadata,indent=2))
+VERIFY_QWEN35
+    [ "$?" -eq 0 ] || fail "Qwen3.5 source file verification"
 fi
 
 # SFT uses the exact local source/configuration supplied by the launcher.
@@ -172,14 +170,14 @@ EOF
 #    - --shm-size : dataloader workers need large /dev/shm
 # ------------------------------------------------------------------
 in_docker() {
-    local pilot_environment=()
-    if [ -n "${CPT_PILOT:-}" ]; then
+    local qwen35_environment=()
+    if [ -n "${CPT_QWEN35:-}" ]; then
         mkdir -p "$REPO_DIR/.cache/tmp"
-        pilot_environment=(-e HF_HOME=/workspace/.cache/huggingface
-                           -e TMPDIR=/workspace/.cache/tmp
-                           -e PIP_CACHE_DIR=/workspace/.cache/pip)
+        qwen35_environment=(-e HF_HOME=/workspace/.cache/huggingface
+                            -e TMPDIR=/workspace/.cache/tmp
+                            -e PIP_CACHE_DIR=/workspace/.cache/pip)
     fi
-    $DOCKER run "${pilot_environment[@]}" --rm --gpus all \
+    $DOCKER run "${qwen35_environment[@]}" --rm --gpus all \
         --shm-size=32g \
         --ipc=host \
         -v "$REPO_DIR":/workspace \
@@ -189,10 +187,6 @@ in_docker() {
         -e HF_CPT_REPO="$HF_CPT_REPO" \
         -e HF_SFT_REPO="$HF_SFT_REPO" \
         -e JOB_TAG="$JOB_TAG" \
-        -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-}" \
-        -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-}" \
-        -e AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN:-}" \
-        -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}" \
         -e ROOT=/workspace \
         --workdir /workspace \
         "$IMAGE" \
@@ -202,53 +196,27 @@ in_docker() {
 # ------------------------------------------------------------------
 # 7. Run training (+ auto-eval, + HF push) inside the container.
 # ------------------------------------------------------------------
-run_cpt_pilot() {
+run_qwen35_cpt() {
     local configs=() cfg
     while IFS= read -r cfg; do
         [ -z "$cfg" ] || configs+=("$cfg")
     done <<< "${CONFIG_LIST:-}"
-    [ "${#configs[@]}" -eq 1 ] || { echo "[pilot] exactly one config required"; return 1; }
-    local quoted_config quoted_tag
+    [ "${#configs[@]}" -eq 1 ] || { echo "[qwen35] exactly one config is required"; return 1; }
+    local quoted_config
     printf -v quoted_config '%q' "${configs[0]}"
-    printf -v quoted_tag '%q' "$JOB_TAG"
-    local py=/workspace/.venv-cpt-pilot/bin/python
-    local run_dir="/workspace/CPT/pilot_runs/$JOB_TAG"
-    local baseline="" limit="" result=0
-    [ -z "${CPT_PILOT_BASELINE:-}" ] || baseline="--baseline"
-    [ -z "${CPT_PILOT_SMOKE:-}" ] || limit="--limit 2"
-    mkdir -p "$REPO_DIR/CPT/pilot_runs/$JOB_TAG" "$REPO_DIR/.cache/tmp"
-    echo "[pilot] installing isolated Qwen3.5 dependencies"
-    in_docker "python -m venv /workspace/.venv-cpt-pilot && \
-        $py -m pip install -r /workspace/requirements-cpt-pilot.lock.txt && \
-        $py -m pip freeze > '$run_dir/pip-freeze.txt'" || return $?
-    if [ -z "$baseline" ] && [ -n "${CPT_PILOT_PREPARATION_CONFIG:-}" ]; then
-        local quoted_preparation
-        printf -v quoted_preparation '%q' "$CPT_PILOT_PREPARATION_CONFIG"
-        echo "[pilot] fetching original sources and preparing data on Lambda"
-        in_docker "$py /workspace/scripts/prepare_cpt_data.py --config $quoted_preparation \
-            --fetch-sources" || result=$?
-    fi
+    local py=/workspace/.venv-qwen35/bin/python result=0
+    mkdir -p "$REPO_DIR/CPT/qwen35_outputs/${QWEN35_NAME}-${JOB_TAG}"
+    in_docker "python -m venv /workspace/.venv-qwen35 && \
+        $py -m pip install -r /workspace/requirements-qwen35.txt && \
+        $py -m pip freeze > /workspace/CPT/qwen35_outputs/${QWEN35_NAME}-${JOB_TAG}/pip-freeze.txt" || return $?
+    in_docker "$py /workspace/CPT/train_qwen35.py --config $quoted_config" || result=$?
     if [ "$result" -eq 0 ]; then
-        in_docker "cp /workspace/$quoted_config '$run_dir/config.yaml' && \
-            $py /workspace/scripts/cpt_pilot.py preflight --config $quoted_config $baseline" || result=$?
-    fi
-    if [ "$result" -eq 0 ] && [ -z "$baseline" ]; then
-        in_docker "$py /workspace/CPT/CPT.py --config $quoted_config" || result=$?
-    fi
-    # A separate container gives evaluation a fresh CUDA process after training.
-    if [ "$result" -eq 0 ]; then
-        in_docker "$py /workspace/scripts/cpt_pilot.py evaluate --config $quoted_config \
-            --job-tag $quoted_tag $baseline $limit" || result=$?
-    fi
-    if [ "$result" -eq 0 ]; then
-        in_docker "$py /workspace/scripts/cpt_pilot.py publish --config $quoted_config \
-            --job-tag $quoted_tag $baseline" || result=$?
+        # Fresh CUDA process for native thinking-enabled VM14K evaluation.
+        in_docker "$py /workspace/CPT/eval_qwen35_vm14k.py --config $quoted_config --publish" || result=$?
     fi
     if [ "$result" -ne 0 ]; then
-        echo "[pilot] failed with status $result; preserving diagnostics"
-        in_docker "$py /workspace/scripts/cpt_pilot.py publish --config $quoted_config \
-            --job-tag $quoted_tag $baseline --diagnostics" \
-            || echo "[pilot] diagnostic upload failed; launcher will attempt local backup"
+        in_docker "$py /workspace/CPT/eval_qwen35_vm14k.py --config $quoted_config --diagnostics" \
+            || echo "[qwen35] diagnostic upload failed; launcher will attempt a backup"
     fi
     return "$result"
 }
@@ -678,8 +646,8 @@ run_inference() {
 }
 
 status=0
-if [ -n "${CPT_PILOT:-}" ]; then
-    run_cpt_pilot || status=$?
+if [ -n "${CPT_QWEN35:-}" ]; then
+    run_qwen35_cpt || status=$?
 elif [ "$TASK_TYPE" = "cpt" ]; then
     run_cpt || status=$?
 elif [ "$TASK_TYPE" = "sft" ]; then

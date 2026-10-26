@@ -1,0 +1,92 @@
+output_dir: CPT/prepared_mix
+seed: 42
+sequence_length: 2048
+validation_fraction: 0.01
+near_duplicate_threshold: 0.85
+total_tokens: null
+allow_repetition: false
+tokenizer:
+  name: Qwen/Qwen3-4B-Thinking-2507
+  revision: main
+  eos_token: <|im_end|>
+exclude_benchmarks:
+- EVAL/Data/eastern_medicine_VM14K.jsonl
+exclude_document_ids: []
+sources:
+  domain:
+    text_field: text
+    document_field: source
+    chunk_field: chunk_index
+    inputs:
+    - kind: hf
+      repo: venera-ai/TradMed-CPT-53k-2048
+      revision: c708ab848892fa6944720aab549983a5830c8226
+      split: validation
+      role: validation
+    - kind: hf
+      repo: venera-ai/TradMed-CPT-53k-2048
+      revision: c708ab848892fa6944720aab549983a5830c8226
+      split: train
+      role: train
+  fineweb:
+    text_field: text
+    document_field: id
+    score_field: score
+    min_score: 3
+    max_scan_rows: 200000
+    inputs:
+    - kind: hf
+      repo: HuggingFaceFW/fineweb-edu
+      config: sample-10BT
+      revision: 87f09149ef4734204d70ed1d046ddc9ca3f2b8f9
+      split: train
+  dolma:
+    text_field: text
+    document_field: document_id
+    allowed_components:
+    - general
+    - books
+    - encyclopedia
+    component_field: component
+    inputs:
+    - kind: dolma_urls
+      repo: allenai/dolma
+      revision: 7f48140530a023e9ea4c5cfb141160922727d4d3
+      url_list: urls/v1_7.txt
+      components:
+        books: books
+        wiki: encyclopedia
+  math:
+    text_field: text
+    document_field: url
+    max_scan_rows: 200000
+    inputs:
+    - kind: hf
+      repo: open-web-math/open-web-math
+      revision: fde8ef8de2300f5e778f56261843dab89f230815
+      split: train
+  code:
+    text_field: content
+    document_field: hexsha
+    license_field: max_stars_repo_licenses
+    language_field: lang
+    allowed_licenses:
+    - MIT
+    - Apache-2.0
+    - BSD-2-Clause
+    - BSD-3-Clause
+    allowed_languages:
+    - Python
+    max_scan_rows: 200000
+    provenance_fields:
+    - hexsha
+    - max_stars_repo_name
+    - max_stars_repo_path
+    - max_stars_repo_head_hexsha
+    - max_stars_repo_licenses
+    inputs:
+    - kind: hf
+      repo: bigcode/the-stack-dedup
+      data_dir: data/python
+      revision: 17cad72c886a2858e08d4c349a00d6466f54df63
+      split: train

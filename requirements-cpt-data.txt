@@ -1,8 +1,0 @@
-# CPU data preparation only; no training framework or GPU packages required.
-transformers==5.5.0
-huggingface-hub==1.33.0
-PyYAML==6.0.3
-# Direct acquisition of the original corpora (also available inside Lambda).
-datasets==4.3.0
-requests==2.32.5
-boto3==1.40.0

@@ -37,14 +37,15 @@ _unsloth_temporary_saved_buffers/
 CPT/cpt_qwen3_medical_merged/
 TMdata/
 .venv-vllm-slurm/
-# Frozen CPT pilot exports, prepared tokens, and run artifacts (never commit corpora).
-/CPT/pilot_data/
-/CPT/pilot_outputs/
-/CPT/pilot_runs/
-/CPT/pilot_source.json
-/.venv-cpt-pilot/
-
-# Repository-local preparation environment and caches.
-/.venv-cpt-data/
+# Standalone local dataset preparation artifacts.
+/CPT/prepared_mix/
+/CPT/data_inputs/
 /.cache/
-!/configs/data/cpt-pilot/sources.example.json
+
+# Isolated Qwen3.5 training/check artifacts.
+/CPT/prepared_mix_qwen35/
+/CPT/prepared_tradmed_qwen35/
+/CPT/qwen35_outputs/
+/CPT/qwen35_source.json
+/.venv-qwen35/
+/.venv-qwen35-check/
