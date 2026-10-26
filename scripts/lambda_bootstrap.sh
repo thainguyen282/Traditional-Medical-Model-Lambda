@@ -176,6 +176,7 @@ in_docker() {
         qwen35_environment=(-e HF_HOME=/workspace/.cache/huggingface
                             -e TMPDIR=/workspace/.cache/tmp
                             -e PIP_CACHE_DIR=/workspace/.cache/pip
+                            -e PYTORCH_ALLOC_CONF="${PYTORCH_ALLOC_CONF:-expandable_segments:True}"
                             -e WANDB_PROJECT="${WANDB_PROJECT:-qwen35-cpt}"
                             -e WANDB_ENTITY="${WANDB_ENTITY:-}")
     fi

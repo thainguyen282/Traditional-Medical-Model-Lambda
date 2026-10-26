@@ -861,7 +861,8 @@ def main() -> int:
         })
 
     if qwen35_config:
-        env_vars.update(CPT_QWEN35='1', QWEN35_NAME=qwen35_config['name'])
+        env_vars.update(CPT_QWEN35='1', QWEN35_NAME=qwen35_config['name'],
+                        PYTORCH_ALLOC_CONF=os.getenv('PYTORCH_ALLOC_CONF') or 'expandable_segments:True')
 
     return run_job(
         api=api,

@@ -34,7 +34,7 @@ TradMed-only, one epoch:
 DOCKER_IMAGE=ghcr.io/thainguyen282/traditional-medical-model-lambda:thai-dev \
 .venv/bin/python scripts/lambda_launch.py \
   --task cpt \
-  --config configs/experiments/qwen3.5-4B/tradmed.yaml \
+  --config configs/experiments/qwen3.5-4B/exp001/config_cpt.yaml \
   --instance-type gpu_1x_a100_sxm4 \
   --git-repo https://github.com/thainguyen282/Traditional-Medical-Model-Lambda.git \
   --git-branch thai-dev \
@@ -58,7 +58,7 @@ DOCKER_IMAGE=ghcr.io/thainguyen282/traditional-medical-model-lambda:thai-dev \
 
 ## Changes for review
 
-- `CPT/train_qwen35.py`, `CPT/qwen35_common.py`: isolated native Transformers/PEFT implementation. The restored `CPT/CPT.py` and its dependencies remain unchanged. Preserve rank/alpha 64, rsLoRA, batch 1 × accumulation 16, AdamW 8-bit, LR 3e-5, cosine schedule, 3% warmup, BF16 and 2,048-token packing. Qwen3.5 hybrid attention requires its additional linear-attention projection targets; vision weights remain frozen. Raw code whitespace is retained.
+- `CPT/train_qwen35.py`, `CPT/qwen35_common.py`: isolated native Transformers/PEFT implementation. The restored `CPT/CPT.py` and its dependencies remain unchanged. Preserve rank/alpha 64, rsLoRA, batch 2 × accumulation 8 (effective batch 16), AdamW 8-bit, LR 3e-5, cosine schedule, 3% warmup, BF16 and 2,048-token packing. Qwen3.5 hybrid attention requires its additional linear-attention projection targets; vision weights remain frozen. Raw code whitespace is retained.
 - `requirements-qwen35.txt`: pinned separate environment, installed in the Lambda container at `/workspace/.venv-qwen35`; no Unsloth dependency. Native PyTorch attention fallback is supported; optional fast linear-attention kernels are not installed. This can affect throughput.
 - `scripts/lambda_launch.py`, `scripts/lambda_bootstrap.sh`: forward the selected config, verify and install an exact local source bundle, execute the dedicated trainer/evaluator, and download backups before cleanup. Bundle SHA and individual file hashes accompany the Git revision, including uncommitted local changes. Training, evaluation and required upload errors fail the job. Diagnostic upload is best effort on failure. Local temporary bundle/env files use repository `.cache/lambda`.
 - `CPT/eval_qwen35_vm14k.py`: load the current run's local final adapter and pinned base only; bypass legacy multi-dataset evaluation. Evaluate the frozen 564-question traditional-medicine VM14K subset with native thinking enabled, temperature .6, top-p .95, top-k 20, seed 3407, input budget 2,048, generation budget 32,768. Invalid/truncated outputs are incorrect. Final answers are parsed after `</think>`.
@@ -78,3 +78,13 @@ A full A100 smoke job is still required before the full training runs. No VM14K 
 Qwen3.5 training reports loss, learning rate, gradient norm and scheduled validation loss to W&B. Runs use project `qwen35-cpt` by default, named `<experiment-name>-<JOB_TAG>`. The existing `.env` `WANDB_KEY` is forwarded as `WANDB_API_KEY`; optional `WANDB_PROJECT` and `WANDB_ENTITY` are also forwarded. Launch commands are unchanged. Smoke runs log training metrics but skip validation as configured.
 
 `wandb_run.json` stores the run URL and ID beside the adapter artifacts. W&B local files stay in the run output directory and the context manager finishes/syncs the run after training (including failure). Final VM14K outputs remain in Hugging Face and the downloaded backup; this change logs Trainer metrics to W&B. No training or external logging run was launched during implementation.
+
+## A100 batch configuration
+
+The user-provided smoke log for `tm-cpt-1793022537` showed CUDA OOM during backward with batch 4 / accumulation 4: 37.96 GiB process usage on a 39.49 GiB GPU, with another 7.58 GiB allocation requested. One optimizer step succeeded before the failure, so that step alone did not establish a safe memory peak. W&B synced, diagnostics uploaded, and the launcher downloaded a backup and terminated the instance. This was a failed smoke run, with no final adapter or VM14K results.
+
+TradMed (`exp001/config_cpt.yaml`), mixed and smoke now use `per_device_train_batch_size: 2` and `gradient_accumulation_steps: 8`. Effective batch remains 16 sequences (32,768 packed tokens) per optimizer step on one GPU. Epoch count, learning rate, sequence length and evaluation protocol are unchanged. The user's move of the TradMed configuration into `exp001` is preserved.
+
+Qwen3.5 Lambda containers also default to `PYTORCH_ALLOC_CONF=expandable_segments:True` to help reduce allocator fragmentation. The launcher forwards an explicit environment override if supplied. This is supplementary to lowering the batch; it does not guarantee sufficient memory or a particular speedup. See [PyTorch allocator documentation](https://docs.pytorch.org/docs/stable/notes/cuda.html#environment-variables).
+
+Rerun smoke before full training. Batch 2 / accumulation 8 has passed local config/wiring checks but has not been validated on the A100. If it still fails, batch 1 / accumulation 16 is the fallback. Existing running jobs retain their loaded configuration. Compare steady-state tokens/second to assess throughput; training batching does not accelerate the separate serial VM14K generation loop.
