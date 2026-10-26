@@ -823,6 +823,8 @@ def main() -> int:
     env_vars = {
         "HF_TOKEN": hf_token,
         "WANDB_KEY": os.environ.get("WANDB_KEY", ""),
+        "WANDB_PROJECT": os.environ.get("WANDB_PROJECT", "qwen35-cpt"),
+        "WANDB_ENTITY": os.environ.get("WANDB_ENTITY", ""),
         "GH_TOKEN": os.environ.get("GH_TOKEN", ""),
         "HF_CPT_REPO": os.environ.get("HF_CPT_REPO", "Maverfrick/Venera-CPT-TMModel"),
         "HF_SFT_REPO": os.environ.get("HF_SFT_REPO", "Maverfrick/Venera-Traditional-Model"),

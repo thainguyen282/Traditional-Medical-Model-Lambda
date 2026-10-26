@@ -76,13 +76,23 @@ def train(config, directory):
             self.processed_tokens += int(inputs['attention_mask'].sum().item())
             return super().training_step(model, inputs, *args, **kwargs)
     arguments = dict(config['training'])
-    arguments.update(output_dir=str(directory), report_to='none', remove_unused_columns=False,
+    arguments.update(output_dir=str(directory), report_to='wandb', run_name=directory.name,
+                     remove_unused_columns=False,
                      dataloader_drop_last=False, gradient_checkpointing=True,
                      gradient_checkpointing_kwargs={'use_reentrant': False}, save_strategy='no')
-    trainer = CountingTrainer(model=model, processing_class=tokenizer,
-        train_dataset=training_data, eval_dataset=validation_data, data_collator=collate,
-        args=TrainingArguments(**arguments))
-    result = trainer.train()
+    import wandb
+    # Keep W&B's local files with the run artifacts; never send credentials in config.
+    with wandb.init(project=os.getenv('WANDB_PROJECT') or 'qwen35-cpt',
+                    entity=os.getenv('WANDB_ENTITY') or None,
+                    name=directory.name, dir=str(directory), config=config) as run:
+        tracking = {'id': run.id, 'url': run.url, 'project': run.project, 'name': run.name}
+        (directory/'wandb_run.json').write_text(json.dumps(tracking, indent=2))
+        print(f'[qwen35] W&B: {run.url}', flush=True)
+        trainer = CountingTrainer(model=model, processing_class=tokenizer,
+            train_dataset=training_data, eval_dataset=validation_data, data_collator=collate,
+            args=TrainingArguments(**arguments))
+        result = trainer.train()
+        run.summary['processed_nonpadding_tokens'] = trainer.processed_tokens
     trainer.save_model(str(directory))
     tokenizer.save_pretrained(directory)
     adapter = json.loads((directory/'adapter_config.json').read_text())

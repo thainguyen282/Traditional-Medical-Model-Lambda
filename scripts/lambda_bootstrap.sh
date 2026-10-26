@@ -175,7 +175,9 @@ in_docker() {
         mkdir -p "$REPO_DIR/.cache/tmp"
         qwen35_environment=(-e HF_HOME=/workspace/.cache/huggingface
                             -e TMPDIR=/workspace/.cache/tmp
-                            -e PIP_CACHE_DIR=/workspace/.cache/pip)
+                            -e PIP_CACHE_DIR=/workspace/.cache/pip
+                            -e WANDB_PROJECT="${WANDB_PROJECT:-qwen35-cpt}"
+                            -e WANDB_ENTITY="${WANDB_ENTITY:-}")
     fi
     $DOCKER run "${qwen35_environment[@]}" --rm --gpus all \
         --shm-size=32g \

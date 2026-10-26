@@ -72,3 +72,9 @@ Adapters, tokenizer, resolved configuration, dataset preparation manifest, proce
 Local native Qwen3.5 CPU test passed finite forward/backward loss, LoRA gradients, frozen vision, a Trainer optimizer step with gradient checkpointing, and cached generation using the pinned dependencies. This used a tiny randomly initialized architecture, not the full pretrained weights or GPU optimizer. Configuration/source-bundle/failure-propagation tests and 15 data-preparation tests passed. Uploaded private manifests match local hashes; medical rows match exactly across both datasets; the mixed data audit found no train/validation document overlap and no token-count errors.
 
 A full A100 smoke job is still required before the full training runs. No VM14K training results, baseline comparison, paired bootstrap intervals or reasoning-retention claims are available yet. This update provides the requested two training configurations and commands; it does not run the original-model baseline or the previously rolled-back three-condition pilot. VM14K alone measures this medical subset and cannot establish general thinking/instruction retention.
+
+## W&B logging
+
+Qwen3.5 training reports loss, learning rate, gradient norm and scheduled validation loss to W&B. Runs use project `qwen35-cpt` by default, named `<experiment-name>-<JOB_TAG>`. The existing `.env` `WANDB_KEY` is forwarded as `WANDB_API_KEY`; optional `WANDB_PROJECT` and `WANDB_ENTITY` are also forwarded. Launch commands are unchanged. Smoke runs log training metrics but skip validation as configured.
+
+`wandb_run.json` stores the run URL and ID beside the adapter artifacts. W&B local files stay in the run output directory and the context manager finishes/syncs the run after training (including failure). Final VM14K outputs remain in Hugging Face and the downloaded backup; this change logs Trainer metrics to W&B. No training or external logging run was launched during implementation.

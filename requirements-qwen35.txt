@@ -12,3 +12,4 @@ PyYAML==6.0.3
 python-dotenv==1.2.1
 Pillow==12.1.1
 sentencepiece==0.2.1
+wandb==0.25.0
