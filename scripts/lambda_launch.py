@@ -5,7 +5,7 @@ Orchestrate a training job on Lambda Cloud.
 Flow:
   1. Pick an available region for the requested instance type via Lambda API.
   2. Launch a new instance, wait until it is active and reachable via SSH.
-  3. scp bootstrap + push_to_hf scripts + secrets onto the instance.
+  3. Arm a persistent 12-hour termination watchdog; scp bootstrap + push_to_hf scripts + secrets onto the instance.
   4. Start training inside tmux; stream logs back to local via `tail -f` over SSH.
   5. Poll for a sentinel file (DONE_SUCCESS / DONE_FAILED) in the remote home dir.
   6. Terminate the instance (unless --keep-alive is passed).
@@ -49,6 +49,7 @@ REMOTE_REPO_DIR = "Traditional-Medical-Model"
 REMOTE_USER = "ubuntu"
 POLL_INTERVAL_LAUNCH = 15  # seconds
 POLL_INTERVAL_TRAIN = 60   # seconds
+MAX_INSTANCE_SECONDS = 12 * 60 * 60
 
 
 def log(msg: str) -> None:
@@ -145,7 +146,7 @@ def wait_for_active(api: LambdaAPI, instance_id: str, timeout: int = 600) -> dic
 
 def ssh_cmd(key: str, ip: str, remote_cmd: str, *, check: bool = True,
             capture: bool = False, retries: int = 1,
-            delay: int = 10) -> subprocess.CompletedProcess:
+            delay: int = 10, input_text: str | None = None) -> subprocess.CompletedProcess:
     if retries < 1:
         raise ValueError("retries must be at least 1")
     cmd = [
@@ -169,7 +170,7 @@ def ssh_cmd(key: str, ip: str, remote_cmd: str, *, check: bool = True,
     for attempt in range(1, retries + 1):
         result = subprocess.run(cmd, check=False,
                                 capture_output=capture, text=True,
-                                encoding="utf-8", errors="replace")
+                                encoding="utf-8", errors="replace", input=input_text)
         if result.returncode != 255 or attempt == retries:
             if check:
                 result.check_returncode()
@@ -299,7 +300,13 @@ def qwen35_temp_root() -> Path:
 def build_qwen35_bundle(config_path: str, destination: Path) -> dict:
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(root / 'CPT'))
-    from qwen35_common import load_config
+    import yaml
+    candidate = yaml.safe_load(Path(config_path).read_text())
+    sft = candidate.get('pipeline', {}).get('implementation') == 'scripts/train_qwen35_sft.py'
+    if sft:
+        from train_qwen35_sft import load_config
+    else:
+        from qwen35_common import load_config
     config_path = Path(config_path).resolve()
     if not config_path.is_relative_to(root):
         raise ValueError('Qwen3.5 configs must be inside the repository')
@@ -308,6 +315,8 @@ def build_qwen35_bundle(config_path: str, destination: Path) -> dict:
              'requirements-qwen35.txt', 'scripts/eval_medical_baselines.py', 'scripts/lambda_bootstrap.sh',
              'EVAL/Data/eastern_medicine_VM14K.jsonl', 'EVAL/Unsloth_QA_goc_VM14K.ipynb',
              str(config_path.relative_to(root))]
+    if sft:
+        names.append('scripts/train_qwen35_sft.py')
     files = {name: hashlib.sha256((root/name).read_bytes()).hexdigest() for name in names}
     metadata = {'git_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
                 'files': files, 'config': str(config_path.relative_to(root)), 'name': config['name']}
@@ -406,6 +415,58 @@ def render_env_file(env_vars: dict[str, str]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def install_termination_watchdog(api: LambdaAPI, key: str, ip: str,
+                                 instance_id: str, deadline: float) -> None:
+    """Install a persistent host watchdog; never put the key in argv or Docker."""
+    service = """[Unit]
+Description=Lambda Cloud 12-hour termination watchdog
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /etc/lambda-watchdog/watchdog.py /etc/lambda-watchdog/config.json
+Restart=always
+RestartSec=60
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
+"""
+    # Stream the credential directly over SSH into a root-only directory.
+    # Including source/unit in the payload avoids unprivileged staging files.
+    payload = json.dumps({
+        "config": {"api_key": api.session.auth[0], "instance_id": instance_id,
+                   "deadline": deadline},
+        "script": Path(__file__).with_name("lambda_watchdog.py").read_text(),
+        "service": service,
+    })
+    installer = """import json, os, pathlib, sys
+os.umask(0o077)
+payload = json.load(sys.stdin)
+directory = pathlib.Path('/etc/lambda-watchdog')
+directory.mkdir(mode=0o700, exist_ok=True)
+directory.chmod(0o700)
+for name, content in [('config.json', json.dumps(payload['config'])),
+                      ('watchdog.py', payload['script'])]:
+    path = directory / name
+    path.write_text(content)
+    path.chmod(0o600)
+path = pathlib.Path('/etc/systemd/system/lambda-watchdog.service')
+path.write_text(payload['service'])
+path.chmod(0o644)
+"""
+    ssh_cmd(key, ip,
+            "sudo -n /usr/bin/python3 -c " + shlex.quote(installer) +
+            " && sudo -n systemctl daemon-reload"
+            " && sudo -n systemctl enable --now lambda-watchdog.service"
+            " && sudo -n systemctl is-active --quiet lambda-watchdog.service",
+            retries=4, input_text=payload)
+    log(f"12-hour termination watchdog armed on {instance_id}; "
+        "independent of Wulver, including after a remote reboot")
+
+
 def run_job(
     api: LambdaAPI,
     task: str,
@@ -423,10 +484,12 @@ def run_job(
     region = find_region_for(api, instance_type, region)
     log(f"launching {instance_type} in region {region}")
     job_tag = f"tm-{task}-{int(time.time())}"
+    deadline = time.time() + MAX_INSTANCE_SECONDS
     instance_id = api.launch(region, instance_type, [ssh_key_name], name=job_tag)
     log(f"instance_id={instance_id}")
 
     exit_code = 1
+    watchdog_armed = False
     baseline_started = False
     job_finished = False
     ip = None
@@ -435,13 +498,16 @@ def run_job(
         ip = inst["ip"]
         wait_for_ssh(ssh_private_key, ip)
 
+        install_termination_watchdog(api, ssh_private_key, ip, instance_id, deadline)
+        watchdog_armed = True
+
         # Push scripts + env to the instance.
         scripts_dir = Path(__file__).resolve().parent
         scp_to(ssh_private_key, ip, str(scripts_dir / "lambda_bootstrap.sh"),
                "/home/ubuntu/lambda_bootstrap.sh")
         scp_to(ssh_private_key, ip, str(scripts_dir / "lambda_push_to_hf.py"),
                "/home/ubuntu/lambda_push_to_hf.py")
-        if env_vars.get('CPT_QWEN35'):
+        if env_vars.get('CPT_QWEN35') or env_vars.get('SFT_QWEN35'):
             with tempfile.TemporaryDirectory(prefix='qwen35-source-', dir=qwen35_temp_root()) as directory:
                 bundle = Path(directory)/'qwen35_source.tar.gz'
                 source = build_qwen35_bundle(configs[0], bundle)
@@ -558,10 +624,10 @@ def run_job(
         if task == "sft":
             keep_alive = True
     finally:
-        if task == "sft" and ip and not job_finished:
+        if task == "sft" and ip and watchdog_armed and not job_finished:
             log("SFT completion is unconfirmed; preserving the instance. Billing continues.")
             keep_alive = True
-        if task == "sft" and ip and not keep_alive:
+        if task == "sft" and ip and watchdog_armed and not keep_alive:
             try:
                 download_sft_backup(ssh_private_key, ip, job_tag)
             except (Exception, KeyboardInterrupt) as error:
@@ -583,8 +649,12 @@ def run_job(
                 log("Check the Hugging Face upload in the job log. "
                     "Instance cleanup still follows --keep-alive.")
                 exit_code = 2
+        if not watchdog_armed:
+            log("Watchdog setup not confirmed; terminating instance for safety")
+            keep_alive = False
         if keep_alive:
-            log(f"--keep-alive set; leaving instance {instance_id} running")
+            log("The 12-hour termination deadline still applies")
+            log(f"Instance preserved; leaving instance {instance_id} running")
             log(f"  ssh -i {ssh_private_key} ubuntu@{ip}  # if still reachable")
         else:
             log(f"terminating instance {instance_id}")
@@ -676,7 +746,7 @@ def main() -> int:
                         default="https://github.com/Venera-AI/Traditional-Medical-Model.git")
     parser.add_argument("--git-branch", default="main2")
     parser.add_argument("--keep-alive", action="store_true",
-                        help="Do not terminate the instance after the job ends")
+                        help="Leave instance running after the job; the 12-hour deadline still applies")
     parser.add_argument("--list-types", action="store_true",
                         help="List all instance types + availability and exit")
     parser.add_argument("--inference-script", default=None,
@@ -789,6 +859,20 @@ def main() -> int:
             die(f"baseline preflight failed before launching a GPU: {error}")
 
     qwen35_config = None
+    qwen35_sft_config = None
+    if args.task == 'sft' and args.config:
+        import yaml
+        candidate = yaml.safe_load(Path(args.config).read_text())
+        if candidate.get('pipeline', {}).get('implementation') == 'scripts/train_qwen35_sft.py':
+            from train_qwen35_sft import load_config as load_sft_config, preflight as sft_preflight
+            try:
+                qwen35_sft_config = load_sft_config(args.config)
+                sft_preflight(qwen35_sft_config, hf_token)
+                check_git_access(args.git_repo, args.git_branch, os.environ.get('GH_TOKEN'))
+                with tempfile.TemporaryDirectory(prefix='qwen35-sft-preflight-', dir=qwen35_temp_root()) as directory:
+                    build_qwen35_bundle(args.config, Path(directory)/'source.tar.gz')
+            except Exception as error:
+                die(f'Qwen3.5 SFT preflight failed before GPU allocation: {error}')
     if args.task == 'cpt' and args.config:
         import yaml
         candidate = yaml.safe_load(Path(args.config).read_text())
@@ -862,6 +946,10 @@ def main() -> int:
 
     if qwen35_config:
         env_vars.update(CPT_QWEN35='1', QWEN35_NAME=qwen35_config['name'],
+                        PYTORCH_ALLOC_CONF=os.getenv('PYTORCH_ALLOC_CONF') or 'expandable_segments:True')
+    if qwen35_sft_config:
+        env_vars.update(SFT_QWEN35='1', QWEN35_NAME=qwen35_sft_config['name'],
+                        WANDB_PROJECT=os.getenv('WANDB_PROJECT') or 'qwen35-sft',
                         PYTORCH_ALLOC_CONF=os.getenv('PYTORCH_ALLOC_CONF') or 'expandable_segments:True')
 
     return run_job(

@@ -19,6 +19,8 @@ import time
 
 ROOT = Path(__file__).resolve().parent.parent
 MODELS = {
+    "qwen35-base": "Qwen/Qwen3.5-4B",
+    "qwen35-mixed": "Maverfrick/Qwen3.5-4B-TradMed-CPT",
     "exp0015": "Maverfrick/Venera-Traditional-Model",
     "medgemma": "google/medgemma-1.5-4b-it",
     "huatuo": "FreedomIntelligence/HuatuoGPT-o1-8B",
@@ -35,6 +37,19 @@ MODELS = {
 EXP0015_REVISION = "06fc5e88287113fc29b1cdf236dd294260272daa"
 EXP0015_BASE = "unsloth/Qwen3-4B-Thinking-2507"
 EXP0015_BASE_REVISION = "fb56efbd0f60c5bcd531901fa5fe3ee3157b5135"
+QWEN35_MIXED_REVISION = "cd864d7e87eacd1c4c9d01e0ba9a5a686ac7d7b1"
+QWEN35_BASE = "Qwen/Qwen3.5-4B"
+QWEN35_BASE_REVISION = "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a"
+
+
+def validate_qwen35_mixed(token):
+    from huggingface_hub import hf_hub_download
+    config = json.loads(Path(hf_hub_download(MODELS['qwen35-mixed'], 'adapter_config.json',
+                        revision=QWEN35_MIXED_REVISION, token=token)).read_text())
+    if (config['base_model_name_or_path'] != QWEN35_BASE or
+            config['revision'] != QWEN35_BASE_REVISION or config['r'] != 64):
+        raise ValueError('Unexpected Qwen3.5 mixed adapter base, revision, or rank')
+    return config
 
 
 def validate_exp0015(token):
@@ -163,6 +178,17 @@ def check_access(models: list[str], token: str | None) -> dict[str, str]:
     revisions = {}
     for key in models:
         repo = MODELS[key]
+        if key == 'qwen35-base':
+            from huggingface_hub import HfApi
+            HfApi(token=token).model_info(repo, revision=QWEN35_BASE_REVISION)
+            revisions[key] = QWEN35_BASE_REVISION
+            print(f'[medical-eval] access OK: {repo}@{revisions[key]}', flush=True)
+            continue
+        if key == 'qwen35-mixed':
+            validate_qwen35_mixed(token)
+            revisions[key] = QWEN35_MIXED_REVISION
+            print(f'[medical-eval] access OK: {repo}@{revisions[key]}', flush=True)
+            continue
         if key == "exp0015":
             validate_exp0015(token)
             revisions[key] = EXP0015_REVISION
@@ -223,20 +249,32 @@ def load_model(key: str, revision: str, token: str | None):
     if not torch.cuda.is_available():
         raise RuntimeError("A CUDA GPU is required for the 4-bit baseline evaluation")
     repo = MODELS[key]
-    adapter = key == "exp0015"
-    if adapter:
+    adapter = key in {"exp0015", "qwen35-mixed"}
+    base_revision = revision
+    if key == 'qwen35-base' and revision != QWEN35_BASE_REVISION:
+        raise ValueError('Qwen3.5 control must use the mixed adapter base revision')
+    if key == 'qwen35-mixed':
+        if revision != QWEN35_MIXED_REVISION:
+            raise ValueError('Qwen3.5 mixed requires the pinned uploaded adapter revision')
+        validate_qwen35_mixed(token)
+        repo, base_revision = QWEN35_BASE, QWEN35_BASE_REVISION
+    elif adapter:
         if revision != EXP0015_REVISION:
             raise ValueError("exp0015 requires the pinned final CPT-SFT revision")
         validate_exp0015(token)
         repo = EXP0015_BASE
+        base_revision = EXP0015_BASE_REVISION
     loader = Gemma3ForConditionalGeneration if key == "medgemma" else AutoModelForCausalLM
+    if key in {'qwen35-base', 'qwen35-mixed'}:
+        from transformers import AutoModelForImageTextToText
+        loader = AutoModelForImageTextToText
     processor = None
     if key == "gemma4-e2b":
         from transformers import AutoProcessor, Gemma4ForConditionalGeneration
         loader = Gemma4ForConditionalGeneration
         processor = AutoProcessor.from_pretrained(repo, revision=revision, token=token)
     model = loader.from_pretrained(
-        repo, revision=EXP0015_BASE_REVISION if adapter else revision, token=token,
+        repo, revision=base_revision, token=token,
         torch_dtype=torch.bfloat16, device_map={"": 0},
         attn_implementation="sdpa",
         quantization_config=BitsAndBytesConfig(
@@ -249,7 +287,7 @@ def load_model(key: str, revision: str, token: str | None):
         model = PeftModel.from_pretrained(model, MODELS[key], revision=revision,
                                           token=token, is_trainable=False)
     tokenizer = (processor.tokenizer if processor is not None else
-                 AutoTokenizer.from_pretrained(repo, revision=EXP0015_BASE_REVISION if adapter else revision, token=token))
+                 AutoTokenizer.from_pretrained(repo, revision=base_revision, token=token))
     tokenizer.padding_side = "left"
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -483,7 +521,7 @@ def export_vm14k_comparison(output: Path) -> None:
     (output / "comparison.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def evaluate(key: str, dataset: str, revision: str, args) -> None:
+def evaluate(key: str, dataset: str, revision: str, args, *, model_loader=None, extra_metadata=None) -> None:
     import torch
 
     dependencies = check_runtime([key])
@@ -503,6 +541,15 @@ def evaluate(key: str, dataset: str, revision: str, args) -> None:
         metadata.update(base_model=EXP0015_BASE, base_revision=EXP0015_BASE_REVISION,
                         adapter_composition="final CPT-SFT adapter applied once",
                         thinking_prompt_closed=args.generation_mode == "direct")
+    if key == 'qwen35-mixed':
+        metadata.update(base_model=QWEN35_BASE, base_revision=QWEN35_BASE_REVISION,
+                        adapter_composition='final mixed CPT adapter applied once',
+                        adapter_weights_sha256='8e1c99d0d5cb183046e5115a82447ddbd31083ca95dcb8ab5beffbac6cdb1b4f')
+    if key == 'qwen35-base':
+        metadata.update(base_model=QWEN35_BASE, base_revision=QWEN35_BASE_REVISION,
+                        adapter_composition='none; original base model control')
+    if extra_metadata:
+        metadata.update(extra_metadata)
     manifest = output / "run_config.json"
     manifest.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     from transformers import set_seed
@@ -512,7 +559,7 @@ def evaluate(key: str, dataset: str, revision: str, args) -> None:
     batch_size = args.batch_size
     started = time.monotonic()
     try:
-        model, tokenizer, processor = load_model(key, revision, os.getenv("HF_TOKEN"))
+        model, tokenizer, processor = (model_loader or load_model)(key, revision, os.getenv("HF_TOKEN"))
         started = time.monotonic()
         with (output / "responses.jsonl").open("w", encoding="utf-8") as handle:
             while len(rows) < len(samples):
@@ -597,7 +644,7 @@ def main() -> int:
     if args.check_access:
         return 0
     check_runtime(models)
-    if (args.vm14k_baselines or (models == ["exp0015"] and datasets == ["vm14k"]
+    if (args.vm14k_baselines or (models in (["exp0015"], ["qwen35-mixed"], ["qwen35-base"]) and datasets == ["vm14k"]
                                and args.generation_mode == "direct")) and args.limit == 0:
         smoke_args = copy.copy(args)
         smoke_args.limit = 4

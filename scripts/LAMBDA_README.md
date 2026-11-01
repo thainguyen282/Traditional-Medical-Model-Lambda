@@ -76,11 +76,12 @@ lambda_launch.py ──API──▶ [terminate instance]
 ```bash
 python scripts/lambda_launch.py --task sft --list-types
 ```
-> **Warning (Slurm / local VM timeout):** Keep `lambda_launch.py` alive until it
-> prints `terminating instance`. If Slurm kills the job or the local VM stops,
-> the remote GPU may keep running and billing. 
-> After any timeout, node failure, or forced kill, check the Lambda dashboard
-> and terminate the instance manually. Do not use `--keep-alive` unless intended.
+> **12-hour automatic termination:** Every new launch installs a persistent
+> watchdog on the Lambda GPU host before training starts. Once the launcher prints
+> `12-hour termination watchdog armed`, Wulver/local VM shutdown does not cancel it.
+> The deadline is 12 hours from the launch request, including provisioning and setup.
+> It also applies to `--keep-alive` and automatically preserved SFT instances.
+> Unfinished jobs and data stored only on the instance are lost at termination.
 
 ### Run a single SFT experiment
 ```bash
@@ -190,7 +191,7 @@ paths are unchanged. No extra dependency installs or GPU instances are added.
 ### Debug / inspect after finish
 ```bash
 python scripts/lambda_launch.py --task sft --config ... --keep-alive
-# After the run, SSH in manually with the printed IP to inspect files.
+# After the run, SSH in with the printed IP before the 12-hour deadline.
 ```
 
 ### Other flags
@@ -239,14 +240,29 @@ lambda_launch.py
 |---|---|
 | "no region has capacity for gpu_2x_a100" | Lambda is out of stock for that type. Retry later or use `--instance-type gpu_1x_a100_sxm4`. |
 | SSH never comes up | `lambda_launch.py` waits 5 min. Check the Lambda dashboard — instance may be stuck provisioning. |
-| Training hangs, you Ctrl+C locally | The remote job keeps running in tmux. The script proceeds to terminate anyway. Pass `--keep-alive` if you want to inspect. |
-| `lambda_launch.py` crashes mid-run | **Check the Lambda dashboard and terminate the instance manually** — otherwise you keep paying. |
+| Training hangs, you Ctrl+C locally | SFT may be preserved for recovery; other tasks follow normal cleanup. The armed 12-hour watchdog still applies. |
+| `lambda_launch.py` crashes mid-run | Once armed, the host watchdog requests termination at the 12-hour deadline. If the crash happened before arming, check the dashboard and terminate manually. |
 | HF push fails (token scope) | Ensure `HF_TOKEN` has write access to both target repos, and the repo namespace matches your account. |
 
 ## Cost guardrails
-- Default flow always terminates the instance — even on `KeyboardInterrupt` and
-  `DONE_FAILED`. The only path that *doesn't* terminate is `--keep-alive`.
-- If the orchestrator itself dies (e.g. machine reboots), instances will keep
-  running. Always double-check the Lambda dashboard after an unusual exit.
+- Normal cleanup still terminates after completion; SFT interruption or backup
+  failure can preserve an instance for recovery until the 12-hour deadline.
+- The watchdog runs on the GPU host, outside Docker and tmux, as an enabled
+  systemd service. It resumes after a host reboot using the original deadline.
+- The API credential is sent over SSH stdin and stored in
+  `/etc/lambda-watchdog/config.json` (root-only directory and file). It is not
+  included in command arguments, `job.env`, Docker, or training backups.
+- Setup must succeed before training starts. On setup failure, the launcher
+  attempts immediate API termination, including with `--keep-alive`.
+- Wulver must remain running until setup is confirmed. Existing instances are
+  not retrofitted. A launch response lost before an instance ID is received,
+  or Wulver shutdown before setup completes, still requires manual cleanup.
+- At the deadline the watchdog calls Lambda's termination API and retries every
+  60 seconds until the instance disappears. API/network outages, revoked keys,
+  or a nonfunctional GPU host can delay/prevent termination; this is not a
+  provider-enforced billing cap. Confirm termination in the dashboard.
+- Inspect watchdog status/logs on the GPU with
+  `sudo systemctl status lambda-watchdog` and
+  `sudo journalctl -u lambda-watchdog`.
 
 For the separate Qwen3.5 TradMed and 80/20 runs, see [Qwen3.5 CPT commands and developer review](QWEN35_CPT.md).

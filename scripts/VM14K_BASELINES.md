@@ -24,6 +24,36 @@ as invalid and incorrect. No ROUGE, BLEU, or judge calls are made.
 
 ## Local GPU
 
+The uploaded Qwen3.5 mixed CPT adapter can use this same direct protocol:
+
+```bash
+.venv-qwen35/bin/python scripts/eval_medical_baselines.py \
+  --model qwen35-mixed --dataset vm14k --generation-mode direct \
+  --batch-size 4 --output-dir EVAL/outputs/qwen35_mixed_vm14k_direct
+```
+
+This pins adapter commit `cd864d7e87eacd1c4c9d01e0ba9a5a686ac7d7b1`
+and its original Qwen3.5 base revision, applies the adapter once, and runs
+four smoke questions before all 564 rows. It reuses the baseline prompt,
+answer constraints, NF4 quantization, greedy 16-token decoding, and scoring.
+The Qwen3.5 image-text model loader and Transformers 5.5 environment are
+required; this is protocol parity, not identical model architecture or runtime.
+Results include dependency versions and immutable adapter/base revisions.
+
+For an untuned Qwen3.5 control, replace `--model qwen35-mixed` with
+`--model qwen35-base` and choose a new output directory. The control pins
+the exact base commit referenced by the mixed adapter and loads no adapter.
+Run it on a cluster A100 with:
+
+```bash
+sbatch scripts/slurm/eval_vm14k_qwen35_base.sbatch
+```
+
+The job installs the pinned inference dependencies with CUDA 12.8 into
+job-local scratch, runs smoke then full evaluation, and releases the GPU
+when finished. Results stay on the shared filesystem under
+`EVAL/outputs/qwen35_base_vm14k_direct/slurm-<job-id>/`; no upload is performed.
+
 Create a **separate** environment; the training requirements remain unchanged:
 
 ```bash

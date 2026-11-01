@@ -89,7 +89,7 @@ fi
 cd "$REPO_DIR" || fail "cd repo"
 
 # Dedicated Qwen3.5 jobs use an exact local code/config bundle.
-if [ -n "${CPT_QWEN35:-}" ]; then
+if [ -n "${CPT_QWEN35:-}${SFT_QWEN35:-}" ]; then
     printf '%s  %s\n' "$QWEN35_BUNDLE_SHA256" /home/ubuntu/qwen35_source.tar.gz | sha256sum -c - \
         || fail "Qwen3.5 source archive checksum"
     tar -xzf /home/ubuntu/qwen35_source.tar.gz -C "$REPO_DIR" || fail "extract Qwen3.5 source"
@@ -171,7 +171,7 @@ EOF
 # ------------------------------------------------------------------
 in_docker() {
     local qwen35_environment=()
-    if [ -n "${CPT_QWEN35:-}" ]; then
+    if [ -n "${CPT_QWEN35:-}${SFT_QWEN35:-}" ]; then
         mkdir -p "$REPO_DIR/.cache/tmp"
         qwen35_environment=(-e HF_HOME=/workspace/.cache/huggingface
                             -e TMPDIR=/workspace/.cache/tmp
@@ -287,6 +287,19 @@ run_cpt() {
         --eval-src /workspace/EVAL/outputs \
         --log-file /host/train.log" \
         || echo "[bootstrap] WARN: eval push failed (adapter is already on HF)"
+}
+
+run_qwen35_sft() {
+    local config quoted_config
+    config=$(printf '%s\n' "$CONFIG_LIST" | sed '/^$/d')
+    [[ "$config" != *$'\n'* ]] || { echo '[qwen35-sft] exactly one config required'; return 1; }
+    printf -v quoted_config '%q' "$config"
+    local py=/workspace/.venv-qwen35/bin/python
+    in_docker "python -m venv /workspace/.venv-qwen35 && $py -m pip install -r /workspace/requirements-qwen35.txt" || return $?
+    in_docker "$py /workspace/scripts/train_qwen35_sft.py --config $quoted_config --mode train" || return $?
+    # Preserve the adapter in HF before any evaluation can fail or take time.
+    in_docker "$py /workspace/scripts/train_qwen35_sft.py --config $quoted_config --mode publish" || return $?
+    in_docker "$py /workspace/scripts/train_qwen35_sft.py --config $quoted_config --mode evaluate"
 }
 
 run_sft() {
@@ -649,7 +662,9 @@ run_inference() {
 }
 
 status=0
-if [ -n "${CPT_QWEN35:-}" ]; then
+if [ -n "${SFT_QWEN35:-}" ]; then
+    run_qwen35_sft || status=$?
+elif [ -n "${CPT_QWEN35:-}" ]; then
     run_qwen35_cpt || status=$?
 elif [ "$TASK_TYPE" = "cpt" ]; then
     run_cpt || status=$?
