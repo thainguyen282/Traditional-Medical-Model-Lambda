@@ -9,6 +9,16 @@ spec.loader.exec_module(sweeper)
 
 
 class ExpirySweepTest(unittest.TestCase):
+    def test_ten_minute_test_deadline(self):
+        launched = 1700000000
+        instance = {'id': 'test', 'name': f'tmm-exp-{launched + 600}-{launched}', 'status': 'active'}
+        with patch.object(sweeper, 'request', return_value=[instance]) as request:
+            sweeper.sweep('key', launched + 599)
+            self.assertEqual(request.call_count, 1)
+        with patch.object(sweeper, 'request', side_effect=[[instance], {'terminated_instances': [{'id': 'test'}]}]) as request, patch.object(sweeper.time, 'sleep'):
+            sweeper.sweep('key', launched + 600)
+            self.assertEqual(request.call_args.args[2], {'instance_ids': ['test']})
+
     def test_only_expired_matching_instances_are_terminated(self):
         launched = 1700000000
         deadline = launched + sweeper.LIFETIME
@@ -16,7 +26,7 @@ class ExpirySweepTest(unittest.TestCase):
             {'id': 'expired', 'name': f'tmm-exp-{deadline}-{launched}', 'status': 'unhealthy'},
             {'id': 'future', 'name': f'tmm-exp-{deadline + 1}-{launched + 1}', 'status': 'active'},
             {'id': 'other', 'name': 'other', 'status': 'active'},
-            {'id': 'bad', 'name': f'tmm-exp-{deadline}-{launched + 1}', 'status': 'active'},
+            {'id': 'bad', 'name': f'tmm-exp-{deadline + 1}-{launched}', 'status': 'active'},
             {'id': 'gone', 'name': f'tmm-exp-{deadline}-{launched}', 'status': 'terminating'},
         ]
         response = {'terminated_instances': [{'id': 'expired'}]}

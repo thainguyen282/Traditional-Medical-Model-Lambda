@@ -463,7 +463,7 @@ path.chmod(0o644)
             " && sudo -n systemctl enable --now lambda-watchdog.service"
             " && sudo -n systemctl is-active --quiet lambda-watchdog.service",
             retries=4, input_text=payload)
-    log(f"12-hour termination watchdog armed on {instance_id}; "
+    log(f"Termination watchdog armed on {instance_id} for deadline {deadline:.0f}; "
         "independent of Wulver, including after a remote reboot")
 
 
@@ -480,14 +480,20 @@ def run_job(
     keep_alive: bool,
     region: str | None = None,
     boot_timeout: int = 600,
+    max_instance_seconds: int = MAX_INSTANCE_SECONDS,
 ) -> int:
     region = find_region_for(api, instance_type, region)
     log(f"launching {instance_type} in region {region}")
     job_tag = f"tm-{task}-{int(time.time())}"
-    deadline = time.time() + MAX_INSTANCE_SECONDS
+    launched_at = int(time.time())
+    deadline = launched_at + max_instance_seconds
+    from datetime import datetime, timezone
+    deadline_text = datetime.fromtimestamp(deadline, timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+    log(f"automatic termination after {max_instance_seconds / 3600:g} hours "
+        f"({max_instance_seconds} seconds); deadline {deadline_text}")
     # The deadline is part of the provider-side name, so an independent
     # scheduler can discover the instance even if this process loses the reply.
-    instance_name = f"tmm-exp-{int(deadline)}-{int(deadline - MAX_INSTANCE_SECONDS)}"
+    instance_name = f"tmm-exp-{deadline}-{launched_at}"
     instance_id = api.launch(region, instance_type, [ssh_key_name], name=instance_name)
     log(f"instance_id={instance_id}")
 
@@ -656,7 +662,7 @@ def run_job(
             log("Watchdog setup not confirmed; terminating instance for safety")
             keep_alive = False
         if keep_alive:
-            log("The 12-hour termination deadline still applies")
+            log("The configured termination deadline still applies")
             log(f"Instance preserved; leaving instance {instance_id} running")
             log(f"  ssh -i {ssh_private_key} ubuntu@{ip}  # if still reachable")
         else:
@@ -745,11 +751,13 @@ def main() -> int:
                         help="Require a region, e.g. us-east-1 (Virginia); default: first available")
     parser.add_argument("--boot-timeout", type=int, default=600,
                         help="Seconds to wait for Lambda active status before cleanup (default: 600)")
+    parser.add_argument("--termination-timeout", type=float, default=12,
+                        help="Hours from launch request until automatic termination (up to 12; default: 12)")
     parser.add_argument("--git-repo",
                         default="https://github.com/Venera-AI/Traditional-Medical-Model.git")
     parser.add_argument("--git-branch", default="main2")
     parser.add_argument("--keep-alive", action="store_true",
-                        help="Leave instance running after the job; the 12-hour deadline still applies")
+                        help="Leave instance running after the job; the termination deadline still applies")
     parser.add_argument("--list-types", action="store_true",
                         help="List all instance types + availability and exit")
     parser.add_argument("--inference-script", default=None,
@@ -763,6 +771,8 @@ def main() -> int:
         parser.error("--cpt-max-steps requires --cpt-new-model and a positive value")
     if args.boot_timeout < 1:
         parser.error("--boot-timeout must be a positive number of seconds")
+    if not 1 / 3600 <= args.termination_timeout <= 12:
+        parser.error("--termination-timeout must be between 1/3600 and 12 hours")
     if not (args.baselines or args.general_vi) and any(value is not None for value in (
             args.eval_datasets, args.eval_limit, args.eval_batch_size, args.eval_generation_mode,
             args.eval_protocol)):
@@ -968,6 +978,7 @@ def main() -> int:
         keep_alive=args.keep_alive,
         region=args.region,
         boot_timeout=args.boot_timeout,
+        max_instance_seconds=round(args.termination_timeout * 3600),
     )
 
 

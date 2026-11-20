@@ -33,7 +33,7 @@ def sweep(key, now):
         if not match:
             continue
         deadline, launched = map(int, match.groups())
-        if deadline - launched != LIFETIME or now < deadline:
+        if not 1 <= deadline - launched <= LIFETIME or now < deadline:
             continue
         if instance.get('status') in ('terminated', 'terminating', 'preempted'):
             continue

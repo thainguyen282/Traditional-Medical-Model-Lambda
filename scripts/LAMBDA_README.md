@@ -78,8 +78,11 @@ python scripts/lambda_launch.py --task sft --list-types
 ```
 > **12-hour automatic termination:** Every new launch installs a persistent
 > watchdog on the Lambda GPU host before training starts. Once the launcher prints
-> `12-hour termination watchdog armed`, Wulver/local VM shutdown does not cancel it.
-> The deadline is 12 hours from the launch request, including provisioning and setup.
+> `Termination watchdog armed`, Wulver/local VM shutdown does not cancel it.
+> The default deadline is 12 hours from the launch request, including provisioning and setup.
+> Set `--termination-timeout 0.166667` for approximately 10 minutes. The argument
+> is in hours, accepts fractional values from one second up to 12 hours, and is
+> rounded to the nearest second.
 > It also applies to `--keep-alive` and automatically preserved SFT instances.
 > Unfinished jobs and data stored only on the instance are lost at termination.
 > For protection when the GPU host itself is shut down, configure the independent
@@ -254,10 +257,10 @@ lambda_launch.py
   enable Actions, and run **Terminate expired Lambda GPU instances** manually
   from the Actions tab to verify access. A successful run with no expired
   instances makes no changes. Do not put the key in the repository.
-- New launches encode the 12-hour deadline in the Lambda instance name, using
+- New launches encode the termination deadline in the Lambda instance name, using
   `tmm-exp-<deadline>-<launch-time>`. Every five minutes the independent job
   lists instances and terminates expired names matching that exact format and
-  12-hour interval. Do not rename these instances. Older launches do not have
+  interval between 1 and 43200 seconds. Do not rename these instances. Older launches do not have
   this marker and are not covered. The deadline includes provisioning, even
   if the launcher never receives the instance ID. Persistent filesystems are
   not deleted, but instance-local data is lost on termination.
@@ -266,6 +269,12 @@ lambda_launch.py
   expired credentials, runner or network outages can also prevent termination.
   This is not an exact 12-hour billing cap. Monitor Actions failures and verify
   termination in the Lambda dashboard; check manually until setup is complete.
+- To test the expiry watchdog, add `--termination-timeout 0.166667 --keep-alive`
+  to a launch. The deadline is 10 minutes from the launch request, including
+  provisioning. Keep-alive prevents normal completion from terminating early,
+  but setup or job failures can still cause earlier cleanup. The host watchdog
+  and GitHub sweep both recognize this deadline; GitHub may run late. Confirm
+  termination in the Lambda dashboard. The job or its results may be interrupted.
 - Normal cleanup still terminates after completion; SFT interruption or backup
   failure can preserve an instance for recovery until the 12-hour deadline.
 - The watchdog runs on the GPU host, outside Docker and tmux, as an enabled
