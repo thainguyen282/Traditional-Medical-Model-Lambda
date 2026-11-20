@@ -485,7 +485,10 @@ def run_job(
     log(f"launching {instance_type} in region {region}")
     job_tag = f"tm-{task}-{int(time.time())}"
     deadline = time.time() + MAX_INSTANCE_SECONDS
-    instance_id = api.launch(region, instance_type, [ssh_key_name], name=job_tag)
+    # The deadline is part of the provider-side name, so an independent
+    # scheduler can discover the instance even if this process loses the reply.
+    instance_name = f"tmm-exp-{int(deadline)}-{int(deadline - MAX_INSTANCE_SECONDS)}"
+    instance_id = api.launch(region, instance_type, [ssh_key_name], name=instance_name)
     log(f"instance_id={instance_id}")
 
     exit_code = 1

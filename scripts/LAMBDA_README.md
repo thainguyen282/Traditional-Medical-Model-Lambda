@@ -82,6 +82,8 @@ python scripts/lambda_launch.py --task sft --list-types
 > The deadline is 12 hours from the launch request, including provisioning and setup.
 > It also applies to `--keep-alive` and automatically preserved SFT instances.
 > Unfinished jobs and data stored only on the instance are lost at termination.
+> For protection when the GPU host itself is shut down, configure the independent
+> GitHub Actions expiry sweep described in **Cost guardrails** below.
 
 ### Run a single SFT experiment
 ```bash
@@ -245,6 +247,25 @@ lambda_launch.py
 | HF push fails (token scope) | Ensure `HF_TOKEN` has write access to both target repos, and the repo namespace matches your account. |
 
 ## Cost guardrails
+- To enable the independent sweep, add a GitHub Actions repository secret named
+  `LAMBDA_API_KEY` with a Lambda Cloud API key authorized to list and terminate
+  instances in the relevant workspace. Merge `.github/workflows/lambda-expiry.yml`
+  and `scripts/lambda_expiry_sweeper.py` into the repository's default branch,
+  enable Actions, and run **Terminate expired Lambda GPU instances** manually
+  from the Actions tab to verify access. A successful run with no expired
+  instances makes no changes. Do not put the key in the repository.
+- New launches encode the 12-hour deadline in the Lambda instance name, using
+  `tmm-exp-<deadline>-<launch-time>`. Every five minutes the independent job
+  lists instances and terminates expired names matching that exact format and
+  12-hour interval. Do not rename these instances. Older launches do not have
+  this marker and are not covered. The deadline includes provisioning, even
+  if the launcher never receives the instance ID. Persistent filesystems are
+  not deleted, but instance-local data is lost on termination.
+- GitHub's schedule can be delayed or dropped; public-repository schedules can
+  be disabled after 60 days of inactivity. API failures, disabled workflows,
+  expired credentials, runner or network outages can also prevent termination.
+  This is not an exact 12-hour billing cap. Monitor Actions failures and verify
+  termination in the Lambda dashboard; check manually until setup is complete.
 - Normal cleanup still terminates after completion; SFT interruption or backup
   failure can preserve an instance for recovery until the 12-hour deadline.
 - The watchdog runs on the GPU host, outside Docker and tmux, as an enabled

@@ -417,7 +417,9 @@ run_medical_eval() {
         # expose the venv executables to its subprocesses. Activate in each container.
         eval_python="source /workspace/.venv-vllm/bin/activate && python"
     elif [ -n "${EVAL_GENERAL_VI:-}" ] || [[ " $EVAL_MEDICAL_MODELS " == *" gemma4-e2b "* ]] || \
-         [[ " $EVAL_MEDICAL_MODELS " == *" exp0015 "* ]]; then
+         [[ " $EVAL_MEDICAL_MODELS " == *" exp0015 "* ]] || \
+         [[ " $EVAL_MEDICAL_MODELS " == *" qwen35-mixed "* ]] || \
+         [[ " $EVAL_MEDICAL_MODELS " == *" qwen35-base "* ]]; then
         # The venv lives on the repository bind mount, so fresh containers
         # share it. Training's interpreter and dependency pins are untouched.
         in_docker "bash /workspace/scripts/setup_baseline_env.sh /workspace/.venv-baselines" \
